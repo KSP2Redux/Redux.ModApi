@@ -11,9 +11,9 @@ using SpaceWarp.API.Assets;
 using UitkForKsp2.API;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static SpaceWarp.UI.Debug.SpaceWarpConsoleLogListener;
+using static SpaceWarp.UI.Console.SpaceWarpConsoleLogListener;
 
-namespace SpaceWarp.UI.Debug;	
+namespace SpaceWarp.UI.Console;	
 
 public sealed class SpaceWarpConsole : KerbalMonoBehaviour	
 {	
