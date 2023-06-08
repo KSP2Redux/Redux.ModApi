@@ -16,7 +16,7 @@ public class FunctionValidator : ParseValidator<Function>
         if (Arguments.Count != node.Arguments.Count) return false;
         if (Arguments.Where((validator, idx) => !validator.Validate(node.Arguments[idx])).Any()) return false;
         if (Body.Count != node.Body.Count) return false;
-        return !Body.Where((validator, idx) => !validator.Validate(node.Arguments[idx])).Any();
+        return !Body.Where((validator, idx) => !validator.Validate(node.Body[idx])).Any();
     }
 
     public IEnumerator<ParseValidator> GetEnumerator()
