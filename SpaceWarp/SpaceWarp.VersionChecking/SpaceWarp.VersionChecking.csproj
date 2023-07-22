@@ -9,4 +9,8 @@
       <ProjectReference Include="..\SpaceWarp\SpaceWarp.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="KerbalSpaceProgram2.GameLibs" Version="0.1.3" />
+    </ItemGroup>
+
 </Project>
