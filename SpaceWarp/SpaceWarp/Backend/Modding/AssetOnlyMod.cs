@@ -26,4 +26,5 @@ internal class AssetOnlyMod : ISpaceWarpMod
 
     public ILogger SWLogger { get; }
     public IConfigFile SWConfiguration => new EmptyConfigFile();
+    public SpaceWarpPluginDescriptor SWMetadata { get; set; }
 }
