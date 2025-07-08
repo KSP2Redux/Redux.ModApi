@@ -74,7 +74,7 @@ namespace DebugTools.Runtime.Controllers
 
         public void Update()
         {
-            if (Input.GetKey(Configuration.ToggleModifierKey.Value) && Input.GetKeyDown(Configuration.ToggleKey.Value))
+            if (Configuration.KeyboardShortcut.Value.Down)
             {
                 IsWindowOpen = !IsWindowOpen;
             }

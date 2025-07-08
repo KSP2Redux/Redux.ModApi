@@ -69,6 +69,7 @@ namespace DebugTools.Runtime.Controllers.VesselTools
             row.ReentryFlux.text =
                 Units.PrintSI(part.Model.ThermalData.ReentryFlux * 1000.0, "W");
             row.OtherFlux.text = Units.PrintSI(part.Model.ThermalData.OtherFlux * 1000.0, "W");
+            row.CoolingFlux.text = Units.PrintSI(-part.Model.ThermalData.RemovedFlux * 1000.0, "W");
             row.ShockMult.text =
                 Units.PrintSI(part.Model.ThermalData.ExposedAreaProportion * 100.0, "%");
             row.WettedArea.text =

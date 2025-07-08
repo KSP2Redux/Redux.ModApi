@@ -1,20 +1,17 @@
 ﻿using ReduxLib.Configuration;
+using ReduxLib.Input;
 using UnityEngine;
 
 namespace DebugTools.Utils
 {
     public static class Configuration
     {
-        public static ConfigValue<KeyCode> ToggleModifierKey;
-        public static ConfigValue<KeyCode> ToggleKey;
+        public static ConfigValue<KeyboardShortcut> KeyboardShortcut;
 
         public static void Initialize(IConfigFile config)
         {
-            ToggleModifierKey = new ConfigValue<KeyCode>(config.Bind("Keybinding", "Debug UI Modifier Key",
-                KeyCode.LeftAlt, "Modifier key to toggle the main debug UI"));
-
-            ToggleKey = new ConfigValue<KeyCode>(config.Bind("Keybinding", "Debug UI Key",
-                KeyCode.F12, "Key to toggle the main debug UI"));
+            KeyboardShortcut = new ConfigValue<KeyboardShortcut>(config.Bind("Keybinding", "Debug UI Keyboard shortcut",
+                new KeyboardShortcut(KeyCode.F12, KeyCode.LeftAlt), "Keyboard shortcut to toggle the main debug UI"));
         }
     }
 }

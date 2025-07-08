@@ -19,6 +19,7 @@ namespace DebugTools.Runtime.UI
         public readonly Label ReentryFlux;
         public readonly Label EnvironmentFlux;
         public readonly Label OtherFlux;
+        public readonly Label CoolingFlux;
         public readonly Label ExposedArea;
         public readonly Label ConeType;
         public readonly Label ShockAngle;
@@ -65,6 +66,10 @@ namespace DebugTools.Runtime.UI
             OtherFlux.AddToClassList(EntryClassName);
             hierarchy.Add(OtherFlux);
 
+            CoolingFlux = new Label();
+            CoolingFlux.AddToClassList(EntryClassName);
+            hierarchy.Add(CoolingFlux);
+
             ExposedArea = new Label();
             ExposedArea.AddToClassList(EntryClassName);
             hierarchy.Add(ExposedArea);
@@ -98,6 +103,7 @@ namespace DebugTools.Runtime.UI
             EnvironmentFlux.text = "Q<sub>env</sub>";
             ReentryFlux.text = "Q<sub>reentry</sub>";
             OtherFlux.text = "Q<sub>other</sub>";
+            CoolingFlux.text = "Q<sub>cool</sub>";
             ExposedArea.text = "A<sub>exp</sub>";
             ShockArea.text = "A<sub>reentry</sub>";
             ConeType.text = "C<sub>type</sub>";
@@ -130,6 +136,7 @@ namespace DebugTools.Runtime.UI
                         row.EnvironmentFlux.text = "Q<sub>env</sub>";
                         row.ReentryFlux.text = "Q<sub>reentry</sub>";
                         row.OtherFlux.text = "Q<sub>other</sub>";
+                        row.CoolingFlux.text = "Q<sub>cool</sub>";
                         row.ExposedArea.text = "A<sub>exp</sub>";
                         row.ShockArea.text = "A<sub>reentry</sub>";
                         row.ConeType.text = "C<sub>type</sub>";
@@ -147,6 +154,7 @@ namespace DebugTools.Runtime.UI
                         row.EnvironmentFlux.text = "999W";
                         row.ReentryFlux.text = "999W";
                         row.OtherFlux.text = "999W";
+                        row.OtherFlux.text = "-999W";
                         row.ExposedArea.text = "999m<sup>2</sup>";
                         row.ShockArea.text = "999m<sup>2</sup>";
                         row.ConeType.text = "Obl";
