@@ -1,0 +1,27 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/ResourceScanDebugWindow.uss?fileID=7433441132597879392&amp;guid=d69ace9bc18b48144838ed3e95abdda0&amp;type=3#ResourceScanDebugWindow" />
+    <ui:VisualElement name="root" class="root">
+        <ui:VisualElement name="title-bar">
+            <ui:Label text="Resource Scan Debug" />
+            <ui:Button text="×" name="close-button" />
+        </ui:VisualElement>
+        <ui:VisualElement name="controls" class="controls" style="flex-wrap: wrap;">
+            <ui:DropdownField label="Celestial Body" index="-1" choices="System.Collections.Generic.List`1[System.String]" name="celestial-body" class="terrain-dropdown" />
+            <ui:DropdownField label="Resource" index="-1" choices="System.Collections.Generic.List`1[System.String]" name="resource" class="terrain-dropdown" />
+            <ui:VisualElement name="list-titles" style="flex-direction: row; width: 100%; justify-content: space-around;">
+                <ui:Label tabindex="-1" text="Unscanned" display-tooltip-when-elided="true" style="width: 48%; height: 30px; -unity-text-align: upper-center;" />
+                <ui:Label tabindex="-1" text="Scanned" display-tooltip-when-elided="true" style="width: 48%; height: 30px; -unity-text-align: upper-center;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="resources" style="flex-direction: row; justify-content: space-around; flex-wrap: wrap; width: 100%;">
+                <ui:ScrollView scroll-deceleration-rate="0,135" elasticity="0,1" name="unscanned" style="width: 48%; height: auto; max-height: 200px; background-color: rgba(34, 38, 46, 0.5); min-height: 60px;" />
+                <ui:ScrollView scroll-deceleration-rate="0,135" elasticity="0,1" name="scanned" style="width: 48%; height: auto; max-height: 200px; background-color: rgba(34, 38, 46, 0.5); min-height: 60px;" />
+            </ui:VisualElement>
+            <ui:Button text="Scan/Unscan Resource" display-tooltip-when-elided="true" name="scan-unscan" class="tp-button scan-button button" style="width: 80%;" />
+            <ui:Button text="Scan All CB Resources" display-tooltip-when-elided="true" name="scan-cb-all" class="tp-button scan-button button" />
+            <ui:Button text="Unscan All CB Resources" display-tooltip-when-elided="true" name="unscan-cb-all" class="tp-button scan-button button" />
+            <ui:VisualElement style="background-color: rgb(154, 158, 167); width: 100%; height: 2px; margin-top: 8px;" />
+            <ui:Button text="Scan All Resources" display-tooltip-when-elided="true" name="scan-all" class="tp-button all-button button" />
+            <ui:Button text="Unscan All Resources" display-tooltip-when-elided="true" name="unscan-all" class="all-button button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

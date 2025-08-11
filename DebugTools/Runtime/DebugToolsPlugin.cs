@@ -1,14 +1,9 @@
-using JetBrains.Annotations;
 using DebugTools.Runtime.Controllers;
 using DebugTools.Runtime.Controllers.FlightTools;
 using DebugTools.Runtime.Controllers.VesselTools;
 using DebugTools.Utils;
 using KSP.Game;
-using UitkForKsp2.API;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
-using UnityEngine.UIElements;
 using ILogger = ReduxLib.Logging.ILogger;
 
 // ReSharper disable once CheckNamespace
@@ -102,6 +97,8 @@ namespace DebugTools
             CreateDebugWindow<KerbalRosterToolWindowController>("KerbalRosterToolWindow", "Roster Tools");
             // Teleport bookmarks window
             CreateDebugWindow<TeleportBookmarksWindowController>("TeleportBookmarksWindow", "Teleport Bookmarks");
+            // Resource scanning window
+            CreateDebugWindow<ResourceScanDebugWindowController>("ResourceScanDebugWindow", "Resource Scanning");
         }
     }
 }
