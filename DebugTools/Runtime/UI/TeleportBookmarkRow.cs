@@ -4,7 +4,8 @@ using UnityEngine.UIElements;
 // ReSharper disable once CheckNamespace
 namespace DebugTools.Runtime.UI
 {
-    public class TeleportBookmarkRow : VisualElement
+    [UxmlElement]
+    public partial class TeleportBookmarkRow : VisualElement
     {
         private const string ClassName = "teleport-bookmark-row";
         private const string SelectedClassName = ClassName + "__selected";
@@ -40,41 +41,31 @@ namespace DebugTools.Runtime.UI
             Type.AddToClassList(TypeClassName);
             hierarchy.Add(Type);
 
-            _teleportButton = new Button();
-            _teleportButton.text = "TP";
+            _teleportButton = new Button
+            {
+                text = "TP"
+            };
             _teleportButton.AddToClassList(TeleportButtonClassName);
             _teleportButton.clicked += () => OnTeleport?.Invoke(Name.text);
             hierarchy.Add(_teleportButton);
 
-            _deleteButton = new Button();
-            _deleteButton.text = "Del";
+            _deleteButton = new Button
+            {
+                text = "Del"
+            };
             _deleteButton.AddToClassList(DeleteButtonClassName);
             _deleteButton.clicked += () => OnDelete?.Invoke(Name.text);
             hierarchy.Add(_deleteButton);
+
+            // Set default preview values for UI Builder
+            Name.text = "Rings";
+            BodyName.text = "Dres";
+            Type.text = "Orbit";
         }
 
         public void SetSelected(bool value)
         {
             EnableInClassList(SelectedClassName, value);
-        }
-
-        public new class UxmlFactory : UxmlFactory<TeleportBookmarkRow, UxmlTraits>
-        {
-        }
-
-        public new class UxmlTraits : VisualElement.UxmlTraits
-        {
-            public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
-            {
-                base.Init(ve, bag, cc);
-
-                if (ve is TeleportBookmarkRow row)
-                {
-                    row.Name.text = "Rings";
-                    row.BodyName.text = "Dres";
-                    row.Type.text = "Orbit";
-                }
-            }
         }
     }
 }

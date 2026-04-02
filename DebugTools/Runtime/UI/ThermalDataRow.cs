@@ -3,7 +3,8 @@ using UnityEngine.UIElements;
 // ReSharper disable once CheckNamespace
 namespace DebugTools.Runtime.UI
 {
-    public class ThermalDataRow : VisualElement
+    [UxmlElement]
+    public partial class ThermalDataRow : VisualElement
     {
         private const string ClassName = "data-row";
         private const string EntryClassName = "data-row-entry";
@@ -25,6 +26,54 @@ namespace DebugTools.Runtime.UI
         public readonly Label ShockAngle;
         public readonly Label ShockDistance;
         public readonly Label IsShielded;
+
+        [UxmlAttribute("IsHeader")]
+        public bool IsHeader
+        {
+            get => _isHeader;
+            set
+            {
+                _isHeader = value;
+                if (value)
+                {
+                    PartName.text = "Part";
+                    ThermalMass.text = "M<sub>th</sub>";
+                    Temperature.text = "T<sub>part</sub>/T<sub>max</sub>";
+                    WettedArea.text = "A<sub>wet</sub>";
+                    ShockMult.text = "p<sub>shock</sub>";
+                    EnvironmentFlux.text = "Q<sub>env</sub>";
+                    ReentryFlux.text = "Q<sub>reentry</sub>";
+                    OtherFlux.text = "Q<sub>other</sub>";
+                    CoolingFlux.text = "Q<sub>cool</sub>";
+                    ExposedArea.text = "A<sub>exp</sub>";
+                    ShockArea.text = "A<sub>reentry</sub>";
+                    ConeType.text = "C<sub>type</sub>";
+                    ShockAngle.text = "Z<sub>shk</sub>";
+                    ShockDistance.text = "D<sub>shk</sub>";
+                    IsShielded.text = "Shield";
+                }
+                else
+                {
+                    PartName.text = "Waow";
+                    ThermalMass.text = "99.9J/K";
+                    Temperature.text = "999K/9.99K";
+                    WettedArea.text = "9.99m<sup>2</sup>";
+                    ShockMult.text = "99.9%";
+                    EnvironmentFlux.text = "999W";
+                    ReentryFlux.text = "999W";
+                    OtherFlux.text = "999W";
+                    CoolingFlux.text = "-999W";
+                    ExposedArea.text = "999m<sup>2</sup>";
+                    ShockArea.text = "999m<sup>2</sup>";
+                    ConeType.text = "Obl";
+                    ShockAngle.text = "99°";
+                    ShockDistance.text = "99";
+                    IsShielded.text = "X";
+                }
+            }
+        }
+
+        private bool _isHeader;
 
         public ThermalDataRow()
         {
@@ -89,81 +138,13 @@ namespace DebugTools.Runtime.UI
             IsShielded = new Label();
             IsShielded.AddToClassList(SmallEntryClassName);
             hierarchy.Add(IsShielded);
+
+            IsHeader = true;
         }
 
         public ThermalDataRow(bool isHeader) : this()
         {
-            if (!isHeader) return;
-            
-            PartName.text = "Part";
-            ThermalMass.text = "M<sub>th</sub>";
-            Temperature.text = "T<sub>part</sub>/T<sub>max</sub>";
-            WettedArea.text = "A<sub>wet</sub>";
-            ShockMult.text = "p<sub>shock</sub>";
-            EnvironmentFlux.text = "Q<sub>env</sub>";
-            ReentryFlux.text = "Q<sub>reentry</sub>";
-            OtherFlux.text = "Q<sub>other</sub>";
-            CoolingFlux.text = "Q<sub>cool</sub>";
-            ExposedArea.text = "A<sub>exp</sub>";
-            ShockArea.text = "A<sub>reentry</sub>";
-            ConeType.text = "C<sub>type</sub>";
-            ShockAngle.text = "Z<sub>shk</sub>";
-            ShockDistance.text = "D<sub>shk</sub>";
-            IsShielded.text = "Shield";
-        }
-
-        public new class UxmlFactory : UxmlFactory<ThermalDataRow, UxmlTraits>
-        {
-        }
-
-        public new class UxmlTraits : VisualElement.UxmlTraits
-        {
-            private readonly UxmlBoolAttributeDescription _isHeader = new() { name = "IsHeader", defaultValue = true };
-
-            public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
-            {
-                base.Init(ve, bag, cc);
-
-                if (ve is ThermalDataRow row)
-                {
-                    if (_isHeader.GetValueFromBag(bag, cc))
-                    {
-                        row.PartName.text = "Part";
-                        row.ThermalMass.text = "M<sub>th</sub>";
-                        row.Temperature.text = "T<sub>part</sub>/T<sub>max</sub>";
-                        row.WettedArea.text = "A<sub>wet</sub>";
-                        row.ShockMult.text = "p<sub>shock</sub>";
-                        row.EnvironmentFlux.text = "Q<sub>env</sub>";
-                        row.ReentryFlux.text = "Q<sub>reentry</sub>";
-                        row.OtherFlux.text = "Q<sub>other</sub>";
-                        row.CoolingFlux.text = "Q<sub>cool</sub>";
-                        row.ExposedArea.text = "A<sub>exp</sub>";
-                        row.ShockArea.text = "A<sub>reentry</sub>";
-                        row.ConeType.text = "C<sub>type</sub>";
-                        row.ShockAngle.text = "Z<sub>shk</sub>";
-                        row.ShockDistance.text = "D<sub>shk</sub>";
-                        row.IsShielded.text = "Shield";
-                    }
-                    else
-                    {
-                        row.PartName.text = "Waow";
-                        row.ThermalMass.text = "99.9J/K";
-                        row.Temperature.text = "999K/9.99K";
-                        row.WettedArea.text = "9.99m<sup>2</sup>";
-                        row.ShockMult.text = "99.9%";
-                        row.EnvironmentFlux.text = "999W";
-                        row.ReentryFlux.text = "999W";
-                        row.OtherFlux.text = "999W";
-                        row.OtherFlux.text = "-999W";
-                        row.ExposedArea.text = "999m<sup>2</sup>";
-                        row.ShockArea.text = "999m<sup>2</sup>";
-                        row.ConeType.text = "Obl";
-                        row.ShockAngle.text = "99°";
-                        row.ShockDistance.text = "99";
-                        row.IsShielded.text = "X";
-                    }
-                }
-            }
+            IsHeader = isHeader;
         }
     }
 }
