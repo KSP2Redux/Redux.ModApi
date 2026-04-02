@@ -2,7 +2,8 @@ using UnityEngine.UIElements;
 
 namespace DebugTools.Runtime.UI.VesselTools
 {
-    public class ManeuverNodeRow : VisualElement
+    [UxmlElement]
+    public partial class ManeuverNodeRow : VisualElement
     {
         private const string ClassName = "maneuver-node";
         private const string PartNameClassName = ClassName + "__name";
@@ -12,6 +13,32 @@ namespace DebugTools.Runtime.UI.VesselTools
         public readonly Label UniversalTime;
         public readonly Label DeltaV;
         public readonly Label GUID;
+
+        [UxmlAttribute]
+        public bool IsHeader
+        {
+            get => _isHeader;
+            set
+            {
+                _isHeader = value;
+                if (value)
+                {
+                    NodeName.text = "Name";
+                    UniversalTime.text = "UT";
+                    DeltaV.text = "Δv";
+                    GUID.text = "GUID";
+                }
+                else
+                {
+                    NodeName.text = "Node-1";
+                    UniversalTime.text = "1234.5";
+                    DeltaV.text = "1234.5";
+                    GUID.text = "abc-def-ghi";
+                }
+            }
+        }
+
+        private bool _isHeader;
 
         public ManeuverNodeRow()
         {
@@ -32,48 +59,13 @@ namespace DebugTools.Runtime.UI.VesselTools
             GUID = new Label();
             GUID.AddToClassList(SubItemClassName);
             hierarchy.Add(GUID);
+
+            IsHeader = true;
         }
 
         public ManeuverNodeRow(bool isHeader) : this()
         {
-            if (!isHeader) return;
-            
-            NodeName.text = "Name";
-            UniversalTime.text = "UT";
-            DeltaV.text = "Δv";
-            GUID.text = "GUID";
-        }
-
-        public new class UxmlFactory : UxmlFactory<ManeuverNodeRow, UxmlTraits>
-        {
-        }
-
-        public new class UxmlTraits : VisualElement.UxmlTraits
-        {
-            private readonly UxmlBoolAttributeDescription _isHeader = new() {name = "IsHeader", defaultValue = true};
-
-            public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
-            {
-                base.Init(ve, bag, cc);
-
-                if (ve is ManeuverNodeRow row)
-                {
-                    if (_isHeader.GetValueFromBag(bag, cc))
-                    {
-                        row.NodeName.text = "Name";
-                        row.UniversalTime.text = "UT";
-                        row.DeltaV.text = "Δv";
-                        row.GUID.text = "GUID";
-                    }
-                    else
-                    {
-                        row.NodeName.text = "Node-1";
-                        row.UniversalTime.text = "1234.5";
-                        row.DeltaV.text = "1234.5";
-                        row.GUID.text = "abc-def-ghi";
-                    }
-                }
-            }
+            IsHeader = isHeader;
         }
     }
 }

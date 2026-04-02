@@ -3,7 +3,8 @@
 // ReSharper disable once CheckNamespace
 namespace DebugTools.Runtime.UI.FlightTools
 {
-    public class JointConnectionItem : VisualElement
+    [UxmlElement]
+    public partial class JointConnectionItem : VisualElement
     {
         private const string ClassName = "joint-connection-item";
         private const string NameClassName = ClassName + "_name";
@@ -38,27 +39,13 @@ namespace DebugTools.Runtime.UI.FlightTools
 
             Destroy = new Button { text = "Destroy" };
             hierarchy.Add(Destroy);
-        }
 
-        public new class UxmlFactory : UxmlFactory<JointConnectionItem, UxmlTraits>
-        {
-        }
-
-        public new class UxmlTraits : VisualElement.UxmlTraits
-        {
-            public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
-            {
-                base.Init(ve, bag, cc);
-
-                if (ve is JointConnectionItem item)
-                {
-                    item.NumJoints.text = "4";
-                    item.HostName.text = "Host";
-                    item.TargetName.text = "Target";
-                    item.AttachmentType.text = "Surface";
-                    item.JointType.text = "Physical";
-                }
-            }
+            // Set default preview values for UI Builder
+            NumJoints.text = "4";
+            HostName.text = "Host";
+            TargetName.text = "Target";
+            AttachmentType.text = "Surface";
+            JointType.text = "Physical";
         }
     }
 }

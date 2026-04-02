@@ -2,7 +2,8 @@ using UnityEngine.UIElements;
 
 namespace DebugTools.Runtime.UI.VesselTools
 {
-    public class PartDetailsRow : VisualElement
+    [UxmlElement]
+    public partial class PartDetailsRow : VisualElement
     {
         private const string ClassName = "part-details";
         private const string PartNameClassName = ClassName + "__name";
@@ -16,6 +17,40 @@ namespace DebugTools.Runtime.UI.VesselTools
         public readonly Label RBMass;
         public readonly Label RBPhysXMass;
         public readonly Label WettedArea;
+
+        [UxmlAttribute]
+        public bool IsHeader
+        {
+            get => _isHeader;
+            set
+            {
+                _isHeader = value;
+                if (value)
+                {
+                    PartName.text = "Name";
+                    ModelMass.text = "M<sub>model</sub>";
+                    PartMass.text = "M<sub>part</sub>";
+                    ResourceMass.text = "M<sub>resource</sub>";
+                    GreenMass.text = "M<sub>green</sub>";
+                    RBMass.text = "M<sub>rb</sub>";
+                    RBPhysXMass.text = "M<sub>rbphysx</sub>";
+                    WettedArea.text = "A<sub>wet</sub>";
+                }
+                else
+                {
+                    PartName.text = "Waow";
+                    ModelMass.text = "99.99";
+                    PartMass.text = "33.33";
+                    ResourceMass.text = "33.33";
+                    GreenMass.text = "33.33";
+                    RBMass.text = "99.99";
+                    RBPhysXMass.text = "99.99";
+                    WettedArea.text = "9.99 m<sup>2</sup>";
+                }
+            }
+        }
+
+        private bool _isHeader;
 
         public PartDetailsRow()
         {
@@ -52,60 +87,13 @@ namespace DebugTools.Runtime.UI.VesselTools
             WettedArea = new Label();
             WettedArea.AddToClassList(SubItemClassName);
             hierarchy.Add(WettedArea);
+
+            IsHeader = true;
         }
 
         public PartDetailsRow(bool isHeader) : this()
         {
-            if (!isHeader) return;
-            
-            PartName.text = "Name";
-            ModelMass.text = "M<sub>model</sub>";
-            PartMass.text = "M<sub>part</sub>";
-            ResourceMass.text = "M<sub>resource</sub>";
-            GreenMass.text = "M<sub>green</sub>";
-            RBMass.text = "M<sub>rb</sub>";
-            RBPhysXMass.text = "M<sub>rbphysx</sub>";
-            WettedArea.text = "A<sub>wet</sub>";
-        }
-
-        public new class UxmlFactory : UxmlFactory<PartDetailsRow, UxmlTraits>
-        {
-        }
-
-        public new class UxmlTraits : VisualElement.UxmlTraits
-        {
-            private readonly UxmlBoolAttributeDescription _isHeader = new() {name = "IsHeader", defaultValue = true};
-
-            public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
-            {
-                base.Init(ve, bag, cc);
-
-                if (ve is PartDetailsRow row)
-                {
-                    if (_isHeader.GetValueFromBag(bag, cc))
-                    {
-                        row.PartName.text = "Name";
-                        row.ModelMass.text = "M<sub>model</sub>";
-                        row.PartMass.text = "M<sub>part</sub>";
-                        row.ResourceMass.text = "M<sub>resource</sub>";
-                        row.GreenMass.text = "M<sub>green</sub>";
-                        row.RBMass.text = "M<sub>rb</sub>";
-                        row.RBPhysXMass.text = "M<sub>rbphysx</sub>";
-                        row.WettedArea.text = "A<sub>wet</sub>";
-                    }
-                    else
-                    {
-                        row.PartName.text = "Waow";
-                        row.ModelMass.text = "99.99";
-                        row.PartMass.text = "33.33";
-                        row.ResourceMass.text = "33.33";
-                        row.GreenMass.text = "33.33";
-                        row.RBMass.text = "99.99";
-                        row.RBPhysXMass.text = "99.99";
-                        row.WettedArea.text = "9.99 m<sup>2</sup>";
-                    }
-                }
-            }
+            IsHeader = isHeader;
         }
     }
 }
