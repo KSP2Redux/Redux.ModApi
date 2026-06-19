@@ -8,6 +8,12 @@ namespace DebugTools.Utils
     {
         public static ConfigValue<KeyboardShortcut> KeyboardShortcut;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            KeyboardShortcut = null;
+        }
+
         public static void Initialize(IConfigFile config)
         {
             KeyboardShortcut = new ConfigValue<KeyboardShortcut>(config.Bind("Keybinding", "Debug UI Keyboard shortcut",

@@ -18,6 +18,11 @@ namespace DebugTools
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
         public static void AttachToReduxLib()
         {
+            // With Domain Reload disabled this runs on every Play Mode enter, so reset static
+            // state (UDR0002) and re-subscribe idempotently to the static event (UDR0003).
+            DebugWindowController = null;
+            Logger = null;
+            ReduxLib.ReduxLib.OnReduxLibInitialized -= PreInitialize;
             ReduxLib.ReduxLib.OnReduxLibInitialized += PreInitialize;
         }
 
