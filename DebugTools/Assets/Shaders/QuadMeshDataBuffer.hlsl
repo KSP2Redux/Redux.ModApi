@@ -1,8 +1,6 @@
 ﻿#ifndef _QUADMESHDATA
 #define _QUADMESHDATA
 
-#pragma multi_compile_local _USE_PQS_BUFFER
-
 struct QuadMeshData
 {
     float3 position;
