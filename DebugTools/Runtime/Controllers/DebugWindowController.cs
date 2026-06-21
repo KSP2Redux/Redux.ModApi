@@ -14,8 +14,8 @@ namespace DebugTools.Runtime.Controllers
     /// </summary>
     public class DebugWindowController : KerbalMonoBehaviour
     {
-        // The UIDocument component of the window game object
-        private UIDocument _window;
+        // The PanelRenderer component of the window game object
+        private PanelRenderer _window;
 
         // The elements of the window that we need to access
         private VisualElement _rootElement;
@@ -51,13 +51,13 @@ namespace DebugTools.Runtime.Controllers
         /// </summary>
         private void OnEnable()
         {
-            // Get the UIDocument component from the game object
-            _window = GetComponent<UIDocument>();
+            // Get the PanelRenderer component from the game object
+            _window = GetComponent<PanelRenderer>();
 
             // Get the root element of the window.
             // Since we're cloning the UXML tree from a VisualTreeAsset, the actual root element is a TemplateContainer,
             // so we need to get the first child of the TemplateContainer to get our actual root VisualElement.
-            _rootElement = _window.rootVisualElement[0];
+            _rootElement = _window.GetWindowRoot();
 
             // Center the window by default
             _rootElement.CenterByDefault();

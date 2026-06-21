@@ -16,7 +16,7 @@ namespace DebugTools.Utils
             GameManager.Instance.Assets.Load($"Assets/Modules/DebugTools/Assets/UI/{name}.uxml", callback);
         }
 
-        public static UIDocument CreateWindowFromUxml(VisualTreeAsset uxml, string name)
+        public static PanelRenderer CreateWindowFromUxml(VisualTreeAsset uxml, string name)
         {
             // Create the window options object
             var windowOptions = new WindowOptions
@@ -33,7 +33,7 @@ namespace DebugTools.Utils
 
             // Create the window
             Object.Instantiate(uxml);
-            UIDocument window = Window.Create(windowOptions, uxml);
+            PanelRenderer window = Window.Create(windowOptions, uxml);
             window.panelSettings.sortingOrder = 9999;
             return window;
         }
