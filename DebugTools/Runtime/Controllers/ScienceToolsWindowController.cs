@@ -13,8 +13,6 @@ namespace DebugTools.Runtime.Controllers
         private Toggle? _unlockAllParts;
 
         private TextField? _addSciencePointsField;
-        private TextField? _setPointsCapacityField;
-        private TextField? _setAllocatedPointsField;
 
         private DropdownField? _availableNodes;
 
@@ -38,14 +36,6 @@ namespace DebugTools.Runtime.Controllers
             _addSciencePointsField = RootElement.Q<TextField>("add-points-field");
             var addPoints = RootElement.Q<Button>("add-points");
             addPoints.clicked += AddSciencePoints;
-
-            _setPointsCapacityField = RootElement.Q<TextField>("set-capacity-field");
-            var setCapacity = RootElement.Q<Button>("set-capacity");
-            setCapacity.clicked += SetPointsCapacity;
-
-            _setAllocatedPointsField = RootElement.Q<TextField>("set-allocated-field");
-            var setAllocated = RootElement.Q<Button>("set-allocated");
-            setAllocated.clicked += SetAllocatedPoints;
 
             _availableNodes = RootElement.Q<DropdownField>("available-nodes");
             var unlockNode = RootElement.Q<Button>("unlock-node");
@@ -82,26 +72,7 @@ namespace DebugTools.Runtime.Controllers
         {
             if (int.TryParse(_addSciencePointsField?.text, out var result))
             {
-                var additionalSciencePoints = Game.SessionManager.GetMyAgencyAdditionalSciencePoints() + result;
-                Game.SessionManager.UpdateMyAgencyAdditionalSciencePoints(additionalSciencePoints);
-                UpdateScienceMetadata();
-            }
-        }
-
-        private void SetPointsCapacity()
-        {
-            if (int.TryParse(_setPointsCapacityField?.text, out var result))
-            {
-                Game.SessionManager.UpdateMyAgencySciencePointCapacity(result);
-                UpdateScienceMetadata();
-            }
-        }
-
-        private void SetAllocatedPoints()
-        {
-            if (int.TryParse(_setAllocatedPointsField?.text, out var result))
-            {
-                Game.SessionManager.SetMyPlayerAllocatedSciencePoints(result);
+                Game.SessionManager.AddMyAgencyAvailableSciencePoints(result);
                 UpdateScienceMetadata();
             }
         }
@@ -112,14 +83,7 @@ namespace DebugTools.Runtime.Controllers
 
             _agencyName!.text = "Agency Name: <b>" + sessionManager.GetMyAgencyName() + "</b>";
 
-            sessionManager.TryGetDifficultyOptionState<float>("StartingScience", out var startingScience);
-            var capacity = (float)sessionManager.GetMyAgencySciencePointCapacity();
-            var allocated = (float)sessionManager.GetMyPlayerAllocatedSciencePoints();
-            var additional = (float)sessionManager.GetMyAgencyAdditionalSciencePoints();
-            var total = capacity + startingScience + additional;
-
-            var text = "Available: <b>" + (total - allocated) + "</b> - Used: <b>" + allocated +
-                       "</b> - Total: <b>" + total + "</b>";
+            var text = "Available: <b>" + sessionManager.GetMyAgencyAvailableSciencePoints() + "</b>";
             _scienceState!.text = text;
         }
 
@@ -128,11 +92,11 @@ namespace DebugTools.Runtime.Controllers
             if (_availableNodes == null) return;
 
             List<string> list = new();
-            if (Game.CampaignPlayerManager.TryGetMyCampaignPlayerEntry(out var campaignPlayerEntryOut))
+            if (Game.AgencyManager.TryGetMyAgencyEntry(out var agencyEntry))
             {
                 foreach (var value in Game.ScienceManager.TechNodeDataStore.AvailableData.Values)
                 {
-                    if (campaignPlayerEntryOut.UnlockedTechNodes.Contains(value.ID))
+                    if (agencyEntry.UnlockedTechNodes.Contains(value.ID))
                         continue;
 
                     var allRequiredUnlocked = true;
@@ -161,11 +125,9 @@ namespace DebugTools.Runtime.Controllers
             if (_availableNodes?.choices.Count <= 0) return;
             
             var node = _availableNodes!.value;
-            if (!string.IsNullOrWhiteSpace(node) &&
-                Game.CampaignPlayerManager.TryGetMyCampaignPlayerEntry(out var player))
+            if (!string.IsNullOrWhiteSpace(node))
             {
-                player.AddUnlockedTechNodeToPlayer(node.Replace("<b>", "").Replace("</b>", ""));
-                Game.ScienceManager.UpdateAllocatedSciencePoints();
+                Game.ScienceManager.UnlockTechNode(node.Replace("<b>", "").Replace("</b>", ""));
             }
 
             UpdateTechNodeDropdown();
@@ -186,9 +148,9 @@ namespace DebugTools.Runtime.Controllers
         private void UpdateUnlockedTechNodesView()
         {
             _unlockedNodes!.Clear();
-            if (!Game.CampaignPlayerManager.TryGetMyCampaignPlayerEntry(out var campaignPlayerEntry)) return;
+            if (!Game.AgencyManager.TryGetMyAgencyEntry(out var agencyEntry)) return;
 
-            foreach (var unlockedTechNode in campaignPlayerEntry.UnlockedTechNodes)
+            foreach (var unlockedTechNode in agencyEntry.UnlockedTechNodes)
             {
                 var label = new Label { text = unlockedTechNode };
                 _unlockedNodes!.Add(label);
