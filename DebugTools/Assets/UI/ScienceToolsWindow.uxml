@@ -13,14 +13,6 @@
                 <ui:TextField picking-mode="Ignore" label="Science Points" value="..." name="add-points-field" style="width: 75%; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;" />
                 <ui:Button text="Add" display-tooltip-when-elided="true" name="add-points" style="height: 35px; width: 20%;" />
             </ui:VisualElement>
-            <ui:VisualElement name="capacity" class="field">
-                <ui:TextField picking-mode="Ignore" label="Points Capacity" value="..." name="set-capacity-field" style="width: 75%; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;" />
-                <ui:Button text="Set" display-tooltip-when-elided="true" name="set-capacity" style="height: 35px; width: 20%;" />
-            </ui:VisualElement>
-            <ui:VisualElement name="allocated" class="field">
-                <ui:TextField picking-mode="Ignore" label="Allocated Points" value="..." name="set-allocated-field" style="width: 75%; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;" />
-                <ui:Button text="Set" display-tooltip-when-elided="true" name="set-allocated" style="height: 35px; width: 20%;" />
-            </ui:VisualElement>
             <ui:VisualElement name="unlock" class="field">
                 <ui:DropdownField label="Tech Node" index="-1" choices="System.Collections.Generic.List`1[System.String]" name="available-nodes" style="width: 75%; margin-left: 0; margin-right: 0;" />
                 <ui:Button text="Unlock" display-tooltip-when-elided="true" name="unlock-node" style="height: 35px; width: 20%;" />
