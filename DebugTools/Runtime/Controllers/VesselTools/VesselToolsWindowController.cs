@@ -335,6 +335,7 @@ namespace DebugTools.Runtime.Controllers.VesselTools
             UpdateMassStats();
             UpdateManeuvers();
             UpdateCoords();
+            UpdateSASCharts();
 
             if (!IsWindowOpen) return;
 
@@ -344,7 +345,6 @@ namespace DebugTools.Runtime.Controllers.VesselTools
             {
                 UpdateControlStateValues();
                 UpdateInputValues();
-                UpdateSASCharts();
             }
         }
 

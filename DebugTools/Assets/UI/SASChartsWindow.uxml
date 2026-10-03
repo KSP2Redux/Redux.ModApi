@@ -7,13 +7,13 @@
             <ui:Button text="×" name="close-button" style="padding-top: 5px; padding-right: 6px; padding-bottom: 5px; padding-left: 6px; width: 20px; height: 20px; border-top-left-radius: 6px; border-top-right-radius: 6px; border-bottom-right-radius: 6px; border-bottom-left-radius: 6px;"/>
         </ui:VisualElement>
         <ui:VisualElement name="pitch" style="height: 200px;">
-            <NB.Charts.LineChart name="pitch-chart" major-grid-line-width="1" major-grid-label-font-size="10" show-legend="true" default-data-width="2" show-major-grid-labels-vertical="false" axis-label-left="Pitch (°)" grid-label-format-string="N0" style="padding-top: 0; padding-left: 0; padding-bottom: 0;"/>
+            <NB.Charts.LineChart name="pitch-chart" major-grid-line-width="1" major-grid-label-font-size="10" show-legend="true" default-data-width="2" show-major-grid-labels-vertical="false" axis-label-left="Pitch (°)" grid-label-format-string="N0" major-grid-auto-spacing-vertical="false" style="padding-top: 0; padding-left: 0; padding-bottom: 0;"/>
         </ui:VisualElement>
         <ui:VisualElement name="roll" style="height: 200px;">
-            <NB.Charts.LineChart name="roll-chart" major-grid-line-width="1" major-grid-label-font-size="10" show-legend="true" default-data-width="2" show-major-grid-labels-vertical="false" axis-label-left="Roll (°)" grid-label-format-string="N0" style="padding-top: 0; padding-left: 0; padding-bottom: 0;"/>
+            <NB.Charts.LineChart name="roll-chart" major-grid-line-width="1" major-grid-label-font-size="10" show-legend="true" default-data-width="2" show-major-grid-labels-vertical="false" axis-label-left="Roll (°)" grid-label-format-string="N0" major-grid-auto-spacing-vertical="false" style="padding-top: 0; padding-left: 0; padding-bottom: 0;"/>
         </ui:VisualElement>
         <ui:VisualElement name="yaw" style="height: 200px;">
-            <NB.Charts.LineChart name="yaw-chart" major-grid-line-width="1" major-grid-label-font-size="10" show-legend="true" default-data-width="2" show-major-grid-labels-vertical="false" axis-label-left="Yaw (°)" grid-label-format-string="N0" style="padding-top: 0; padding-left: 0; padding-bottom: 0;"/>
+            <NB.Charts.LineChart name="yaw-chart" major-grid-line-width="1" major-grid-label-font-size="10" show-legend="true" default-data-width="2" show-major-grid-labels-vertical="false" axis-label-left="Yaw (°)" grid-label-format-string="N0" major-grid-auto-spacing-vertical="false" style="padding-top: 0; padding-left: 0; padding-bottom: 0;"/>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
