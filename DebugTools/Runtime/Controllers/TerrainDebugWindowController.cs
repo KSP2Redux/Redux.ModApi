@@ -21,7 +21,6 @@ namespace DebugTools.Runtime.Controllers
         private Toggle _showBiomeColors;
         private Toggle _boostTriplanarContrast;
         private Toggle _renderWireframe;
-        private Toggle _includeInterestPosition;
         private Toggle _renderPhysXBubble;
 
         private DropdownField _showBiomes;
@@ -58,9 +57,6 @@ namespace DebugTools.Runtime.Controllers
 
             _renderWireframe = RootElement.Q<Toggle>("render-wireframe");
             _renderWireframe.RegisterValueChangedCallback(RenderWireframe);
-
-            _includeInterestPosition = RootElement.Q<Toggle>("include-interest-position");
-            _includeInterestPosition.RegisterValueChangedCallback(IncludeInterestPosition);
 
             _renderPhysXBubble = RootElement.Q<Toggle>("render-physx-bubble");
 
@@ -130,11 +126,6 @@ namespace DebugTools.Runtime.Controllers
                 Destroy(component);
         }
 
-        private static void IncludeInterestPosition(ChangeEvent<bool> evt)
-        {
-            PQS.DebugIncludeInterestPositions = evt.newValue;
-        }
-
         private static void ShowBiomeChanged(ChangeEvent<string> evt)
         {
             PQSRenderer.DebugBiome = (DebugBiome)Enum.Parse(typeof(DebugBiome), evt.newValue);
@@ -179,8 +170,6 @@ namespace DebugTools.Runtime.Controllers
             else
                 _renderWireframe.SetEnabled(false);
 
-            _includeInterestPosition.value = PQS.DebugIncludeInterestPositions;
-
             var num = (int)Math.Round(Time.timeSinceLevelLoadAsDouble - PQSRenderer.DebugTimeTriplanarBasisUpdated);
             if (num != _secondsSinceTriplanarBasisUpdated)
             {
@@ -190,7 +179,6 @@ namespace DebugTools.Runtime.Controllers
             }
 
             _pqsStats.text = "PQS Stats:" +
-                             $" Vessels: {PQS.DebugInterestVesselCount} |" +
                              $" Quads: {PQSRenderer.DebugVisiblePQSQuadCount} |" +
                              $" Colliders: {PQSRenderer.DebugActivePQSColliderCount}";
 
