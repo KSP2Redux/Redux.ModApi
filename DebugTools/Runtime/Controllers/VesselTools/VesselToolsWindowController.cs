@@ -52,6 +52,15 @@ namespace DebugTools.Runtime.Controllers.VesselTools
         private Toggle? _showOrbitPoints;
         private readonly List<DebugAxes> _vesselOrbitAxes = new();
         private bool _isOrbitPointsShowing;
+        
+        // Control
+        private Label? _pitch;
+        private Label? _yaw;
+        private Label? _roll;
+        private Label? _controlState;
+        
+        private Toggle _showSASCharts;
+        private SASChartsWindowController? _sasCharts;
 
         // Joints
         private Toggle? _inertiaTensorScaling;
@@ -72,14 +81,6 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
         private Toggle? _showPhysicsForce;
         private bool _isPhysicsForceShowing;
-
-        private Toggle? _showInputValues;
-        private VisualElement? _inputValues;
-        private Label? _pitch;
-        private Label? _yaw;
-        private Label? _roll;
-
-        private Label? _controlState;
 
         private GameState _state;
         private ViewController? _view;
@@ -175,6 +176,13 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
             _showOrbitPoints = RootElement.Q<Toggle>("show-orbit-points");
             _showOrbitPoints.RegisterValueChangedCallback(OnShowOrbitPointsChanged);
+            
+            // Control
+            _pitch = RootElement.Q<Label>("pitch");
+            _yaw = RootElement.Q<Label>("yaw");
+            _roll = RootElement.Q<Label>("roll");
+            _controlState = RootElement.Q<Label>("control-state");
+            InitSASCharts();
 
             // Joints
             _inertiaTensorScaling = RootElement.Q<Toggle>("inertia-tensor-scaling");
@@ -212,16 +220,6 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
             _showPhysicsForce = RootElement.Q<Toggle>("show-physics-force");
             _showPhysicsForce.RegisterValueChangedCallback(OnShowPhysicsForceChanged);
-
-            _showInputValues = RootElement.Q<Toggle>("show-input-values");
-            _showInputValues.RegisterValueChangedCallback(OnShowInputValuesChanged);
-
-            _inputValues = RootElement.Q<VisualElement>("input-values");
-            _pitch = RootElement.Q<Label>("pitch");
-            _yaw = RootElement.Q<Label>("yaw");
-            _roll = RootElement.Q<Label>("roll");
-
-            _controlState = RootElement.Q<Label>("control-state");
 
             _initialized = true;
         }
@@ -311,6 +309,26 @@ namespace DebugTools.Runtime.Controllers.VesselTools
             });
         }
 
+        private void InitSASCharts()
+        {
+            _showSASCharts = RootElement.Q<Toggle>("show-sas-charts");
+
+            UITKHelper.LoadUxml("SASChartsWindow", uxml =>
+            {
+                var window = UITKHelper.CreateWindowFromUxml(uxml, "SASChartsWindow");
+                _sasCharts = window.gameObject.AddComponent<SASChartsWindowController>();
+                _sasCharts.IsWindowOpen = false;
+
+                _showSASCharts!.RegisterValueChangedCallback(evt => _sasCharts.IsWindowOpen = evt.newValue);
+
+                _sasCharts.CloseButton.clicked += () =>
+                {
+                    _sasCharts.IsWindowOpen = false;
+                    _showSASCharts!.value = false;
+                };
+            });
+        }
+
         private void LateUpdate()
         {
             UpdateThermalData();
@@ -325,9 +343,8 @@ namespace DebugTools.Runtime.Controllers.VesselTools
             if (_state == GameState.FlightView || _state == GameState.Map3DView)
             {
                 UpdateControlStateValues();
-
-                if (_showInputValues != null && _showInputValues.value)
-                    UpdateInputValues();
+                UpdateInputValues();
+                UpdateSASCharts();
             }
         }
 
@@ -433,6 +450,19 @@ namespace DebugTools.Runtime.Controllers.VesselTools
             if (activeVessel == null || activeBehavior == null) return;
 
             _coords.SyncTo(activeVessel, activeBehavior);
+        }
+
+        private void UpdateSASCharts()
+        {
+            if (_sasCharts == null || !_sasCharts.IsWindowOpen || _view == null) return;
+
+            var activeVessel = _view.GetActiveSimVessel();
+            var activeBehavior = _view.GetBehaviorIfLoaded(activeVessel);
+
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if (activeVessel == null || activeBehavior == null) return;
+
+            _sasCharts.SyncTo(activeVessel, activeBehavior);
         }
 
         private void OnShowControlPointsChanged(ChangeEvent<bool> evt)
@@ -963,13 +993,6 @@ namespace DebugTools.Runtime.Controllers.VesselTools
             Module_Drag.ShowDragDebug = evt.newValue;
             Module_LiftingSurface.ShowPAMDebug = evt.newValue;
             _isPhysicsForceShowing = Game.PhysicsForceDisplaySystem.IsDisplayed;
-        }
-
-        private void OnShowInputValuesChanged(ChangeEvent<bool> evt)
-        {
-            if (_inputValues == null) return;
-
-            _inputValues.style.display = evt.newValue ? DisplayStyle.Flex : DisplayStyle.None;
         }
     }
 }
