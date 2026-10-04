@@ -1,6 +1,6 @@
 .root {
     width: 530px;
-    max-height: 500px;
+    max-height: 1000px;
     background-color: rgba(34, 38, 46, 0.95);
 }
 
