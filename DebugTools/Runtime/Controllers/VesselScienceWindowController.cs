@@ -142,7 +142,7 @@ namespace DebugTools.Runtime.Controllers
         private void UpdateVesselDropdown()
         {
             _vessel!.choices.Clear();
-            _vessel.choices = _allVessels.Select(p => p.DisplayName + " (" + p.mainBody.bodyName + ")").ToList();
+            _vessel.choices = _allVessels.Select(p => p.DisplayName + " (" + (p.mainBody?.bodyName ?? "no body") + ")").ToList();
         }
 
         private void LateUpdate()
