@@ -141,6 +141,10 @@ namespace DebugTools.Runtime.Controllers
 
         private void UpdateVesselDropdown()
         {
+            // A destroyed vessel never publishes VesselDestroyedMessage, so entries for vessels
+            // that no longer exist can only be dropped here.
+            _allVessels.RemoveAll(v => v == null || v.IsDestroyedOrBeingDestroyed);
+
             _vessel!.choices.Clear();
             _vessel.choices = _allVessels.Select(p => p.DisplayName + " (" + p.mainBody.bodyName + ")").ToList();
         }
