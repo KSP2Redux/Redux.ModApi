@@ -69,8 +69,16 @@ namespace DebugTools.Runtime.Controllers
                 return;
             }
             
-            _celestialBody.choices = ISRUResourceManager.CbResources.Keys.ToList();
-            _celestialBody.value = "Kerbin";
+            var bodies = ISRUResourceManager.CbResources.Keys.ToList();
+            _celestialBody.choices = bodies;
+            if (bodies.Count == 0)
+            {
+                return;
+            }
+
+            // Start on the home world, unless the galaxy gives it no resources
+            var homeWorld = Game.UniverseModel.HomeWorld?.bodyName;
+            _celestialBody.value = bodies.Contains(homeWorld) ? homeWorld : bodies[0];
             PopulateResourceDropdown();
             PopulateScannedUnscanned();
         }
