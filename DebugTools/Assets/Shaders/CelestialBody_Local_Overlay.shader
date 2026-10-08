@@ -1,4 +1,4 @@
-﻿Shader "KSP2/Environment/CelestialBody/CelestialBody_Local_Overlay"
+Shader "KSP2/Environment/CelestialBody/CelestialBody_Local_Overlay"
 {
     Properties
     {
@@ -9,19 +9,20 @@
 
     SubShader
     {
-        Tags { "RenderType"="Transparent" }
+        Tags { "RenderPipeline" = "UniversalPipeline" "RenderType"="Transparent" }
         Blend SrcAlpha OneMinusSrcAlpha
 
         Pass
         {
+            // Drawn by PQSRenderer's overlay hook with CommandBuffer.DrawProceduralIndirect (pass 0).
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
 
-            #include "UnityCG.cginc"
-            #include "QuadMeshDataBuffer.hlsl"
-
             #pragma multi_compile_local __ _USE_PQS_BUFFER
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "QuadMeshDataBuffer.hlsl"
 
             struct v2f
             {
@@ -29,25 +30,32 @@
                 float4 vertex : SV_POSITION;
             };
 
-            sampler2D _OverlayTexture;
-            float _Strength;
+            CBUFFER_START(UnityPerMaterial)
+                float4 _OverlayTexture_ST;
+                float _Strength;
+                float _NoComputeBuffer;
+            CBUFFER_END
+
+            TEXTURE2D(_OverlayTexture); SAMPLER(sampler_OverlayTexture);
 
             v2f vert (appdata v)
             {
                 v2f o;
                 QuadMeshData data = GetQuadMeshVert(v);
-                o.vertex = UnityObjectToClipPos(data.position);
+                o.vertex = TransformObjectToHClip(data.position);
                 o.uv = data.uv;
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            half4 frag (v2f i) : SV_Target
             {
-                fixed4 col = tex2D(_OverlayTexture, i.uv);
+                half4 col = SAMPLE_TEXTURE2D(_OverlayTexture, sampler_OverlayTexture, i.uv);
                 col.a = _Strength;
                 return col;
             }
             ENDHLSL
         }
     }
+
+    FallBack Off
 }
