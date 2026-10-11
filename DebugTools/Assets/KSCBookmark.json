@@ -1,0 +1,21 @@
+{
+  "Type": "Surface",
+  "BookmarkName": "KSC",
+  "State": {
+    "ReferenceBodyGuid": "Kerbin",
+    "Altitude": 1.226362943649292,
+    "Latitude": -0.42653726269148151,
+    "Longitude": -74.829645363168808,
+    "VerticalSpeed": -0.0013886236447698784
+  },
+  "OrbitState": {
+    "referenceBodyGuid": null,
+    "inclination": 0.0,
+    "eccentricity": 0.0,
+    "semiMajorAxis": 0.0,
+    "longitudeOfAscendingNode": 0.0,
+    "argumentOfPeriapsis": 0.0,
+    "meanAnomalyAtEpoch": 0.0,
+    "epoch": 0.0
+  }
+}

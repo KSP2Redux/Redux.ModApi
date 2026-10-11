@@ -1,0 +1,65 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/JointsToolsWindow.uss?fileID=7433441132597879392&amp;guid=358950aa23d1e384f81e759931ff407f&amp;type=3#JointsToolsWindow" />
+    <ui:VisualElement name="root" class="root">
+        <ui:VisualElement name="title-bar">
+            <ui:Label text="Joints Tools" />
+            <ui:Button text="×" name="close-button" />
+        </ui:VisualElement>
+        <ui:VisualElement name="content" class="content">
+            <ui:VisualElement name="summary" class="panel">
+                <ui:Label tabindex="-1" text="No active vessel" display-tooltip-when-elided="true" enable-rich-text="true" name="vessel-name" class="summary-title" />
+                <ui:Label tabindex="-1" text="Physics: n/a" display-tooltip-when-elided="true" enable-rich-text="true" name="physics-summary" class="summary-line" />
+                <ui:Label tabindex="-1" text="Joints: n/a" display-tooltip-when-elided="true" enable-rich-text="true" name="joint-summary" class="summary-line" />
+                <ui:Label tabindex="-1" text="Stress: n/a" display-tooltip-when-elided="true" enable-rich-text="true" name="stress-summary" class="summary-line" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="filters" class="panel row-wrap">
+                <ui:Toggle label="Active Vessel Only" name="active-vessel-only" class="toggle filter-toggle" />
+                <ui:Toggle label="Analytical" name="show-analytical" class="toggle filter-toggle" />
+                <ui:Toggle label="Legacy PhysX/Virtual" name="show-legacy" class="toggle filter-toggle wide" />
+                <ui:Toggle label="Markers" name="show-markers" class="toggle filter-toggle" />
+                <ui:Toggle label="Stress Gauges" name="show-stress-gauges" class="toggle filter-toggle" />
+                <ui:DropdownField label="Sort" index="-1" choices="System.Collections.Generic.List`1[System.String]" name="sort-mode" class="sort-mode" />
+                <ui:Button text="Clear Selection" name="clear-selection" class="action-button" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="settings" class="panel settings">
+                <ui:Label tabindex="-1" text="RigidBody Mode: n/a" display-tooltip-when-elided="true" enable-rich-text="true" name="mode-value" class="setting-label" />
+                <ui:Button text="Pack" display-tooltip-when-elided="true" name="set-packed" class="small-button" />
+                <ui:Button text="Unpack" display-tooltip-when-elided="true" name="set-unpacked" class="small-button" />
+                <ui:Label tabindex="-1" text="Rigidity: &lt;b&gt;0.0&lt;/b&gt;" display-tooltip-when-elided="true" enable-rich-text="true" name="rigidity-value" class="setting-label" />
+                <ui:TextField picking-mode="Ignore" value="0.0" name="joint-rigidity-input" class="number-input" />
+                <ui:Button text="Set" display-tooltip-when-elided="true" name="set-joint-rigidity" class="tiny-button" />
+                <ui:Label tabindex="-1" text="Stack: &lt;b&gt;0.0&lt;/b&gt;" display-tooltip-when-elided="true" enable-rich-text="true" name="stack-rigidity-value" class="setting-label" />
+                <ui:TextField picking-mode="Ignore" value="0.0" name="stack-rigidity-input" class="number-input" />
+                <ui:Button text="Set" display-tooltip-when-elided="true" name="set-stack-rigidity" class="tiny-button" />
+                <ui:Label tabindex="-1" text="Surface: &lt;b&gt;0.0&lt;/b&gt;" display-tooltip-when-elided="true" enable-rich-text="true" name="surface-rigidity-value" class="setting-label" />
+                <ui:TextField picking-mode="Ignore" value="0.0" name="surface-rigidity-input" class="number-input" />
+                <ui:Button text="Set" display-tooltip-when-elided="true" name="set-surface-rigidity" class="tiny-button" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="legacy-settings" class="panel row-wrap compact">
+                <ui:Toggle label="Multi Joints" name="multi-joints" class="toggle filter-toggle" />
+                <ui:Toggle label="Inertia Tensor Fix" name="inertia-tensor-fix" class="toggle filter-toggle wide" />
+                <ui:Toggle label="Extra Joints" name="extra-joints" class="toggle filter-toggle" />
+                <ui:DropdownField label="Extra Mode" index="-1" choices="System.Collections.Generic.List`1[System.String]" name="extra-joints-mode" class="extra-mode" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="stress-override" class="panel row-wrap compact">
+                <ui:Slider label="Presentation Stress" low-value="0" high-value="1" value="0.85" show-input-field="true" name="stress-override-value" class="stress-override-slider" />
+                <ui:Button text="Set Selected" name="set-selected-stress" class="action-button" />
+                <ui:Button text="Set All" name="set-all-stress" class="small-button" />
+                <ui:Button text="Clear Selected" name="clear-selected-stress" class="action-button" />
+                <ui:Button text="Clear All" name="clear-all-stress" class="small-button" />
+                <ui:Label text="Presentation only; cannot break or alter physics" class="stress-override-note" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="joint-header" class="joint-header">
+                <ui:Label text="Type" class="header-kind" />
+                <ui:Label text="Connection" class="header-name" />
+                <ui:Label text="Node / Load" class="header-node" />
+            </ui:VisualElement>
+            <ui:ScrollView scroll-deceleration-rate="0.135" elasticity="0.1" name="joint-rows" class="joint-rows" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
