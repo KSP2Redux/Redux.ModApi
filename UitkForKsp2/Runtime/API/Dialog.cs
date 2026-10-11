@@ -172,8 +172,8 @@ public sealed class DialogHandle
 [PublicAPI]
 public static class Dialog
 {
-    private const string DialogTemplateAddress = "Packages/uitkforksp2.controls/Assets/Templates/Dialog/DialogTemplate.uxml";
-    private const string DialogStyleAddress = "Packages/uitkforksp2.controls/Assets/Templates/Dialog/DialogTemplate.uss";
+    private const string DialogTemplateAddress = "Packages/ksp2redux.sdk/Controls/Assets/Templates/Dialog/DialogTemplate.uxml";
+    private const string DialogStyleAddress = "Packages/ksp2redux.sdk/Controls/Assets/Templates/Dialog/DialogTemplate.uss";
     private const string RootName = "root";
     private const string DialogIconName = "dialog-header-icon";
     private const string DialogTitleName = "dialog-title";

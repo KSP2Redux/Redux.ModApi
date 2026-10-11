@@ -32,7 +32,7 @@ public static class UitkForKsp2Plugin /* : BaseUnityPlugin */
 
     private const string PanelSettingsLabel = "kerbalui";
 
-    private const string FixedPanelSettingsLabel = "Packages/uitkforksp2.controls/Assets/UI Toolkit/FixedKerbalPanelSettings.asset";
+    private const string FixedPanelSettingsLabel = "Packages/ksp2redux.sdk/Controls/Assets/UI Toolkit/FixedKerbalPanelSettings.asset";
 
     private static readonly MethodInfo ApplyPanelSettings = typeof(PanelSettings).GetMethod(
         "ApplyPanelSettings",
