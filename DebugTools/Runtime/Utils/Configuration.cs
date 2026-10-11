@@ -1,5 +1,5 @@
-﻿using ReduxLib.Configuration;
-using ReduxLib.Input;
+﻿using SpaceWarp2.API.Configuration;
+using SpaceWarp2.API.Input;
 using UnityEngine;
 
 namespace DebugTools.Utils

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using ReduxLib.GameInterfaces;
 using UitkForKsp2.API.Manipulator;
 using UitkForKsp2.Panel;
 using UnityEngine;

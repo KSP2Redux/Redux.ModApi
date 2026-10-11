@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using SpaceWarp2.Sound.Backend;

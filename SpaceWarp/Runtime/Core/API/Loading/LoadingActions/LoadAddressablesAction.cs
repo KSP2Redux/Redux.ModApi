@@ -1,7 +1,9 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.IO;
-using ReduxLib.GameInterfaces;
-using ReduxLib.Logging;
+using SpaceWarp2.API.Loading;
+using SpaceWarp2.API.Logging;
 using SpaceWarp2.InternalUtilities;
 using SpaceWarp2.API.Mods;
 
@@ -12,7 +14,7 @@ namespace SpaceWarp2.Patching.LoadingActions;
 /// </summary>
 internal sealed class LoadAddressablesAction : BaseFlowAction
 {
-    private static readonly ILogger Logger = ReduxLib.ReduxLib.GetLogger("Addressables Loader");
+    private static readonly ILogger Logger = LogManager.GetLogger("Addressables Loader");
     private readonly SpaceWarpPluginDescriptor _plugin;
 
     public LoadAddressablesAction(SpaceWarpPluginDescriptor plugin) : base(

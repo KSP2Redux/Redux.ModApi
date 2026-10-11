@@ -1,5 +1,5 @@
 using System;
-using ReduxLib.GameInterfaces;
+using SpaceWarp2.API.Loading;
 
 namespace PatchManager.Core.Flow
 {

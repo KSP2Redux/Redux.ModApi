@@ -1,6 +1,8 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using JetBrains.Annotations;
-using ReduxLib.GameInterfaces;
+using SpaceWarp2.API.Loading;
 using SpaceWarp2.API.Mods;
 
 namespace SpaceWarp2.Patching.LoadingActions;

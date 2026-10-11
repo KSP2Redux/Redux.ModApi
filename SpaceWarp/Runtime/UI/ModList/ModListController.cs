@@ -1,9 +1,11 @@
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using ReduxLib.GameInterfaces;
+using Redux.ApiImpls;
 using SpaceWarp2.UI.Backend.Extensions;
 using SpaceWarp2.API;
 using SpaceWarp2.API.Mods;
@@ -457,7 +459,7 @@ internal class ModListController : MonoBehaviour
 
         _openModSettingsButton.RegisterCallback<ClickEvent>(_ =>
         {
-            ISettingsManager.Instance.OpenSettingsMenu();
+            ReduxSettingsManager.OpenSettingsMenu();
             HideWindow();
         });
     }

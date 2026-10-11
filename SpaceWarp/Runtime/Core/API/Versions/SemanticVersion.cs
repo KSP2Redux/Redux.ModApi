@@ -1,5 +1,7 @@
 ﻿
 
+#nullable enable
+
 // Disable warnings for missing Equals and GetHashCode implementations
 
 using System;

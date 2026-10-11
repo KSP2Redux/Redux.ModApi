@@ -21,7 +21,7 @@ function SwLibrary:PostInit(fn) end
 
 ---Returns an extra named logger, for a mod that wants one beyond its default `Log` global.
 ---@param name string The logger name.
----@return ModLogger logger A logger wrapping the named ReduxLib logger.
+---@return ModLogger logger A logger wrapping the named LogManager logger.
 function SwLibrary:GetLogger(name) end
 
 ---The Lua `Log` global.

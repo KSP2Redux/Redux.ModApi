@@ -1,3 +1,5 @@
+#nullable enable
+
 using MoonSharp.Interpreter;
 using UnityEngine;
 

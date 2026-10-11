@@ -1,10 +1,13 @@
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using MoonSharp.Interpreter;
-using ReduxLib.Reflection;
+using SpaceWarp2.API.Logging;
+using SpaceWarp2.API.Reflection;
 using UnityEngine;
-using ILogger = ReduxLib.Logging.ILogger;
+using ILogger = SpaceWarp2.API.Logging.ILogger;
 
 namespace SpaceWarp2.API.Config;
 
@@ -15,7 +18,7 @@ namespace SpaceWarp2.API.Config;
 /// </summary>
 public static class ConfigTypes
 {
-    private static readonly ILogger Logger = ReduxLib.ReduxLib.GetLogger("ConfigTypes");
+    private static readonly ILogger Logger = LogManager.GetLogger("ConfigTypes");
     private static readonly Dictionary<Type, IConfigType> ByStorageType = new();
     private static readonly Dictionary<string, IConfigType> ByGlobalName = new();
 

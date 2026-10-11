@@ -1,7 +1,9 @@
-﻿using HarmonyLib;
-using ReduxLib.Configuration;
+﻿#nullable enable
+
+using HarmonyLib;
+using SpaceWarp2.API.Configuration;
 using UnityEngine;
-using ILogger = ReduxLib.Logging.ILogger;
+using ILogger = SpaceWarp2.API.Logging.ILogger;
 
 namespace SpaceWarp2.API.Mods;
 

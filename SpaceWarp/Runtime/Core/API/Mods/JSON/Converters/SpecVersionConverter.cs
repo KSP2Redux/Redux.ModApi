@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using Newtonsoft.Json;
 
 namespace SpaceWarp2.API.Mods.JSON.Converters;

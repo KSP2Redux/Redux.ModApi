@@ -1,5 +1,7 @@
-﻿using System;
-using ReduxLib.GameInterfaces;
+﻿#nullable enable
+
+using System;
+using UitkForKsp2.API;
 
 namespace SpaceWarp2.UI.Backend;
 

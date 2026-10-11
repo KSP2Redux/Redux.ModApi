@@ -7,7 +7,7 @@ using PatchManager.CSharpPatching.Attributes;
 using PatchManager.LuaPatching;
 using PatchManager.Shared;
 using PatchManager.Shared.Modules;
-using ReduxLib.Reflection;
+using SpaceWarp2.API.Reflection;
 
 namespace PatchManager.CSharpPatching
 {

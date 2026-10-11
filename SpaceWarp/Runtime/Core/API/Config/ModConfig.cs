@@ -1,5 +1,7 @@
+#nullable enable
+
 using MoonSharp.Interpreter;
-using ReduxLib.Configuration;
+using SpaceWarp2.API.Configuration;
 using SpaceWarp2.API.Mods;
 
 namespace SpaceWarp2.API.Config;

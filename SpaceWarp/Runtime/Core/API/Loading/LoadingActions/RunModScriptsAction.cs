@@ -1,7 +1,10 @@
+#nullable enable
+
 using System;
 using System.Collections.Generic;
-using ReduxLib.GameInterfaces;
+using Redux.ApiImpls;
 using SpaceWarp2.API.Lifecycle;
+using SpaceWarp2.API.Loading;
 using SpaceWarp2.API.Mods;
 using UnityEngine;
 
@@ -32,7 +35,7 @@ internal sealed class RunModScriptsAction : BaseFlowAction
 
             if (
                 string.IsNullOrEmpty(_plugin.AddressableScriptLabel)
-                || !IAssetProvider.Instance.DoesLabelExist(
+                || !ReduxAssetProvider.DoesLabelExist(
                     _plugin.AddressableScriptLabel
                 )
             )
@@ -42,7 +45,7 @@ internal sealed class RunModScriptsAction : BaseFlowAction
             }
 
             var sources = new List<(string, string)>();
-            IAssetProvider.Instance.LoadByLabel<TextAsset>(
+            ReduxAssetProvider.LoadByLabel<TextAsset>(
                 _plugin.AddressableScriptLabel,
                 asset => sources.Add(($"{_plugin.Guid}/{asset.name}", asset.text)),
                 _ =>

@@ -1,4 +1,6 @@
-﻿namespace SpaceWarp2.Game.API.Waypoints;
+﻿#nullable enable
+
+namespace SpaceWarp2.Game.API.Waypoints;
 
 /// <summary>
 /// This contains the state for a waypoint

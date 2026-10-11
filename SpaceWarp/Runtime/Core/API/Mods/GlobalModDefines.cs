@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿#nullable enable
+
+using System.IO;
 using JetBrains.Annotations;
 
 namespace SpaceWarp2.API.Mods;

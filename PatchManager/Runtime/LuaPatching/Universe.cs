@@ -10,7 +10,7 @@ using PatchManager.LuaPatching.Attributes;
 using PatchManager.LuaPatching.Builtin;
 using PatchManager.LuaPatching.Utility;
 using PatchManager.Shared;
-using ReduxLib.Logging;
+using SpaceWarp2.API.Logging;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 

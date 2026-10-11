@@ -1,8 +1,10 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using ReduxLib.GameInterfaces;
+using Redux.ApiImpls;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityObject = UnityEngine.Object;
@@ -48,7 +50,7 @@ public class AddressableAction<T> : BaseFlowAction where T : UnityObject
         _keepAssets = keepAssets;
     }
 
-    private bool DoesLabelExist(string label) => IAssetProvider.Instance.DoesLabelExist(label);
+    private bool DoesLabelExist(string label) => ReduxAssetProvider.DoesLabelExist(label);
 
     /// <summary>
     /// Performs the loading action.
@@ -66,7 +68,7 @@ public class AddressableAction<T> : BaseFlowAction where T : UnityObject
 
         try
         {
-            IAssetProvider.Instance.LoadByLabel(_label,_action,delegate(IList<T> assetLocations)
+            ReduxAssetProvider.LoadByLabel(_label,_action,delegate(IList<T> assetLocations)
             {
                 if (assetLocations != null && !_keepAssets)
                 {

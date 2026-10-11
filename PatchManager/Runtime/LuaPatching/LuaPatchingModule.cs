@@ -5,7 +5,8 @@ using PatchManager.LuaPatching.Attributes;
 using PatchManager.LuaPatching.Utility;
 using PatchManager.Shared;
 using PatchManager.Shared.Modules;
-using ReduxLib.Reflection;
+using SpaceWarp2.API.Lifecycle;
+using SpaceWarp2.API.Reflection;
 
 namespace PatchManager.LuaPatching
 {
@@ -24,9 +25,9 @@ namespace PatchManager.LuaPatching
             UserData.RegistrationPolicy = new FallbackRegistrationPolicy();
 
             // PatchManager contributes PM/J into each mod env the SpaceWarp runtime forks.
-            if (!ReduxLib.GameInterfaces.ModRuntime.Contributors.OfType<Builtin.PatchManagerEnvContributor>().Any())
+            if (!ModRuntime.Contributors.OfType<Builtin.PatchManagerEnvContributor>().Any())
             {
-                ReduxLib.GameInterfaces.ModRuntime.Contributors.Add(new Builtin.PatchManagerEnvContributor());
+                ModRuntime.Contributors.Add(new Builtin.PatchManagerEnvContributor());
             }
 
             // Bridge Lua's 1-based array indices to the 0-based LuaIndex used by the C#-facing position members.

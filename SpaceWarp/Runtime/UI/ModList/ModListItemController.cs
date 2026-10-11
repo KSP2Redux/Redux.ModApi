@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using SpaceWarp2.API.Mods;
 using UnityEngine.UIElements;

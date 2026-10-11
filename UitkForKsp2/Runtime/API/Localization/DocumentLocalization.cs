@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
-using ReduxLib.GameInterfaces;
 using UitkForKsp2;
 using UitkForKsp2.API;
 using UitkForKsp2.MVVM.Converters;

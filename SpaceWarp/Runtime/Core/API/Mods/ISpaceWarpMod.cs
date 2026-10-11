@@ -1,6 +1,8 @@
-﻿using JetBrains.Annotations;
-using ReduxLib.Configuration;
-using ReduxLib.Logging;
+﻿#nullable enable
+
+using JetBrains.Annotations;
+using SpaceWarp2.API.Configuration;
+using SpaceWarp2.API.Logging;
 
 namespace SpaceWarp2.API.Mods;
 

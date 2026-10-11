@@ -12,7 +12,7 @@ using PatchManager.Core.Utility;
 using PatchManager.LuaPatching;
 using PatchManager.LuaPatching.Builtin;
 using PatchManager.Shared;
-using ReduxLib.Configuration;
+using SpaceWarp2.API.Configuration;
 using SpaceWarp2.API.Mods;
 using UniLinq;
 using UnityEngine;

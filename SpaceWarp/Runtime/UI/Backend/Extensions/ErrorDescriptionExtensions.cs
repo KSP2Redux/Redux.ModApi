@@ -1,4 +1,6 @@
-﻿using SpaceWarp2.API.Mods;
+﻿#nullable enable
+
+using SpaceWarp2.API.Mods;
 using SpaceWarp2.UI.ModList;
 
 namespace SpaceWarp2.UI.Backend.Extensions;

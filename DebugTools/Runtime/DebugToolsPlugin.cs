@@ -3,8 +3,10 @@ using DebugTools.Runtime.Controllers.FlightTools;
 using DebugTools.Runtime.Controllers.VesselTools;
 using DebugTools.Utils;
 using KSP.Game;
+using SpaceWarp2.API.Logging;
 using UnityEngine;
-using ILogger = ReduxLib.Logging.ILogger;
+using ILogger = SpaceWarp2.API.Logging.ILogger;
+using ReduxManager = Redux.ReduxManager;
 
 // ReSharper disable once CheckNamespace
 namespace DebugTools
@@ -16,19 +18,19 @@ namespace DebugTools
         internal static ILogger Logger;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
-        public static void AttachToReduxLib()
+        public static void AttachToReduxManager()
         {
             // With Domain Reload disabled this runs on every Play Mode enter, so reset static
             // state (UDR0002) and re-subscribe idempotently to the static event (UDR0003).
             DebugWindowController = null;
             Logger = null;
-            ReduxLib.ReduxLib.OnReduxLibInitialized -= PreInitialize;
-            ReduxLib.ReduxLib.OnReduxLibInitialized += PreInitialize;
+            ReduxManager.OnInitialized -= PreInitialize;
+            ReduxManager.OnInitialized += PreInitialize;
         }
 
         private static void PreInitialize()
         {
-            Logger = ReduxLib.ReduxLib.GetLogger("Debug Tools");
+            Logger = LogManager.GetLogger("Debug Tools");
             Logger.LogInfo("Pre-initialized");
         }
 
@@ -39,7 +41,7 @@ namespace DebugTools
         {
             if (!Application.isPlaying) return;
 
-            Configuration.Initialize(ReduxLib.ReduxLib.ReduxCoreConfig);
+            Configuration.Initialize(ReduxManager.ReduxCoreConfig);
 
             UITKHelper.LoadUxml("DebugWindow", uxml =>
             {

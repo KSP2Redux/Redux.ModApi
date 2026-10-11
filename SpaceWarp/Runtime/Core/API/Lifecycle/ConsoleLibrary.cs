@@ -1,3 +1,5 @@
+#nullable enable
+
 using MoonSharp.Interpreter;
 
 namespace SpaceWarp2.API.Lifecycle;

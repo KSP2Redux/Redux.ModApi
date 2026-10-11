@@ -1,19 +1,21 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
-using ReduxLib.Configuration;
-using ReduxLib.Configuration.Attributes;
-using ReduxLib.GameInterfaces;
+using SpaceWarp2.API.Configuration;
+using SpaceWarp2.API.Configuration.Attributes;
 using SpaceWarp2.Modules;
 using SpaceWarp2.API.Mods;
 using SpaceWarp2.API.Mods.JSON;
 using SpaceWarp2.API.Versions;
 using UnityEngine;
 using UnityEngine.Networking;
+using ReduxManager = Redux.ReduxManager;
 
 namespace SpaceWarp2.VersionChecking;
 
@@ -72,7 +74,7 @@ public class VersionChecking : SpaceWarpModule
     /// <inheritdoc />
     public override void PreInitializeModule()
     {
-        _kspVersion = IVersioning.Instance.Version;
+        _kspVersion = VersionID.VERSION_TEXT;
     }
 
     /// <inheritdoc />
@@ -137,7 +139,7 @@ public class VersionChecking : SpaceWarpModule
         {
             if (plugin.SWInfo.VersionCheck != null)
             {
-                ReduxLib.ReduxLib.Instance.StartCoroutine(CheckVersion(plugin.Guid, plugin, versionCheckCallback));
+                ReduxManager.Instance.StartCoroutine(CheckVersion(plugin.Guid, plugin, versionCheckCallback));
             }
         }
 
@@ -145,7 +147,7 @@ public class VersionChecking : SpaceWarpModule
         {
             if (info.SWInfo.VersionCheck != null)
             {
-                ReduxLib.ReduxLib.Instance.StartCoroutine(CheckVersion(info.Guid, info, versionCheckCallback));
+                ReduxManager.Instance.StartCoroutine(CheckVersion(info.Guid, info, versionCheckCallback));
             }
         }
     }

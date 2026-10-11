@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿#nullable enable
+
+using System.Collections.Generic;
 using System.Reflection;
-using ReduxLib.GameInterfaces;
 using SpaceWarp2.API;
 using SpaceWarp2.API.Backend.Modding;
 using SpaceWarp2.API.Loading;
+using SpaceWarp2.API.Logging;
 using SpaceWarp2.API.Mods;
 using SpaceWarp2.API.Mods.JSON;
 using SpaceWarp2.InternalUtilities;
@@ -11,7 +13,9 @@ using SpaceWarp2.Modules;
 using SpaceWarp2.Patching.LoadingActions;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using ILogger = ReduxLib.Logging.ILogger;
+using ILocalizer = UitkForKsp2.API.ILocalizer;
+using ILogger = SpaceWarp2.API.Logging.ILogger;
+using ReduxManager = Redux.ReduxManager;
 
 namespace SpaceWarp2;
 
@@ -58,8 +62,8 @@ public sealed class SpaceWarpPlugin : GeneralMod
 
         ModList.Initialize();
         _pathsAssembly = SpaceWarpPathsGenerator.GenerateSpaceWarpPathsAssembly();
-        ReduxLib.ReduxLib.OnReduxLibInitialized -= CreateMonoBehaviours;
-        ReduxLib.ReduxLib.OnReduxLibInitialized += CreateMonoBehaviours;
+        ReduxManager.OnInitialized -= CreateMonoBehaviours;
+        ReduxManager.OnInitialized += CreateMonoBehaviours;
 
         Loading.AddAddressablesLoadingAction<TextAsset>("Loading addressables localizations (csv)", "loc_csv", OnCsvLoaded);
         Loading.AddAddressablesLoadingAction<TextAsset>("Loading addressables localizations (i2csv)", "loc_i2csv", OnI2CsvLoaded);
@@ -80,7 +84,7 @@ public sealed class SpaceWarpPlugin : GeneralMod
 
     private static void CreateMonoBehaviours()
     {
-        Logger = ReduxLib.ReduxLib.GetLogger("Space Warp");
+        Logger = LogManager.GetLogger("Space Warp");
         ModuleManager.LoadAllModules();
         PluginRegister.RegisterAllMods();
         PluginList.ResolveDependenciesAndLoadOrder();

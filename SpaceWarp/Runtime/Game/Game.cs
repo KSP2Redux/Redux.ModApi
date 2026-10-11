@@ -1,7 +1,9 @@
-﻿using JetBrains.Annotations;
+﻿#nullable enable
+
+using JetBrains.Annotations;
 using SpaceWarp2.Modules;
 using UnityEngine;
-using ILogger = ReduxLib.Logging.ILogger;
+using ILogger = SpaceWarp2.API.Logging.ILogger;
 
 namespace SpaceWarp2.Game;
 

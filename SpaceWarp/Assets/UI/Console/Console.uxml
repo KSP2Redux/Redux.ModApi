@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Packages/spacewarp/Assets/UI/Console/Console.uss?fileID=7433441132597879392&amp;guid=a3501e36e3199cc4aadc08344a94b6cf&amp;type=3#Console"/>
-    <ui:VisualElement name="root" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, SpaceWarp2.UI" class="root console-root">
+    <Style src="project://database/Assets/Modules/Redux.ModApi/SpaceWarp/Assets/UI/Console/Console.uss?fileID=7433441132597879392&amp;guid=a3501e36e3199cc4aadc08344a94b6cf&amp;type=3#Console"/>
+    <ui:VisualElement name="root" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, Ksp2Redux" class="root console-root">
         <ui:VisualElement name="title-bar" class="title-bar">
             <ui:Button name="close-button" class="back-button">
                 <Bindings>
@@ -21,7 +21,7 @@
             </ui:Button>
             <ui:Button name="compact-button" text="Compact" class="console-title-button">
                 <Bindings>
-                    <ui:DataBinding property="text" data-source-path="CompactToggleText" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, SpaceWarp2.UI" binding-mode="ToTarget"/>
+                    <ui:DataBinding property="text" data-source-path="CompactToggleText" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, Ksp2Redux" binding-mode="ToTarget"/>
                     <UitkForKsp2.MVVM.Bindings.CommandBinding property="viewDataKey" data-source-path="ToggleCompactCommand"/>
                 </Bindings>
             </ui:Button>
@@ -47,7 +47,7 @@
             <ui:VisualElement class="console-toolbar">
                 <ui:TextField name="search-field" class="console-search-field">
                     <Bindings>
-                        <ui:DataBinding property="value" data-source-path="SearchText" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, SpaceWarp2.UI" binding-mode="TwoWay"/>
+                        <ui:DataBinding property="value" data-source-path="SearchText" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, Ksp2Redux" binding-mode="TwoWay"/>
                     </Bindings>
                 </ui:TextField>
                 <ui:Button name="clear-button" text="#SpaceWarp/Console/Clear" class="console-action-button">
@@ -82,14 +82,14 @@
                 <ui:VisualElement class="console-filter-meta">
                     <ui:Label name="summary-label" class="console-summary-label">
                         <Bindings>
-                            <ui:DataBinding property="text" data-source-path="SummaryText" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, SpaceWarp2.UI" binding-mode="ToTarget"/>
+                            <ui:DataBinding property="text" data-source-path="SummaryText" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, Ksp2Redux" binding-mode="ToTarget"/>
                         </Bindings>
                     </ui:Label>
                     <ui:VisualElement class="console-autoscroll">
                         <ui:Label text="#SpaceWarp/Console/AutoScroll" class="console-autoscroll-label"/>
                         <ui:Toggle name="toggle-autoscroll" class="switch console-autoscroll-switch">
                             <Bindings>
-                                <ui:DataBinding property="value" data-source-path="AutoScroll" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, SpaceWarp2.UI" binding-mode="TwoWay"/>
+                                <ui:DataBinding property="value" data-source-path="AutoScroll" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, Ksp2Redux" binding-mode="TwoWay"/>
                             </Bindings>
                         </ui:Toggle>
                     </ui:VisualElement>
@@ -100,7 +100,7 @@
                     <ui:Label name="empty-state" text="No log entries match the current filters." class="console-empty-state"/>
                     <ui:ListView name="console-list" binding-source-selection-mode="AutoAssign" item-template="ConsoleRow.uxml" virtualization-method="DynamicHeight" show-border="false" selection-type="None" horizontal-scrolling="false" class="console-list">
                         <Bindings>
-                            <ui:DataBinding property="itemsSource" data-source-path="VisibleEntries" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, SpaceWarp2.UI" binding-mode="ToTarget"/>
+                            <ui:DataBinding property="itemsSource" data-source-path="VisibleEntries" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, Ksp2Redux" binding-mode="ToTarget"/>
                         </Bindings>
                     </ui:ListView>
                 </ui:VisualElement>
@@ -112,7 +112,7 @@
                     <ui:ScrollView mode="VerticalAndHorizontal" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Auto" class="csharp-editor-scroll">
                         <ui:TextField name="csharp-code" multiline="true" class="csharp-code-field">
                             <Bindings>
-                                <ui:DataBinding property="value" data-source-path="CSharpCode" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, SpaceWarp2.UI" binding-mode="TwoWay"/>
+                                <ui:DataBinding property="value" data-source-path="CSharpCode" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, Ksp2Redux" binding-mode="TwoWay"/>
                             </Bindings>
                         </ui:TextField>
                     </ui:ScrollView>
@@ -133,7 +133,7 @@
                     <ui:ScrollView name="csharp-output-scroll" mode="VerticalAndHorizontal" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Auto" class="csharp-output-scroll">
                         <ui:TextField name="csharp-output" multiline="true" readonly="true" class="csharp-output selectable-output">
                             <Bindings>
-                                <ui:DataBinding property="value" data-source-path="CSharpOutput" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, SpaceWarp2.UI" binding-mode="ToTarget"/>
+                                <ui:DataBinding property="value" data-source-path="CSharpOutput" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, Ksp2Redux" binding-mode="ToTarget"/>
                             </Bindings>
                         </ui:TextField>
                     </ui:ScrollView>
@@ -144,14 +144,14 @@
                     <ui:Label text="Activity" class="cli-activity-title"/>
                     <ui:Label name="cli-activity-summary" class="console-summary-label">
                         <Bindings>
-                            <ui:DataBinding property="text" data-source-path="ActivitySummaryText" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, SpaceWarp2.UI" binding-mode="ToTarget"/>
+                            <ui:DataBinding property="text" data-source-path="ActivitySummaryText" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, Ksp2Redux" binding-mode="ToTarget"/>
                         </Bindings>
                     </ui:Label>
                 </ui:VisualElement>
                 <ui:Label name="cli-activity-empty-state" text="No CLI integration entries yet." class="console-empty-state"/>
                 <ui:ListView name="cli-activity-list" virtualization-method="FixedHeight" fixed-item-height="104" show-border="false" selection-type="None" horizontal-scrolling="false" class="cli-activity-list">
                     <Bindings>
-                        <ui:DataBinding property="itemsSource" data-source-path="ActivityEntries" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, SpaceWarp2.UI" binding-mode="ToTarget"/>
+                        <ui:DataBinding property="itemsSource" data-source-path="ActivityEntries" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, Ksp2Redux" binding-mode="ToTarget"/>
                     </Bindings>
                 </ui:ListView>
             </UitkForKsp2.Controls.InvertedCornerBox>
@@ -162,7 +162,7 @@
                     <ui:ScrollView mode="VerticalAndHorizontal" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Auto" class="csharp-editor-scroll">
                         <ui:TextField name="lua-code" multiline="true" class="csharp-code-field">
                             <Bindings>
-                                <ui:DataBinding property="value" data-source-path="LuaCode" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, SpaceWarp2.UI" binding-mode="TwoWay"/>
+                                <ui:DataBinding property="value" data-source-path="LuaCode" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, Ksp2Redux" binding-mode="TwoWay"/>
                             </Bindings>
                         </ui:TextField>
                     </ui:ScrollView>
@@ -188,7 +188,7 @@
                     <ui:ScrollView name="lua-output-scroll" mode="VerticalAndHorizontal" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Auto" class="csharp-output-scroll">
                         <ui:TextField name="lua-output" multiline="true" readonly="true" class="csharp-output selectable-output">
                             <Bindings>
-                                <ui:DataBinding property="value" data-source-path="LuaOutput" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, SpaceWarp2.UI" binding-mode="ToTarget"/>
+                                <ui:DataBinding property="value" data-source-path="LuaOutput" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, Ksp2Redux" binding-mode="ToTarget"/>
                             </Bindings>
                         </ui:TextField>
                     </ui:ScrollView>
@@ -199,14 +199,14 @@
                     <ui:Label text="Scripts" class="cli-activity-title"/>
                     <ui:Label name="lua-file-summary" class="console-summary-label">
                         <Bindings>
-                            <ui:DataBinding property="text" data-source-path="LuaFileSummaryText" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, SpaceWarp2.UI" binding-mode="ToTarget"/>
+                            <ui:DataBinding property="text" data-source-path="LuaFileSummaryText" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, Ksp2Redux" binding-mode="ToTarget"/>
                         </Bindings>
                     </ui:Label>
                 </ui:VisualElement>
                 <ui:VisualElement class="lua-script-controls">
                     <ui:TextField name="lua-script-path" class="lua-script-path-field">
                         <Bindings>
-                            <ui:DataBinding property="value" data-source-path="LuaSelectedScriptPath" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, SpaceWarp2.UI" binding-mode="TwoWay"/>
+                            <ui:DataBinding property="value" data-source-path="LuaSelectedScriptPath" data-source-type="SpaceWarp2.UI.Console.SpaceWarpConsoleViewModel, Ksp2Redux" binding-mode="TwoWay"/>
                         </Bindings>
                     </ui:TextField>
                     <ui:VisualElement class="lua-script-actions">

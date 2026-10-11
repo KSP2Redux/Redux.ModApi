@@ -1,5 +1,5 @@
 ﻿using JetBrains.Annotations;
-using ReduxLib.Configuration;
+using SpaceWarp2.API.Configuration;
 using UnityEngine.UIElements;
 
 namespace PatchManager.Shared.Modules

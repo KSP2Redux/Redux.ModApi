@@ -1,4 +1,4 @@
-using ReduxLib.GameInterfaces;
+using UitkForKsp2.API;
 
 namespace UitkForKsp2.MVVM.Converters;
 

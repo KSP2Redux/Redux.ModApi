@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using SpaceWarp2.API.Mods.JSON.Converters;

@@ -1,4 +1,6 @@
-﻿namespace SpaceWarp2.Game.API;
+﻿#nullable enable
+
+namespace SpaceWarp2.Game.API;
 
 
 // This is just used for one thing, the WaypointComponent of the Game

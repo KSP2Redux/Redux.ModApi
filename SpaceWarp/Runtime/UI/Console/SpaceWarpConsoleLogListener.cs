@@ -1,7 +1,9 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
-using ReduxLib.Logging;
-using ILogger = ReduxLib.Logging.ILogger;
+using SpaceWarp2.API.Logging;
+using ILogger = SpaceWarp2.API.Logging.ILogger;
 
 namespace SpaceWarp2.UI.Console;
 
@@ -18,7 +20,7 @@ internal sealed class SpaceWarpConsoleLogListener
     {
         _uiModule = uiModule;
         // We now need to add this as a log listener
-        ReduxLib.ReduxLib.ReduxLogProvider.OnLog += LogEvent;
+        LogManager.Provider.OnLog += LogEvent;
     }	
 
     public void LogEvent(LogLevel level, ILogger source, object logged)
@@ -49,7 +51,7 @@ internal sealed class SpaceWarpConsoleLogListener
 
     public void Dispose()	
     {	
-        ReduxLib.ReduxLib.ReduxLogProvider.OnLog -= LogEvent;
+        LogManager.Provider.OnLog -= LogEvent;
         Clear();
     }	
 

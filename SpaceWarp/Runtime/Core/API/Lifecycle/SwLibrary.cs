@@ -1,6 +1,8 @@
+#nullable enable
+
 using System;
 using MoonSharp.Interpreter;
-using ReduxLib.Logging;
+using SpaceWarp2.API.Logging;
 using SpaceWarp2.API.Mods;
 
 namespace SpaceWarp2.API.Lifecycle;
@@ -14,7 +16,7 @@ namespace SpaceWarp2.API.Lifecycle;
 [MoonSharpUserData]
 public sealed class SwLibrary
 {
-    private static readonly ILogger Logger = ReduxLib.ReduxLib.GetLogger("SpaceWarp.Lifecycle");
+    private static readonly ILogger Logger = LogManager.GetLogger("SpaceWarp.Lifecycle");
 
     static SwLibrary()
     {
@@ -39,8 +41,8 @@ public sealed class SwLibrary
     /// Returns an extra named logger, for a mod that wants one beyond its default <c>Log</c> global.
     /// </summary>
     /// <param name="name">The logger name.</param>
-    /// <returns>A logger wrapping the named ReduxLib logger.</returns>
-    public ModLogger GetLogger(string name) => new(ReduxLib.ReduxLib.GetLogger(name));
+    /// <returns>A logger wrapping the named <see cref="LogManager" /> logger.</returns>
+    public ModLogger GetLogger(string name) => new(LogManager.GetLogger(name));
 
     private static void AddHook(ScriptExecutionContext context, DynValue fn, bool postInit)
     {

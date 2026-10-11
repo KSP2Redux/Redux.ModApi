@@ -1,0 +1,79 @@
+﻿#nullable enable
+
+using System;
+using JetBrains.Annotations;
+using UnityEngine;
+
+namespace SpaceWarp2.API.Logging;
+
+/// <summary>
+/// The log level.
+/// </summary>
+[PublicAPI]
+public enum LogLevel
+{
+    /// <summary>
+    /// No logging.
+    /// </summary>
+    None = 0,
+    /// <summary>
+    /// Fatal errors.
+    /// </summary>
+    Fatal = 1,
+    /// <summary>
+    /// Errors.
+    /// </summary>
+    Error = 2,
+    /// <summary>
+    /// Warnings.
+    /// </summary>
+    Warning = 4,
+    /// <summary>
+    /// Messages.
+    /// </summary>
+    Message = 8,
+    /// <summary>
+    /// Information.
+    /// </summary>
+    Info = 16,
+    /// <summary>
+    /// Debug information.
+    /// </summary>
+    Debug = 32,
+    /// <summary>
+    /// All logging.
+    /// </summary>
+    All = Debug | Info | Message | Warning | Error | Fatal
+}
+
+public static class LogLevelExtensions
+{
+    public static string AsString(this LogLevel level)
+    {
+        return level switch
+        {
+            >= LogLevel.Debug => "DEBUG",
+            >= LogLevel.Info => "INFO",
+            >= LogLevel.Message => "MESSAGE",
+            >= LogLevel.Warning => "WARNING",
+            >= LogLevel.Error => "ERROR",
+            >= LogLevel.Fatal => "FATAL",
+            _ => "???"
+        };
+    }
+
+    public static LogType AsLogType(this LogLevel level)
+    {
+        
+        return level switch
+        {
+            >= LogLevel.Debug => LogType.Log,
+            >= LogLevel.Info => LogType.Log,
+            >= LogLevel.Message => LogType.Log,
+            >= LogLevel.Warning => LogType.Warning,
+            >= LogLevel.Error => LogType.Error,
+            >= LogLevel.Fatal => LogType.Error,
+            _ => LogType.Log
+        };
+    }
+}

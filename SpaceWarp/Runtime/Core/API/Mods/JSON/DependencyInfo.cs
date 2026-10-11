@@ -1,4 +1,6 @@
-﻿using JetBrains.Annotations;
+﻿#nullable enable
+
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 
 namespace SpaceWarp2.API.Mods.JSON;

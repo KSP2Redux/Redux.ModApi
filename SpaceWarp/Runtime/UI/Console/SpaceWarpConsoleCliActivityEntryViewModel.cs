@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 
 namespace SpaceWarp2.UI.Console;

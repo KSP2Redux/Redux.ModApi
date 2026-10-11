@@ -1,12 +1,15 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using JetBrains.Annotations;
-using ReduxLib.Configuration;
+using SpaceWarp2.API.Configuration;
+using SpaceWarp2.API.Logging;
 using SpaceWarp2.API.Mods.JSON;
 using UnityEngine.AddressableAssets.ResourceLocators;
-using ILogger = ReduxLib.Logging.ILogger;
+using ILogger = SpaceWarp2.API.Logging.ILogger;
 
 namespace SpaceWarp2.API.Mods;
 
@@ -65,7 +68,7 @@ public class SpaceWarpPluginDescriptor
     /// </remarks>
     public ILogger Logger
     {
-        get => _logger ??= ReduxLib.ReduxLib.GetLogger(Guid);
+        get => _logger ??= LogManager.GetLogger(Guid);
         set => _logger = value;
     }
 

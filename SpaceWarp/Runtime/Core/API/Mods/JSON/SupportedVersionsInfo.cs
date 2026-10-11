@@ -1,4 +1,6 @@
-﻿using JetBrains.Annotations;
+﻿#nullable enable
+
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using SpaceWarp2.API.Versions;
 

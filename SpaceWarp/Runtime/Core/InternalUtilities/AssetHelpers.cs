@@ -1,8 +1,10 @@
+#nullable enable
+
 using System.IO;
-using ReduxLib.GameInterfaces;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.AddressableAssets.ResourceLocators;
+using ILocalizer = UitkForKsp2.API.ILocalizer;
 
 namespace SpaceWarp2.InternalUtilities;
 

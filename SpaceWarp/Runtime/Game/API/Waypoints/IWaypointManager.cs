@@ -1,4 +1,6 @@
-﻿using SpaceWarp2.Game.API.Waypoints;
+﻿#nullable enable
+
+using SpaceWarp2.Game.API.Waypoints;
 
 namespace SpaceWarp2.Game.API;
 

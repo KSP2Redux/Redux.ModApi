@@ -1,7 +1,9 @@
+#nullable enable
+
 using UitkForKsp2.API;
 using UnityEngine;
 using UnityEngine.UIElements;
-using LogLevel = ReduxLib.Logging.LogLevel;
+using LogLevel = SpaceWarp2.API.Logging.LogLevel;
 
 namespace SpaceWarp2.UI.Console;
 

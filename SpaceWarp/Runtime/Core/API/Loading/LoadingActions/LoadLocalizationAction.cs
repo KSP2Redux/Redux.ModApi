@@ -1,6 +1,8 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.IO;
-using ReduxLib.GameInterfaces;
+using SpaceWarp2.API.Loading;
 using SpaceWarp2.InternalUtilities;
 using SpaceWarp2.API.Mods;
 

@@ -1,5 +1,7 @@
-﻿using ReduxLib.Configuration;
-using ReduxLib.Logging;
+﻿#nullable enable
+
+using SpaceWarp2.API.Configuration;
+using SpaceWarp2.API.Logging;
 using SpaceWarp2.API.Mods;
 
 namespace SpaceWarp2.API.Backend.Modding;
@@ -8,7 +10,7 @@ internal class AssetOnlyMod : ISpaceWarpMod
 {
     public AssetOnlyMod(string name)
     {
-        SWLogger = ReduxLib.ReduxLib.GetLogger(name);
+        SWLogger = LogManager.GetLogger(name);
     }
 
     public void OnPreInitialized()

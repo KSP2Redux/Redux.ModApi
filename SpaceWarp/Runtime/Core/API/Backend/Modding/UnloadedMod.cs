@@ -1,8 +1,11 @@
-﻿using System;
-using ReduxLib.Configuration;
+﻿#nullable enable
+
+using System;
+using SpaceWarp2.API.Configuration;
 using SpaceWarp2.API.Mods;
 using UnityEngine;
-using ILogger = ReduxLib.Logging.ILogger;
+using ILogger = SpaceWarp2.API.Logging.ILogger;
+using ReduxManager = Redux.ReduxManager;
 
 namespace SpaceWarp2.API.Backend.Modding;
 internal class UnloadedMod : ISpaceWarpMod
@@ -20,7 +23,7 @@ internal class UnloadedMod : ISpaceWarpMod
         ISpaceWarpMod mod;
         if (ToLoad.IsSubclassOf(typeof(MonoBehaviour)))
         {
-            modObject = ReduxLib.ReduxLib.GetAlwaysLoadedObject(SWMetadata.Guid);
+            modObject = ReduxManager.GetAlwaysLoadedObject(SWMetadata.Guid);
             modObject.SetActive(false);
             mod = (ISpaceWarpMod)modObject.AddComponent(ToLoad);
         }

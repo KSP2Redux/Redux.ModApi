@@ -4,7 +4,7 @@ using KSP.Game;
 using KSP.Game.Load;
 using KSP.Sim.State;
 using PatchManager.Shared;
-using ReduxLib.GameInterfaces;
+using SpaceWarp2.API.Loading;
 using UniLinq;
 
 namespace PatchManager.Parts.Patchers

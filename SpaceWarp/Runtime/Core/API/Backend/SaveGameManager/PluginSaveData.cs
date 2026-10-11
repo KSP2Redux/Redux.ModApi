@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 
 namespace SpaceWarp2.API.Backend.SaveGameManager;
 

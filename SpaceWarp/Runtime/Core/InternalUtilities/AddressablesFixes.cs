@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Reflection;
 using UnityEngine.ResourceManagement.ResourceLocations;
 

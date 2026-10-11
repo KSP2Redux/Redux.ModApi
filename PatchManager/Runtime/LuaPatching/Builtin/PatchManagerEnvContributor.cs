@@ -1,5 +1,5 @@
 using MoonSharp.Interpreter;
-using ReduxLib.GameInterfaces;
+using SpaceWarp2.API.Lifecycle;
 
 namespace PatchManager.LuaPatching.Builtin;
 

@@ -1,7 +1,9 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using ReduxLib.Configuration;
+using SpaceWarp2.API.Configuration;
 using UnityEngine;
 
 namespace SpaceWarp2.UI.API.Settings;

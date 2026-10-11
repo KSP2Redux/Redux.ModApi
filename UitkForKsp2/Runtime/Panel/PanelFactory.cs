@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using ReduxLib.Engine;
 using UitkForKsp2.API;
 using UnityEditor;
 using UnityEngine;
@@ -11,6 +10,9 @@ namespace UitkForKsp2.Panel;
 
 internal static class PanelFactory
 {
+    // KSP2's UI layer. UI Toolkit sits below the game assembly, so it cannot use the game's layer constants.
+    private const int UI_LAYER = 5;
+
     private static readonly MethodInfo ApplyPanelSettings = typeof(PanelSettings).GetMethod(
         "ApplyPanelSettings",
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
@@ -76,6 +78,6 @@ internal static class PanelFactory
             return;
         }
 
-        go.layer = Layers.LayerUi;
+        go.layer = UI_LAYER;
     }
 }

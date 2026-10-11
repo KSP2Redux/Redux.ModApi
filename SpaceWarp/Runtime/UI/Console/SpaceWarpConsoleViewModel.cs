@@ -1,7 +1,9 @@
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ReduxLib.Logging;
+using SpaceWarp2.API.Logging;
 using UitkForKsp2.MVVM.Commands;
 using UitkForKsp2.MVVM.Core;
 using Unity.Properties;

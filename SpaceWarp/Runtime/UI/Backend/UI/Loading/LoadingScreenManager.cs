@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿#nullable enable
+
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using SpaceWarp2.API.Mods;

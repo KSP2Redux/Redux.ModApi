@@ -1,12 +1,15 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using ReduxLib.Configuration;
-using ReduxLib.Logging;
-using ReduxLib.Reflection;
+using SpaceWarp2.API.Configuration;
+using SpaceWarp2.API.Logging;
+using SpaceWarp2.API.Reflection;
 using UnityEngine;
+using ReduxManager = Redux.ReduxManager;
 
 namespace SpaceWarp2.Modules;
 
@@ -16,7 +19,7 @@ namespace SpaceWarp2.Modules;
 public static class ModuleManager
 {
     public static List<SpaceWarpModule> AllSpaceWarpModules = new();
-    private static ReduxLib.Logging.ILogger _moduleManagerLogSource;
+    private static SpaceWarp2.API.Logging.ILogger _moduleManagerLogSource;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStaticState()
@@ -39,8 +42,8 @@ public static class ModuleManager
 
     internal static void LoadAllModules()
     {
-        _moduleManagerLogSource = ReduxLib.ReduxLib.GetLogger("SpaceWarp.ModuleManager");
-        var configDirectory = new DirectoryInfo(Path.Combine(ReduxLib.ReduxLib.REDUX_FOLDER, "Config", "SWModuleConfig"));
+        _moduleManagerLogSource = LogManager.GetLogger("SpaceWarp.ModuleManager");
+        var configDirectory = new DirectoryInfo(Path.Combine(ReduxManager.REDUX_FOLDER, "Config", "SWModuleConfig"));
         _moduleManagerLogSource.LogInfo($"Redux Module Config Path: {configDirectory}");
         if (!Directory.Exists(configDirectory.FullName)) configDirectory.Create();
         // foreach (var module in modules.EnumerateFiles("*.dll", SearchOption.TopDirectoryOnly))
@@ -100,7 +103,7 @@ public static class ModuleManager
         {
             try
             {
-                module.ModuleLogger = ReduxLib.ReduxLib.GetLogger(module.Name);
+                module.ModuleLogger = LogManager.GetLogger(module.Name);
                 module.ModuleConfiguration = new JsonConfigFile(
                     Path.Combine(configDirectory.FullName, module.Name + ".cfg")
                 );

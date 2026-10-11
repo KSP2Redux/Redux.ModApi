@@ -1,8 +1,10 @@
+#nullable enable
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using MoonSharp.Interpreter;
-using ReduxLib.Configuration;
+using SpaceWarp2.API.Configuration;
 
 namespace SpaceWarp2.API.Config;
 

@@ -1,15 +1,15 @@
-using ReduxLib.Logging;
+using SpaceWarp2.API.Logging;
 using VSwift.Modules.Logging;
 
 namespace VSwift.Logging
 {
     /// <summary>
-    /// <see cref="Modules.Logging.IVSwiftLogger" /> implementation that forwards to a <see cref="ReduxLib.Logging.ILogger" />.
+    /// <see cref="Modules.Logging.IVSwiftLogger" /> implementation that forwards to a <see cref="SpaceWarp2.API.Logging.ILogger" />.
     /// </summary>
     public class VSwiftReduxLogger : IVSwiftLogger
     {
         /// <summary>
-        /// Creates the logger forwarding to the given <see cref="ReduxLib.Logging.ILogger" />.
+        /// Creates the logger forwarding to the given <see cref="SpaceWarp2.API.Logging.ILogger" />.
         /// </summary>
         /// <param name="logger">The underlying Redux logger.</param>
         public VSwiftReduxLogger(ILogger logger)

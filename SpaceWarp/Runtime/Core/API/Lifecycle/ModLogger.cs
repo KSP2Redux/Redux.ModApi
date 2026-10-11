@@ -1,5 +1,7 @@
+#nullable enable
+
 using MoonSharp.Interpreter;
-using ReduxLib.Logging;
+using SpaceWarp2.API.Logging;
 
 namespace SpaceWarp2.API.Lifecycle;
 
@@ -22,7 +24,7 @@ public sealed class ModLogger
     }
 
     /// <summary>
-    /// Creates a logger wrapping the given ReduxLib logger.
+    /// Creates a logger wrapping the given <see cref="ILogger" />.
     /// </summary>
     /// <param name="logger">The underlying logger to forward to.</param>
     public ModLogger(ILogger logger)

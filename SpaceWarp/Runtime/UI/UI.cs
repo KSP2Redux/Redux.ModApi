@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿#nullable enable
+
+using System.Collections.Generic;
 using JetBrains.Annotations;
-using ReduxLib.Configuration;
-using ReduxLib.Configuration.Attributes;
+using SpaceWarp2.API.Configuration;
+using SpaceWarp2.API.Configuration.Attributes;
 using SpaceWarp2.API.Loading;
 using SpaceWarp2.Modules;
 using SpaceWarp2.UI.API;
@@ -196,7 +198,7 @@ public class UI : SpaceWarpModule
 
     private void InitializeUI()
     {
-        GameObject ui = ReduxLib.ReduxLib.GetAlwaysLoadedObject("Space Warp UI");
+        GameObject ui = global::Redux.ReduxManager.GetAlwaysLoadedObject("Space Warp UI");
         ui.SetActive(true);
 
         VisualTreeAsset? modListUxml = _uiAssets["modlist"];

@@ -1,14 +1,17 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
-using ReduxLib.Configuration;
-using ReduxLib.Logging;
+using SpaceWarp2.API.Configuration;
+using SpaceWarp2.API.Logging;
 using SpaceWarp2.API.Mods;
 using SpaceWarp2.API.Mods.JSON;
 using UnityEngine;
+using ReduxManager = Redux.ReduxManager;
 namespace SpaceWarp2.API.Backend.Modding;
 
 internal static class PluginRegister
@@ -102,7 +105,7 @@ internal static class PluginRegister
             mod.IsKsp1 = true;
             if (mod.Plugin != null)
             {
-                mod.Plugin.SWLogger ??= ReduxLib.ReduxLib.GetLogger(mod.Guid);
+                mod.Plugin.SWLogger ??= LogManager.GetLogger(mod.Guid);
             }
             PluginList.RegisterPlugin(mod);
         }
@@ -112,7 +115,7 @@ internal static class PluginRegister
     {
         foreach (var mod in IInternalModRegister.Instance.InternalPluginDescriptors)
         {
-            mod.Plugin.SWLogger ??= ReduxLib.ReduxLib.GetLogger(mod.Guid);
+            mod.Plugin.SWLogger ??= LogManager.GetLogger(mod.Guid);
             mod.Plugin.SWConfiguration = mod.ConfigFile = new JsonConfigFile(Path.Combine(mod.Folder.FullName, "config.json"));
             mod.IsCore = true;
             PluginList.RegisterPlugin(mod);
@@ -120,7 +123,7 @@ internal static class PluginRegister
     }
 
 
-    private static readonly ReduxLib.Logging.ILogger Logger = SpaceWarpPlugin.Logger;
+    private static readonly SpaceWarp2.API.Logging.ILogger Logger = SpaceWarpPlugin.Logger;
 
     private static bool AssertFolderPath(ISpaceWarpMod plugin, string folderPath)
     {
@@ -180,11 +183,11 @@ internal static class PluginRegister
     {
         var mod = new UnloadedMod(typeof(SpaceWarpPlugin))
         {
-            SWConfiguration = ReduxLib.ReduxLib.ReduxCoreConfig
+            SWConfiguration = ReduxManager.ReduxCoreConfig
         };
         var descriptor = new SpaceWarpPluginDescriptor(mod,
             SpaceWarpPlugin.SpaceWarpModInfo.ModID, SpaceWarpPlugin.SpaceWarpModInfo.Name,
-            SpaceWarpPlugin.SpaceWarpModInfo, new DirectoryInfo(ReduxLib.ReduxLib.REDUX_FOLDER), true, ReduxLib.ReduxLib.ReduxCoreConfig);
+            SpaceWarpPlugin.SpaceWarpModInfo, new DirectoryInfo(ReduxManager.REDUX_FOLDER), true, ReduxManager.ReduxCoreConfig);
         mod.SWMetadata = descriptor;
         descriptor.Logger = SpaceWarpPlugin.Logger;
         descriptor.IsCore = true;

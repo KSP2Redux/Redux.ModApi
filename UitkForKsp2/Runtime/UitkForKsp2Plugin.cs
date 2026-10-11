@@ -9,7 +9,6 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UIElements;
-using ILogger = ReduxLib.Logging.ILogger;
 
 namespace UitkForKsp2;
 
@@ -28,7 +27,7 @@ public static class UitkForKsp2Plugin /* : BaseUnityPlugin */
 
     public static PanelSettings FixedPanelSettings { get; private set; }
 
-    internal static ILogger Logger;
+    internal static readonly UitkLogger Logger = new("UITK For KSP2");
 
     private const string PanelSettingsLabel = "kerbalui";
 
@@ -43,24 +42,13 @@ public static class UitkForKsp2Plugin /* : BaseUnityPlugin */
     private static float UiScale = 1f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
-    public static void AttachToReduxLib()
+    private static void ResetStaticState()
     {
-        // With Domain Reload disabled this runs on every Play Mode enter, so reset mutable static
-        // state and re-subscribe idempotently to the static event (UDR0005).
+        // With Domain Reload disabled this runs on every Play Mode enter, so reset mutable static state (UDR0005).
         PanelSettings = null;
         FixedPanelSettings = null;
-        Logger = null;
         UiScale = 1f;
         RuntimePanelSettings.Clear();
-
-        ReduxLib.ReduxLib.OnReduxLibInitialized -= PreInitializeUitkForKsp2;
-        ReduxLib.ReduxLib.OnReduxLibInitialized += PreInitializeUitkForKsp2;
-    }
-
-    private static void PreInitializeUitkForKsp2()
-    {
-        Logger = ReduxLib.ReduxLib.GetLogger("UITK For KSP2");
-        Logger.LogInfo("Pre-initialized");
     }
 
     public static void InitializeUitkForKsp2()

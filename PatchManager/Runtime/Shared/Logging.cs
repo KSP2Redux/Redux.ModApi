@@ -1,5 +1,5 @@
 ﻿using JetBrains.Annotations;
-using ReduxLib.Logging;
+using SpaceWarp2.API.Logging;
 
 namespace PatchManager.Shared
 {

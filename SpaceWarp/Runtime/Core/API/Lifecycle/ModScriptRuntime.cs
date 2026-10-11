@@ -1,19 +1,21 @@
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using MoonSharp.Interpreter;
-using ReduxLib.Configuration;
-using ReduxLib.GameInterfaces;
-using ReduxLib.Logging;
+using SpaceWarp2.API.Configuration;
+using SpaceWarp2.API.Logging;
 using SpaceWarp2.API;
 using SpaceWarp2.API.Config;
 using SpaceWarp2.API.Mods;
+using ReduxScriptRuntime = Redux.ApiImpls.ReduxScriptRuntime;
 
 namespace SpaceWarp2.API.Lifecycle;
 
 /// <summary>
 /// The SpaceWarp-owned Lua mod runtime. Forks per-mod environments off the game's root runtime
-/// (<see cref="IScriptRuntime" />), contributes the general mod-loading globals, runs registered
+/// (<see cref="ReduxScriptRuntime" />), contributes the general mod-loading globals, runs registered
 /// <see cref="IModEnvContributor" />s, and executes mod bodies.
 /// </summary>
 /// <remarks>
@@ -30,7 +32,7 @@ public static class ModScriptRuntime
     public const string ConsoleModId = "spacewarp-console";
 
     private static readonly ModScriptLoader Loader = new();
-    private static readonly ILogger Logger = ReduxLib.ReduxLib.GetLogger("ModScriptRuntime");
+    private static readonly ILogger Logger = LogManager.GetLogger("ModScriptRuntime");
     private static readonly Dictionary<string, DynValue> ConsoleGlobals = new();
     private static Table _consoleEnv;
 
@@ -125,7 +127,7 @@ public static class ModScriptRuntime
     /// <returns>The console environment's globals table.</returns>
     public static Table CreateConsoleEnv()
     {
-        var logger = ReduxLib.ReduxLib.GetLogger(ConsoleModId);
+        var logger = LogManager.GetLogger(ConsoleModId);
         var configFile = new JsonConfigFile(Path.Combine(CommonPaths.LuaFolder, "spacewarp-console-config.json"));
         var env = CreateEnv(ConsoleModId, Path.GetFullPath(CommonPaths.LuaFolder), logger, configFile);
         foreach (var pair in ConsoleGlobals)
@@ -138,7 +140,7 @@ public static class ModScriptRuntime
 
     private static Table CreateEnv(string modId, string location, ILogger logger, IConfigFile configFile)
     {
-        var root = IScriptRuntime.Instance.RootGlobals;
+        var root = ReduxScriptRuntime.RootGlobals;
         var script = root.OwnerScript;
         script.Options.ScriptLoader = Loader;
 
