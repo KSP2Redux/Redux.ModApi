@@ -1,0 +1,48 @@
+using MoonSharp.Interpreter;
+using Newtonsoft.Json.Linq;
+using PatchManager.LuaPatching.Utility;
+
+namespace PatchManager.Science.UserData;
+
+/// <summary>
+/// Indexed-list wrapper for a science region's discoverables, keyed by each entry's <c>ScienceRegionId</c>, while
+/// preserving the full envelope for round-tripping.
+/// </summary>
+[MoonSharpUserData]
+public class DiscoverablesUserData : IndexedListUserData
+{
+    /// <summary>
+    /// The complete JSON envelope, mutated indirectly through the inner <c>Discoverables</c> array.
+    /// </summary>
+    [MoonSharpHidden] public JToken FullToken;
+
+    /// <summary>
+    /// Creates a wrapper for the discoverables envelope, exposing its <c>Discoverables</c> array.
+    /// </summary>
+    /// <param name="token">The discoverables JSON envelope (containing a <c>Discoverables</c> array).</param>
+    public DiscoverablesUserData(JToken token) : base(RequireArray(token["Discoverables"], "Discoverables"))
+    {
+        FullToken = token;
+    }
+
+
+    /// <summary>
+    /// Gets the celestial body's name from the envelope's <c>BodyName</c> field.
+    /// </summary>
+    public string BodyName { get => RequireString(FullToken["BodyName"], "BodyName"); }
+
+    /// <summary>
+    /// Gets or sets the layer this copy of the body's discoverables belongs to, or <c>nil</c> for the default copy.
+    /// </summary>
+    public string Layer
+    {
+        get => FullToken["Layer"]?.Type == JTokenType.String ? (string)FullToken["Layer"] : null;
+        set => FullToken["Layer"] = value;
+    }
+
+    /// <inheritdoc />
+    public override string Name(JToken source)
+    {
+        return RequireString(source["ScienceRegionId"], "Discoverables[].ScienceRegionId");
+    }
+}
