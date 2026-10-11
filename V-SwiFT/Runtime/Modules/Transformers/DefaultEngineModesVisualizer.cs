@@ -17,6 +17,7 @@ namespace VSwift.Modules.Transformers
     [Transformer(nameof(DefaultEngineModesVisualizer))]
     [TransformerCategory("Visualizers")]
     [TransformerDescription("Show engine mode stats in the variant popout")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceAssembly: "Assembly-CSharp")]
     public class DefaultEngineModesVisualizer : ITransformer
     {
         /// <inheritdoc />

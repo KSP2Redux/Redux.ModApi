@@ -15,6 +15,7 @@ namespace VSwift.Modules.Transformers
     [Transformer(nameof(TransformActivator))]
     [TransformerCategory("Visual")]
     [TransformerDescription("Enable/disable GameObjects")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceAssembly: "Assembly-CSharp")]
     public class TransformActivator : ITransformer
     {
         /// <summary>

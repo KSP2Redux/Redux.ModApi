@@ -23,6 +23,7 @@ namespace VSwift.Modules.Transformers
     [Transformer(nameof(ResourceContainerAdder))]
     [TransformerCategory("Resources")]
     [TransformerDescription("Add containers")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceAssembly: "Assembly-CSharp")]
     public class ResourceContainerAdder : ITransformer
     {
         /// <summary>

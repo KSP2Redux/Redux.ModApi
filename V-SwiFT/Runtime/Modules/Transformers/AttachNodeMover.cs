@@ -16,6 +16,7 @@ namespace VSwift.Modules.Transformers
     [Transformer(nameof(AttachNodeMover))]
     [TransformerCategory("Attach nodes")]
     [TransformerDescription("Move existing nodes")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceAssembly: "Assembly-CSharp")]
     public class AttachNodeMover : ITransformer
     {
         /// <summary>

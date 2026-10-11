@@ -24,6 +24,7 @@ namespace VSwift.Modules.Transformers
     [Transformer(nameof(EngineModeSwapper))]
     [TransformerCategory("Module Overrides")]
     [TransformerDescription("Replace engine modes")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceAssembly: "Assembly-CSharp")]
     public class EngineModeSwapper : ITransformer
     {
         /// <summary>

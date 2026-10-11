@@ -21,6 +21,7 @@ namespace VSwift.Modules.Transformers
     [Transformer(nameof(PartScalarTransformer))]
     [TransformerCategory("Scalars")]
     [TransformerDescription("Mutate any scalar via keypath")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceAssembly: "Assembly-CSharp")]
     public class PartScalarTransformer : ITransformer, ISerializationCallbackReceiver
     {
         /// <summary>

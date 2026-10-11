@@ -20,6 +20,7 @@ namespace VSwift.Modules.Transformers
     [Transformer(nameof(ResourceContainerRemover))]
     [TransformerCategory("Resources")]
     [TransformerDescription("Remove containers")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceAssembly: "Assembly-CSharp")]
     public class ResourceContainerRemover : ITransformer
     {
         /// <summary>

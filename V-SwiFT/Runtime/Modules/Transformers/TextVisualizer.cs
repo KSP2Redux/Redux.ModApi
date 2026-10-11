@@ -16,6 +16,7 @@ namespace VSwift.Modules.Transformers
     [Transformer(nameof(TextVisualizer))]
     [TransformerCategory("Visualizers")]
     [TransformerDescription("Show a localized title and description")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceAssembly: "Assembly-CSharp")]
     public class TextVisualizer : ITransformer
     {
         /// <summary>

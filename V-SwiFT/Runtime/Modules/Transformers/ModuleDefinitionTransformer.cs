@@ -19,6 +19,7 @@ namespace VSwift.Modules.Transformers
     [Transformer(nameof(ModuleDefinitionTransformer))]
     [TransformerCategory("Module Overrides")]
     [TransformerDescription("Swap a Data_<X> module")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceAssembly: "Assembly-CSharp")]
     public class ModuleDefinitionTransformer : ITransformer, ISerializationCallbackReceiver
     {
         /// <summary>

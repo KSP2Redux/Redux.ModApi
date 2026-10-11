@@ -20,6 +20,7 @@ namespace VSwift.Modules.Transformers
     [Transformer(nameof(AttachNodeAdder))]
     [TransformerCategory("Attach nodes")]
     [TransformerDescription("Add nodes when active")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceAssembly: "Assembly-CSharp")]
     public class AttachNodeAdder : ITransformer
     {
         /// <summary>

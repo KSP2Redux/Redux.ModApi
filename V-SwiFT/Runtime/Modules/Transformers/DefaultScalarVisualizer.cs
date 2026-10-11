@@ -16,6 +16,7 @@ namespace VSwift.Modules.Transformers
     [Transformer(nameof(DefaultScalarVisualizer))]
     [TransformerCategory("Visualizers")]
     [TransformerDescription("Show a part-data value in the variant popout")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceAssembly: "Assembly-CSharp")]
     public class DefaultScalarVisualizer : ITransformer
     {
         /// <summary>

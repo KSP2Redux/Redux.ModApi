@@ -17,6 +17,7 @@ namespace VSwift.Modules.Transformers
     [Transformer(nameof(MassModifier))]
     [TransformerCategory("Mass & Physics")]
     [TransformerDescription("Adjust part mass by delta")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceAssembly: "Assembly-CSharp")]
     public class MassModifier : ITransformer
     {
         /// <summary>

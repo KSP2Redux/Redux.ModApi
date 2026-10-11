@@ -19,6 +19,7 @@ namespace VSwift.Modules.Transformers
     [Transformer(nameof(MaterialSwapper))]
     [TransformerCategory("Visual")]
     [TransformerDescription("Swap materials by name")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceAssembly: "Assembly-CSharp")]
     public class MaterialSwapper : ITransformer
     {
         /// <summary>

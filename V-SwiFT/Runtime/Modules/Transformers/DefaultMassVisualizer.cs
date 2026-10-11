@@ -14,6 +14,7 @@ namespace VSwift.Modules.Transformers
     [Transformer(nameof(DefaultMassVisualizer))]
     [TransformerCategory("Visualizers")]
     [TransformerDescription("Show part mass in the variant popout")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceAssembly: "Assembly-CSharp")]
     public class DefaultMassVisualizer : ITransformer
     {
         /// <inheritdoc />
