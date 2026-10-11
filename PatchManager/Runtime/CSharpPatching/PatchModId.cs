@@ -7,12 +7,12 @@ namespace PatchManager.CSharpPatching
 {
     /// <summary>
     /// Resolves the mod ID a C# patch belongs to from its declaring assembly, mapping each SpaceWarp plugin's
-    /// assembly to its mod ID. Assemblies with no SpaceWarp plugin - the game's Assembly-CSharp and PatchManager's
-    /// own assembly aside - resolve to Redux's internal mod ID.
+    /// assembly to its mod ID. Assemblies with no SpaceWarp plugin - the game assembly, which PatchManager
+    /// compiles into, among them - resolve to Redux's internal mod ID.
     /// </summary>
     internal static class PatchModId
     {
-        // Assembly-CSharp and any unmapped assembly belong to Redux.
+        // The game assembly and any unmapped assembly belong to Redux.
         private const string ReduxModId = "Ksp2Redux";
 
         private static Dictionary<Assembly, string> _byAssembly;
