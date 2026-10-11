@@ -112,7 +112,16 @@ public static class Loading
             modId,
             name,
             reset,
-            done => IAssetProvider.Instance.LoadByLabel<T>(
+            done =>
+            {
+                // No catalog may ship the label at all, which is not an error for data that is optional
+                if (!IAssetProvider.Instance.DoesLabelExist(label))
+                {
+                    done();
+                    return;
+                }
+
+                IAssetProvider.Instance.LoadByLabel<T>(
                 label,
                 onAsset,
                 assets =>
@@ -125,6 +134,7 @@ public static class Loading
 
                     done();
                 }
-            )
+            );
+            }
         );
 }
