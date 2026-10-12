@@ -12,7 +12,7 @@ namespace SpaceWarp2.API.Configuration.Attributes;
 /// tag-to-behavior registry.
 /// </remarks>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = true)]
-public sealed class ConfigMetadataAttribute : Attribute
+public class ConfigMetadataAttribute : Attribute
 {
     /// <summary>
     /// The tag name.
