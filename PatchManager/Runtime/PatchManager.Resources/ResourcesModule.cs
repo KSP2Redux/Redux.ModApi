@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Newtonsoft.Json.Linq;
 using PatchManager.Shared.Modules;
 using SpaceWarp2.API.Loading;
+using SpaceWarp2.API.Mods;
 using UnityEngine;
 
 namespace PatchManager.Resources
@@ -26,7 +27,7 @@ namespace PatchManager.Resources
         public override void RegisterPlaySessionActions()
         {
             Loading.AddSetLoadingAction<TextAsset>(
-                "PatchManager",
+                ModIds.PATCH_MANAGER,
                 "resource units",
                 "resource_units",
                 RegisterUnits,

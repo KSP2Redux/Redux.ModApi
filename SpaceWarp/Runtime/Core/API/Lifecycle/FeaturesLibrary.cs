@@ -32,7 +32,7 @@ namespace SpaceWarp2.API.Lifecycle
         /// <returns>True if the feature is on.</returns>
         public bool Has(ScriptExecutionContext context, string featureId)
         {
-            string modId = context.CurrentGlobalEnv?.Get("ModId").CastToString();
+            string modId = ModScriptRuntime.ModIdOf(context);
             return ActiveFeatures.IsEnabled(modId == null ? featureId : FeatureRegistry.Qualify(modId, featureId));
         }
 

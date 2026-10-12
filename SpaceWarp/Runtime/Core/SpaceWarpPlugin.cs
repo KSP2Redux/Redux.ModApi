@@ -44,7 +44,7 @@ namespace SpaceWarp2
             SpaceWarpModInfo = new()
             {
                 Spec = SpecVersion.V3_0,
-                ModID = "SpaceWarp2",
+                ModID = ModIds.SPACE_WARP,
                 Name = "Space Warp",
                 Author = "Space Warp Dev + Rendezvous Entertainment",
                 Description = "A C# modding API for KSP2 Redux Modding",
@@ -154,7 +154,7 @@ namespace SpaceWarp2
         internal static ModInfo SpaceWarpModInfo = new()
         {
             Spec = SpecVersion.V3_0,
-            ModID = "SpaceWarp2",
+            ModID = ModIds.SPACE_WARP,
             Name = "Space Warp",
             Author = "Space Warp Dev + Rendezvous Entertainment",
             Description = "A C# modding API for KSP2 Redux Modding",

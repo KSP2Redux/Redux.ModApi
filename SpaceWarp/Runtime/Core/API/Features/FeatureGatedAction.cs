@@ -44,7 +44,8 @@ namespace SpaceWarp2.API.Features
         }
 
         /// <summary>
-        /// Gets the mod the action belongs to, whose default feature must be on for it to run.
+        /// Gets the mod the action belongs to, whose default feature must be on for it to run unless the mod is on in
+        /// every set.
         /// </summary>
         public string ModId { get; }
 
@@ -99,7 +100,9 @@ namespace SpaceWarp2.API.Features
         public bool AppliesIn(IReadOnlyCollection<string> enabled)
         {
             bool IsOn(string id) => enabled.Contains(id, StringComparer.OrdinalIgnoreCase);
-            return IsOn(FeatureRegistry.DefaultFor(ModId)) && _needs.TrueForAll(IsOn) && !_conflicts.Exists(IsOn);
+            return (FeatureRegistry.IsAlwaysEnabled(ModId) || IsOn(FeatureRegistry.DefaultFor(ModId)))
+                && _needs.TrueForAll(IsOn)
+                && !_conflicts.Exists(IsOn);
         }
 
         /// <summary>

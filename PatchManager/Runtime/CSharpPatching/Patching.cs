@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using PatchManager.LuaPatching;
 using SpaceWarp2.API.Features;
+using SpaceWarp2.API.Mods;
 
 namespace PatchManager.CSharpPatching
 {
@@ -21,7 +22,12 @@ namespace PatchManager.CSharpPatching
         {
             // NoInlining keeps GetCallingAssembly resolving to the caller's assembly, not an inlined-away frame.
             [MethodImpl(MethodImplOptions.NoInlining)]
-            get => new(PatchModId.Resolve(Assembly.GetCallingAssembly()));
+            get => new(
+                PluginList.ModIdOf(Assembly.GetCallingAssembly())
+                ?? throw new InvalidOperationException(
+                    "No single mod loaded the calling assembly, so name the mod with Patching.ForMod"
+                )
+            );
         }
 
         /// <summary>A patch scope bound to an explicit mod ID.</summary>

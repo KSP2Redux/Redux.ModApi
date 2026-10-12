@@ -6,6 +6,7 @@ using PatchManager.Core.Assets;
 using PatchManager.Shared.Modules;
 using PatchManager.Planets.Overrides;
 using SpaceWarp2.API.Loading;
+using SpaceWarp2.API.Mods;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -16,8 +17,6 @@ namespace PatchManager.Planets
     /// </summary>
     public class PlanetsModule : BaseModule
     {
-        private const string MOD_ID = "PatchManager";
-
         private static void RegisterAtmosphereOverride(TextAsset atmosphereOverride)
         {
             var atmosphere = JsonConvert.DeserializeObject<AtmosphereOverride>(atmosphereOverride.text);
@@ -49,21 +48,21 @@ namespace PatchManager.Planets
         public override void RegisterPlaySessionActions()
         {
             Loading.AddSetLoadingAction<TextAsset>(
-                MOD_ID,
+                ModIds.PATCH_MANAGER,
                 "atmosphere overrides",
                 "atmosphere_overrides",
                 RegisterAtmosphereOverride,
                 OverrideManager.AtmosphereOverrides.Clear
             );
             Loading.AddSetLoadingAction<TextAsset>(
-                MOD_ID,
+                ModIds.PATCH_MANAGER,
                 "volume cloud overrides",
                 "volume_cloud_overrides",
                 RegisterVolumeCloudOverride,
                 OverrideManager.VolumeCloudOverrides.Clear
             );
             // Bodies record their scale as they are created, so a body the next set lacks must not keep this set's
-            Loading.AddSetAction(MOD_ID, "body scales", () => OverrideManager.Scales.Clear(), done => done());
+            Loading.AddSetAction(ModIds.PATCH_MANAGER, "body scales", () => OverrideManager.Scales.Clear(), done => done());
         }
     }
 }

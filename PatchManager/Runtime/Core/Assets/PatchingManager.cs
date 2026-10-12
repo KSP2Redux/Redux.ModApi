@@ -367,7 +367,7 @@ namespace PatchManager.Core.Assets
             {
                 var owner = OwnerOf(key, folderByMod);
                 if (owner == null ||
-                    string.Equals(owner, Universe.EXPLICIT_MOD_ID, StringComparison.OrdinalIgnoreCase) ||
+                    FeatureRegistry.IsAlwaysEnabled(owner) ||
                     enabled.Contains(FeatureRegistry.DefaultFor(owner)))
                 {
                     scoped[key] = hash;
@@ -412,7 +412,7 @@ namespace PatchManager.Core.Assets
             ISet<string> enabled
         ) => errorsByMod
             .Where(pair =>
-                string.Equals(pair.Key, Universe.EXPLICIT_MOD_ID, StringComparison.OrdinalIgnoreCase) ||
+                FeatureRegistry.IsAlwaysEnabled(pair.Key) ||
                 enabled.Contains(FeatureRegistry.DefaultFor(pair.Key)))
             .SelectMany(pair => pair.Value)
             .ToList();

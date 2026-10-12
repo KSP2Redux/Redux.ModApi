@@ -32,6 +32,9 @@ namespace SpaceWarp2.API.Lifecycle
         /// </summary>
         public const string ConsoleModId = "spacewarp-console";
 
+        // The global holding the id of the mod an environment belongs to
+        private const string MOD_ID_GLOBAL = "ModId";
+
         private static readonly ModScriptLoader Loader = new();
         // Taken on first use, so tracking feature environments does not need the log provider to be set up
         private static ILogger _logger;
@@ -48,6 +51,20 @@ namespace SpaceWarp2.API.Lifecycle
         {
             FeatureEnvironments.Clear();
         }
+
+        /// <summary>
+        /// Gets the mod a script environment belongs to.
+        /// </summary>
+        /// <param name="env">The environment's globals, or null.</param>
+        /// <returns>The mod id, or null for an environment no mod owns.</returns>
+        public static string? ModIdOf(Table? env) => env?.Get(MOD_ID_GLOBAL).CastToString();
+
+        /// <summary>
+        /// Gets the mod whose script is making a call.
+        /// </summary>
+        /// <param name="context">The calling script's context.</param>
+        /// <returns>The mod id, or null for a script no mod owns.</returns>
+        public static string? ModIdOf(ScriptExecutionContext context) => ModIdOf(context.CurrentGlobalEnv);
 
         /// <summary>
         /// Starts keeping an environment's <c>Enabled</c> in step with the active feature set, and sets it now.
@@ -204,7 +221,7 @@ namespace SpaceWarp2.API.Lifecycle
             meta["__index"] = DynValue.NewTable(root);
             child.MetaTable = meta;
 
-            child["ModId"] = modId;
+            child[MOD_ID_GLOBAL] = modId;
             if (location != null)
             {
                 child["Location"] = location;

@@ -24,7 +24,7 @@ namespace SpaceWarp2.UI.API.Appbar
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void RegisterAppButton(string text, string id, Sprite icon, Action<bool> func) =>
-            RegisterAppButton(OwnerOf(Assembly.GetCallingAssembly()), text, id, icon, func);
+            RegisterAppButton(PluginList.ModIdOf(Assembly.GetCallingAssembly()), text, id, icon, func);
 
         /// <summary>
         /// Registers a flight app bar button that shows only while its mod is enabled in the active feature set.
@@ -46,12 +46,12 @@ namespace SpaceWarp2.UI.API.Appbar
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void RegisterAppButton(string text, string id, Texture2D icon, Action<bool> func) =>
-            RegisterAppButton(OwnerOf(Assembly.GetCallingAssembly()), text, id, GetAppBarIconFromTexture(icon), func);
+            RegisterAppButton(PluginList.ModIdOf(Assembly.GetCallingAssembly()), text, id, GetAppBarIconFromTexture(icon), func);
 
         // ReSharper disable once InconsistentNaming
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void RegisterOABAppButton(string text, string id, Sprite icon, Action<bool> func) =>
-            RegisterOABAppButton(OwnerOf(Assembly.GetCallingAssembly()), text, id, icon, func);
+            RegisterOABAppButton(PluginList.ModIdOf(Assembly.GetCallingAssembly()), text, id, icon, func);
 
         /// <summary>
         /// Registers an assembly building app bar button that shows only while its mod is enabled in the active
@@ -74,12 +74,12 @@ namespace SpaceWarp2.UI.API.Appbar
         // ReSharper disable once InconsistentNaming
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void RegisterOABAppButton(string text, string id, Texture2D icon, Action<bool> func) =>
-            RegisterOABAppButton(OwnerOf(Assembly.GetCallingAssembly()), text, id, GetAppBarIconFromTexture(icon), func);
+            RegisterOABAppButton(PluginList.ModIdOf(Assembly.GetCallingAssembly()), text, id, GetAppBarIconFromTexture(icon), func);
 
         // ReSharper disable once InconsistentNaming
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void RegisterKSCAppButton(string text, string id, Sprite icon, Action func) =>
-            RegisterKSCAppButton(OwnerOf(Assembly.GetCallingAssembly()), text, id, icon, func);
+            RegisterKSCAppButton(PluginList.ModIdOf(Assembly.GetCallingAssembly()), text, id, icon, func);
 
         /// <summary>
         /// Registers a space center app bar button that shows only while its mod is enabled in the active feature
@@ -101,7 +101,7 @@ namespace SpaceWarp2.UI.API.Appbar
         // ReSharper disable once InconsistentNaming
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void RegisterKSCAppButton(string text, string id, Texture2D icon, Action func) =>
-            RegisterKSCAppButton(OwnerOf(Assembly.GetCallingAssembly()), text, id, GetAppBarIconFromTexture(icon), func);
+            RegisterKSCAppButton(PluginList.ModIdOf(Assembly.GetCallingAssembly()), text, id, GetAppBarIconFromTexture(icon), func);
 
         /// <summary>
         /// Removes a button from every app bar, for a button registered for one campaign only.
@@ -175,8 +175,5 @@ namespace SpaceWarp2.UI.API.Appbar
                 IAppbarBackend.Instance.AddKSCButton(button.text, button.icon, button.ID, button.action);
             }
         }
-
-        // A button registered through the old overloads belongs to the mod whose plugin lives in the calling assembly
-        private static string OwnerOf(Assembly assembly) => PluginList.ModIdOf(assembly);
     }
 }

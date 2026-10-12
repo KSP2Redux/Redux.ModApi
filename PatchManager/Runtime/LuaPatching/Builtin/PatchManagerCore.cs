@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using MoonSharp.Interpreter;
 using SpaceWarp2.API.Features;
+using SpaceWarp2.API.Lifecycle;
 using SpaceWarp2.API.Loading;
 
 namespace PatchManager.LuaPatching.Builtin
@@ -58,7 +59,7 @@ namespace PatchManager.LuaPatching.Builtin
             if (!Universe.Converters.TryGetValue(converter, out var converterInstance))
                 throw new ScriptRuntimeException($"Unknown converter {converter}");
 
-            var modId = context.CurrentGlobalEnv.Get("ModId").CastToString();
+            var modId = ModScriptRuntime.ModIdOf(context);
             var actualName = modId + ':' + name;
 
             var newPatch = new PatchDefinition
@@ -118,7 +119,7 @@ namespace PatchManager.LuaPatching.Builtin
             if (!_universe.RegistrationOpen)
                 throw new ScriptRuntimeException($"PM:Pass('{name}') can only be called during patch registration, not from a Do callback or at runtime.");
 
-            return _universe.GetOrAddPass(context.CurrentGlobalEnv.Get("ModId").CastToString(), name);
+            return _universe.GetOrAddPass(ModScriptRuntime.ModIdOf(context), name);
         }
 
         /// <summary>
@@ -138,9 +139,7 @@ namespace PatchManager.LuaPatching.Builtin
                 );
             }
 
-            var modId = context.CurrentGlobalEnv
-                .Get("ModId")
-                .CastToString();
+            var modId = ModScriptRuntime.ModIdOf(context);
             if (target.Type != DataType.String)
             {
                 throw new ScriptRuntimeException(
@@ -172,7 +171,7 @@ namespace PatchManager.LuaPatching.Builtin
         public LuaAsset New(ScriptExecutionContext context, string converter, string label, string name, DynValue newObject)
         {
             var asset = New(converter, label, name, newObject);
-            asset.ModId = ModIdOf(context);
+            asset.ModId = ModScriptRuntime.ModIdOf(context);
             asset.NeedsFeatures.UnionWith(_scopedFeatures);
             return asset;
         }
@@ -190,7 +189,7 @@ namespace PatchManager.LuaPatching.Builtin
                 throw new ScriptRuntimeException($"PM:DefineFeature('{id}') can only be called during patch registration.");
 
             _universe.FeatureRegistry.Define(
-                ModIdOf(context),
+                ModScriptRuntime.ModIdOf(context),
                 id,
                 StringsIn(options?.Get("requires")),
                 StringsIn(options?.Get("conflicts"))
@@ -210,7 +209,7 @@ namespace PatchManager.LuaPatching.Builtin
         /// <param name="body">The function whose registrations get the feature.</param>
         public void WithFeature(ScriptExecutionContext context, string id, Closure body)
         {
-            _scopedFeatures.Add(FeatureRegistry.Qualify(ModIdOf(context), id));
+            _scopedFeatures.Add(FeatureRegistry.Qualify(ModScriptRuntime.ModIdOf(context), id));
             try
             {
                 body.Call();
@@ -251,7 +250,7 @@ namespace PatchManager.LuaPatching.Builtin
         /// <returns>The registered action, for gating it with features.</returns>
         public FeatureGatedAction OnSetActivated(ScriptExecutionContext context, Closure callback)
         {
-            string modId = ModIdOf(context);
+            string modId = ModScriptRuntime.ModIdOf(context);
             Script script = context.GetScript();
             FeatureGatedAction action = Loading.AddSetAction(
                 modId,
@@ -289,7 +288,7 @@ namespace PatchManager.LuaPatching.Builtin
             if (!_universe.RegistrationOpen)
                 throw new ScriptRuntimeException("Run callbacks can only be registered during patch registration.");
 
-            string modId = ModIdOf(context);
+            string modId = ModScriptRuntime.ModIdOf(context);
             Script script = context.GetScript();
             var registered = new FeatureGatedAction(modId, $"{modId} run callback", done =>
             {
@@ -316,9 +315,6 @@ namespace PatchManager.LuaPatching.Builtin
 
             return DynValue.NewTable(set);
         }
-
-        private static string ModIdOf(ScriptExecutionContext context) =>
-            context.CurrentGlobalEnv.Get("ModId").CastToString();
 
         private static IEnumerable<string> StringsIn(DynValue list)
         {

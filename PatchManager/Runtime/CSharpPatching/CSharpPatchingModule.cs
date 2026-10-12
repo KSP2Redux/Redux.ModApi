@@ -7,6 +7,7 @@ using PatchManager.CSharpPatching.Attributes;
 using PatchManager.LuaPatching;
 using PatchManager.Shared;
 using PatchManager.Shared.Modules;
+using SpaceWarp2.API.Mods;
 using SpaceWarp2.API.Reflection;
 
 namespace PatchManager.CSharpPatching
@@ -48,7 +49,13 @@ namespace PatchManager.CSharpPatching
                         continue;
                     }
 
-                    var modId = string.IsNullOrEmpty(pmPatch.ModId) ? PatchModId.Resolve(type) : pmPatch.ModId;
+                    var modId = string.IsNullOrEmpty(pmPatch.ModId) ? PluginList.ModIdOf(type.Assembly) : pmPatch.ModId;
+                    if (modId == null)
+                    {
+                        Logging.LogError(
+                            $"CSharpPatchingModule: [PMPatch] class {type.FullName} names no ModId, and no single mod loaded its assembly");
+                        continue;
+                    }
 
                     foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic |
                                                            BindingFlags.Instance | BindingFlags.Static))

@@ -11,6 +11,7 @@ using PatchManager.Science;
 using PatchManager.Shared;
 using PatchManager.Shared.Modules;
 using Redux.ExtraModTypes;
+using SpaceWarp2.API.Mods;
 using UnityEngine.UIElements;
 
 namespace PatchManager
@@ -114,7 +115,7 @@ namespace PatchManager
                 return detailsContainer;
             }
 
-            SpaceWarp2.UI.API.ModList.RegisterDetailsFoldoutGenerator("PatchManager", GeneratePatchManagerText);
+            SpaceWarp2.UI.API.ModList.RegisterDetailsFoldoutGenerator(ModIds.PATCH_MANAGER, GeneratePatchManagerText);
         }
     }
 }

@@ -79,7 +79,7 @@ namespace SpaceWarp2.API.Lifecycle
                 return root == null ? null : FindInFolder(root, split[1]);
             }
 
-            var hostRoot = GetRoot(globalContext.Get("ModId").CastToString());
+            var hostRoot = GetRoot(ModScriptRuntime.ModIdOf(globalContext));
             return hostRoot == null ? null : FindInFolder(hostRoot, modname);
         }
     }

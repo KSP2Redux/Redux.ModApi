@@ -32,12 +32,6 @@ namespace PatchManager.LuaPatching
     /// </remarks>
     public class Universe
     {
-        /// <summary>
-        /// The mod whose registrations carry no implicit default feature. Redux's patches each state the feature
-        /// they belong to.
-        /// </summary>
-        public const string EXPLICIT_MOD_ID = "Ksp2Redux";
-
         // Packs, game modes and difficulty options are chosen before a set exists, so every set sees all of them
         private static readonly HashSet<string> GlobalLabels = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -80,7 +74,7 @@ namespace PatchManager.LuaPatching
 
             if (
                 !string.IsNullOrEmpty(modId)
-                && !string.Equals(modId, EXPLICIT_MOD_ID, StringComparison.OrdinalIgnoreCase)
+                && !FeatureRegistry.IsAlwaysEnabled(modId)
                 && !enabled.Contains(FeatureRegistry.DefaultFor(modId))
             )
             {
@@ -258,10 +252,7 @@ namespace PatchManager.LuaPatching
             var enabled = (EnabledFeatures ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)).ToList();
             foreach (var callback in callbacks)
             {
-                // Redux's registrations carry no implicit default feature, so its own counts as on for them
-                bool isExplicit = string.Equals(callback.ModId, EXPLICIT_MOD_ID, StringComparison.OrdinalIgnoreCase);
-                var seen = isExplicit ? enabled.Append(FeatureRegistry.DefaultFor(callback.ModId)).ToList() : enabled;
-                if (!callback.AppliesIn(seen))
+                if (!callback.AppliesIn(enabled))
                     continue;
 
                 try

@@ -56,15 +56,22 @@ namespace SpaceWarp2.API.Mods
         public static SpaceWarpPluginDescriptor? TryGetDescriptor(string guid) => AllEnabledAndActivePlugins.FirstOrDefault(item => item.Guid == guid);
 
         /// <summary>
-        /// Gets the mod whose plugin lives in an assembly, for registrations made through APIs that take no mod id.
+        /// Gets the mod an assembly belongs to, for registrations made through APIs that take no mod id.
         /// </summary>
+        /// <remarks>
+        /// The game assembly belongs to Redux, though SpaceWarp, Patch Manager and V-SwiFT compile into it too. A mod
+        /// that needs its own id there names it. Any other assembly belongs to the mod that loaded it, as its main
+        /// assembly or a library.
+        /// </remarks>
         /// <param name="assembly">The assembly.</param>
-        /// <returns>The mod's id, or null when no enabled plugin lives in the assembly, or several do, as Redux's core
-        /// mods all live in the game's own assembly.</returns>
+        /// <returns>The mod's id, or null when no enabled mod loaded the assembly, or several did.</returns>
         public static string? ModIdOf(System.Reflection.Assembly assembly)
         {
+            if (assembly == typeof(PluginList).Assembly)
+                return ModIds.KSP2_REDUX;
+
             var owners = AllEnabledAndActivePlugins
-                .Where(descriptor => descriptor.Plugin != null && descriptor.Plugin.GetType().Assembly == assembly)
+                .Where(descriptor => descriptor.Assemblies.Contains(assembly))
                 .Take(2)
                 .ToList();
             return owners.Count == 1 ? owners[0].Guid : null;
@@ -250,7 +257,7 @@ namespace SpaceWarp2.API.Mods
                 {
                     if (dependency.ID == "com.github.x606.spacewarp")
                     {
-                        dependency.ID = "SpaceWarp2";
+                        dependency.ID = ModIds.SPACE_WARP;
                     }
                 }
             }

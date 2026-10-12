@@ -58,7 +58,7 @@ namespace SpaceWarp2.API.Lifecycle
                 throw new ScriptRuntimeException($"SW.{phase} requires a ModId on the calling environment.");
             }
 
-            var modId = env.Get("ModId").CastToString();
+            var modId = ModScriptRuntime.ModIdOf(env);
             if (string.IsNullOrEmpty(modId))
             {
                 throw new ScriptRuntimeException($"SW.{phase} requires a ModId on the calling environment.");

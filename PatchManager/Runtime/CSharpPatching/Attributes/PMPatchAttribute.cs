@@ -11,7 +11,7 @@ namespace PatchManager.CSharpPatching.Attributes
     {
         /// <summary>
         /// The explicit mod ID patches in this class are namespaced under, or null to derive it from the
-        /// declaring assembly (its SpaceWarp plugin, or Redux for game code).
+        /// declaring assembly (the mod that loaded it, or Redux for game code).
         /// </summary>
         public string ModId { get; }
 

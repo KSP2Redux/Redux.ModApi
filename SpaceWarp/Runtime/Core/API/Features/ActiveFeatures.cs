@@ -67,8 +67,9 @@ namespace SpaceWarp2.API.Features
         /// Checks whether a mod's default feature is on in the active set.
         /// </summary>
         /// <param name="modId">The mod id.</param>
-        /// <returns>True if the mod is on, or if no set is active.</returns>
-        public static bool IsModEnabled(string modId) => IsEnabled(FeatureRegistry.DefaultFor(modId));
+        /// <returns>True if the mod is on, if it is on in every set, or if no set is active.</returns>
+        public static bool IsModEnabled(string modId) =>
+            FeatureRegistry.IsAlwaysEnabled(modId) || IsEnabled(FeatureRegistry.DefaultFor(modId));
 
         /// <summary>
         /// Checks whether a mod's runtime hooks run in the active feature set.
