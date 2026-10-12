@@ -118,8 +118,8 @@ namespace SpaceWarp2
                 if (plugin.IsKsp1)
                     continue;
 
-                // Space Warps addressables are already loaded by redux at this point
-                if (plugin.Guid != "spacewarp")
+                // SpaceWarp's addressables are already loaded by Redux at this point
+                if (plugin.Guid != ModIds.SPACE_WARP)
                     AfterGameLoadActions.Add(new LoadAddressablesAction(plugin));
 
                 AfterGameLoadActions.Add(new LoadLocalizationAction(plugin));
