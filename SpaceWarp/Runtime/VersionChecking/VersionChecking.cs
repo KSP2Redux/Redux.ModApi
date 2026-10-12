@@ -2,8 +2,6 @@
 
 using System;
 using System.Collections;
-using System.Linq;
-using System.Reflection;
 using System.Xml;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -13,9 +11,11 @@ using SpaceWarp2.Modules;
 using SpaceWarp2.API.Mods;
 using SpaceWarp2.API.Mods.JSON;
 using SpaceWarp2.API.Versions;
+using SpaceWarp2.UI.ModList;
 using UnityEngine;
 using UnityEngine.Networking;
 using ReduxManager = Redux.ReduxManager;
+using SpaceWarpUI = SpaceWarp2.UI.UI;
 
 namespace SpaceWarp2.VersionChecking;
 
@@ -105,32 +105,15 @@ public class VersionChecking : SpaceWarpModule
     /// </summary>
     public void CheckVersions()
     {
-        var uiModule = (SpaceWarpModule)AppDomain.CurrentDomain
-            .GetAssemblies()
-            .First(assembly => assembly.FullName.StartsWith("SpaceWarp2.UI"))
-            .GetTypes()
-            .First(type => type.FullName == "SpaceWarp2.UI.UI")
-            .GetField("Instance", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-            ?.GetValue(null)!;
-
-        FieldInfo? modListControllerField = uiModule
-            ?.GetType()
-            .GetField("ModListController", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
         Func<string, bool, bool> versionCheckCallback = (guid, isOutdated) =>
         {
-            object? modListController = modListControllerField?.GetValue(uiModule);
-
+            ModListController? modListController = SpaceWarpUI.Instance?.ModListController;
             if (modListController == null)
             {
                 return false;
             }
 
-            modListControllerField
-                .FieldType
-                .GetMethod("UpdateOutdated", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                ?.Invoke(modListController, new object[] { guid, isOutdated });
-
+            modListController.UpdateOutdated(guid, isOutdated);
             return true;
         };
 
