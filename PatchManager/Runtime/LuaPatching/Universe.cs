@@ -190,9 +190,10 @@ namespace PatchManager.LuaPatching
         public List<LuaAsset> AllNewAssets = new();
 
         /// <summary>
-        /// The features the run is building for, or <c>null</c> to run every registration regardless of features.
+        /// The features the run is building for, the active set, or <c>null</c> before one activates to run every
+        /// registration regardless of features.
         /// </summary>
-        public ISet<string> EnabledFeatures;
+        public ISet<string> EnabledFeatures => ActiveFeatures.EnabledSet;
 
         /// <summary>
         /// The registry that <c>PM:DefineFeature</c> declares features into.

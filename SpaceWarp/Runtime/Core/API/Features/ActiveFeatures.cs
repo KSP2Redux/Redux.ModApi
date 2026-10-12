@@ -14,7 +14,8 @@ namespace SpaceWarp2.API.Features
     /// </summary>
     /// <remarks>
     /// Before any set activates, every feature reads as enabled, since the main menu's set that boot activates turns
-    /// on every installed mod.
+    /// on every installed mod. This is the only copy of the active set. Patch Manager's runs and the asset gate read
+    /// it from here.
     /// </remarks>
     [PublicAPI]
     public static class ActiveFeatures
@@ -36,6 +37,11 @@ namespace SpaceWarp2.API.Features
         /// Gets the enabled feature ids, or null before any set has activated.
         /// </summary>
         public static IReadOnlyCollection<string>? Enabled => _enabled;
+
+        /// <summary>
+        /// Gets the enabled feature ids as a case-insensitive set, or null before any set has activated.
+        /// </summary>
+        internal static ISet<string>? EnabledSet => _enabled;
 
         /// <summary>
         /// Makes a set the active one, and updates every plugin's <see cref="FeatureAttribute" /> fields and every mod

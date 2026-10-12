@@ -237,10 +237,8 @@ namespace PatchManager.Core.Assets
         /// <param name="features">The set's enabled features.</param>
         public static void ActivateSet(IEnumerable<string> features)
         {
-            Universe.EnabledFeatures = new HashSet<string>(features, StringComparer.OrdinalIgnoreCase);
+            ActiveFeatures.Activate(features);
             Logging.LogInfo($"Patching for {Universe.EnabledFeatures.Count} enabled feature(s)");
-            FeatureAssetIndex.Activate(Universe.EnabledFeatures);
-            ActiveFeatures.Activate(Universe.EnabledFeatures);
             var setId = SetIdOf(Universe.EnabledFeatures);
             CacheManager.UseSet(setId);
             var ordered = Universe.EnabledFeatures.OrderBy(id => id, StringComparer.OrdinalIgnoreCase);
