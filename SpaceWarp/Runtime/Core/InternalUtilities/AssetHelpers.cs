@@ -50,7 +50,7 @@ internal static class AssetHelpers
         foreach (var i2CsvFile in info.GetFiles("*.i2csv", SearchOption.AllDirectories))
         {
             var i2CsvData = File.ReadAllText(i2CsvFile.FullName).Replace("\r\n", "\n");
-            ILocalizer.Instance.AddCsvSource(i2CsvData);
+            ILocalizer.Instance.AddI2CsvSource(i2CsvData);
             loadedCount++;
         }
 
