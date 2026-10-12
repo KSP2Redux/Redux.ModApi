@@ -186,7 +186,7 @@ namespace PatchManager.LuaPatching.Builtin
             if (!_universe.RegistrationOpen)
                 throw new ScriptRuntimeException($"PM:DefineFeature('{id}') can only be called during patch registration.");
 
-            _universe.FeatureRegistry.Define(
+            FeatureRegistry.Instance.Define(
                 ModScriptRuntime.ModIdOf(context),
                 id,
                 StringsIn(options?.Get("requires")),

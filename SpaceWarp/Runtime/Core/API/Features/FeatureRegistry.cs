@@ -52,16 +52,20 @@ namespace SpaceWarp2.API.Features
         private readonly Dictionary<string, FeatureDefinition> _features = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        /// Gets the registry built from the installed, enabled mods once their load order is resolved.
+        /// Gets the one registry every feature is declared in: the loaded mods' swinfo features, then those Lua and C#
+        /// declare. It is replaced only when a play session starts, so a reference to it never goes stale.
         /// </summary>
         public static FeatureRegistry Instance { get; private set; } = new();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState() => Instance = new FeatureRegistry();
 
-        internal static void BuildInstance(IEnumerable<ModInfo> mods)
+        /// <summary>
+        /// Declares the loaded mods' swinfo features in <see cref="Instance" />, once their load order is resolved.
+        /// </summary>
+        /// <param name="mods">The loaded mods' infos.</param>
+        internal static void AddLoadedMods(IEnumerable<ModInfo> mods)
         {
-            var registry = new FeatureRegistry();
             foreach (ModInfo mod in mods)
             {
                 if (mod == null)
@@ -69,15 +73,13 @@ namespace SpaceWarp2.API.Features
 
                 try
                 {
-                    registry.AddMod(mod);
+                    Instance.AddMod(mod);
                 }
                 catch (Exception exception)
                 {
                     SpaceWarpPlugin.Logger.LogError($"Could not read the features of {mod.Name}: {exception.Message}");
                 }
             }
-
-            Instance = registry;
         }
 
         /// <summary>

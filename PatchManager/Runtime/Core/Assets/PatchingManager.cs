@@ -127,7 +127,6 @@ namespace PatchManager.Core.Assets
             loadedPlugins.AddRange(singleFileModIds);
             Universe = new(Logging.LogError, Logging.LogMessage,
                 loadedPlugins);
-            Universe.FeatureRegistry = FeatureRegistry.Instance;
         }
 
         /// <summary>
@@ -148,7 +147,7 @@ namespace PatchManager.Core.Assets
         internal static IReadOnlyCollection<string> MainMenuFeatures()
         {
             var installed = PluginList.AllEnabledAndActivePlugins.Select(descriptor => descriptor.Guid);
-            return MainMenuSet(Universe.FeatureRegistry, installed);
+            return MainMenuSet(FeatureRegistry.Instance, installed);
         }
 
         /// <summary>

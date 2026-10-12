@@ -91,7 +91,7 @@ namespace SpaceWarp2
             ModuleManager.LoadAllModules();
             PluginRegister.RegisterAllMods();
             PluginList.ResolveDependenciesAndLoadOrder();
-            FeatureRegistry.BuildInstance(PluginList.AllEnabledAndActivePlugins.Select(plugin => plugin.SWInfo));
+            FeatureRegistry.AddLoadedMods(PluginList.AllEnabledAndActivePlugins.Select(plugin => plugin.SWInfo));
             PluginList.LoadAllMods();
             SetupBeforeGameLoadActions();
             SetupAfterGameLoadActions();

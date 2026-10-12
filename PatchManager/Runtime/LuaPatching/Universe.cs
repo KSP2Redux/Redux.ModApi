@@ -141,11 +141,6 @@ namespace PatchManager.LuaPatching
         public ISet<string> EnabledFeatures => ActiveFeatures.EnabledSet;
 
         /// <summary>
-        /// The registry that <c>PM:DefineFeature</c> declares features into.
-        /// </summary>
-        public FeatureRegistry FeatureRegistry = new();
-
-        /// <summary>
         /// Gets the queued new assets whose features are on in <see cref="EnabledFeatures" />.
         /// </summary>
         public IEnumerable<LuaAsset> EnabledNewAssets => AllNewAssets.Where(
