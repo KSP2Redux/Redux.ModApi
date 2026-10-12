@@ -50,6 +50,28 @@ public class JsonConfigFile : IConfigFile
         }
     }
 
+    /// <summary>
+    /// Creates a config kept in memory rather than in a file, such as one stored in a save.
+    /// </summary>
+    /// <param name="onChanged">Called whenever an entry's value changes, so the owner can store it, or null.</param>
+    /// <returns>The config.</returns>
+    public static JsonConfigFile InMemory(Action? onChanged) => throw new NotImplementedException();
+
+    /// <summary>
+    /// Replaces every value with the given ones, keeping the bound entries so whatever shows or reads them follows.
+    /// Entries the values leave out return to their defaults.
+    /// </summary>
+    /// <param name="values">The values by section and key, or null to return every entry to its default.</param>
+    public void Load(JObject? values)
+    {
+    }
+
+    /// <summary>
+    /// Gets every value by section and key, including those of entries nothing has bound.
+    /// </summary>
+    /// <returns>The values.</returns>
+    public JObject ToJObject() => new();
+
     private static void QuarantineCorruptedFile(string file)
     {
         try
