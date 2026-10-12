@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using VSwift.Modules.Behaviours;
-using VSwift.Modules.Logging;
 
 namespace VSwift.Modules.Reverters
 {
@@ -32,7 +31,9 @@ namespace VSwift.Modules.Reverters
         /// <inheritdoc />
         public void Revert(Module_PartSwitch partSwitch, object? data, bool isStartingReset)
         {
-            if (isStartingReset) return;
+            if (isStartingReset)
+                return;
+
             foreach (var nodeName in DynamicNodeNames)
             {
                 if (partSwitch.OABPart.FindNodeWithTag(nodeName) is {} node)

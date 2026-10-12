@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 using VSwift.Modules.Behaviours;
-using VSwift.Modules.Logging;
 using VSwift.Modules.Reverters;
 
 namespace VSwift.Modules.Transformers
@@ -55,7 +54,7 @@ namespace VSwift.Modules.Transformers
                 var t = partSwitch.gameObject.transform.Find(activatedTransform);
                 if (ReferenceEquals(t,null) || t == null)
                 {
-                    IVSwiftLogger.Instance.LogError($"Could not find child of {partSwitch.gameObject.name} with name {activatedTransform}");
+                    VSwiftPlugin.Logger.LogError($"Could not find child of {partSwitch.gameObject.name} with name {activatedTransform}");
                     continue;
                 }
                 t.gameObject.SetActive(true);

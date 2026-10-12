@@ -11,7 +11,6 @@ using Newtonsoft.Json.Linq;
 using UnityEngine;
 using VSwift.Modules.Behaviours;
 using VSwift.Modules.InformationLoaders;
-using VSwift.Modules.Logging;
 using VSwift.Modules.Reverters;
 
 namespace VSwift.Modules.Transformers
@@ -58,7 +57,6 @@ namespace VSwift.Modules.Transformers
         /// <inheritdoc />
         public void ApplyInOab(Module_PartSwitch partSwitch)
         {
-            // IVSwiftLogger.Instance.LogInfo(Environment.StackTrace);
             var oabPart = (ObjectAssemblyPart)partSwitch.OABPart;
             var resourceContainers = Containers;
             if (resourceContainers is { Count: > 0 })
@@ -80,7 +78,9 @@ namespace VSwift.Modules.Transformers
                 resourceContainer.FreezeDefinitions();
                 oabPart.Container = resourceContainer;
             }
-            if (!oabPart.TryGetModule(typeof(Module_ResourceCapacities), out var module)) return;
+            if (!oabPart.TryGetModule(typeof(Module_ResourceCapacities), out var module))
+                return;
+
             var moduleResourceCapacities = (Module_ResourceCapacities)module;
             moduleResourceCapacities.Shutdown();
             moduleResourceCapacities.ValueChangeHandlers.Clear();

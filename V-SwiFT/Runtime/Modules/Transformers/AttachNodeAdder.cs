@@ -8,7 +8,6 @@ using KSP.Sim.Definitions;
 using Newtonsoft.Json;
 using UnityEngine;
 using VSwift.Modules.Behaviours;
-using VSwift.Modules.Logging;
 using VSwift.Modules.Reverters;
 
 namespace VSwift.Modules.Transformers

@@ -6,7 +6,6 @@ using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using VSwift.Modules.Behaviours;
-using VSwift.Modules.Logging;
 using VSwift.Modules.Reverters;
 using VSwift.Utilities;
 
@@ -77,15 +76,11 @@ namespace VSwift.Modules.Transformers
         private void LoadMaterial(string name, Action<Material> callback)
         {
             // TODO: Look at solely supporting addressables
-            if (name.StartsWith("addressables://"))
-            {
-                var addressableKey = name.Replace("addressables://", "");
-                GameManager.Instance.Assets.Load(addressableKey, callback);
-            }
-            else
-            {
+            if (!name.StartsWith("addressables://"))
                 throw new Exception($"Unknown material {name}");
-            }
+
+            var addressableKey = name.Replace("addressables://", "");
+            GameManager.Instance.Assets.Load(addressableKey, callback);
         }
 
         private void RecursivelySwitch(GameObject gameObject, string name, Material targetMat)
@@ -95,9 +90,9 @@ namespace VSwift.Modules.Transformers
             {
                 foreach (var material in renderer.materials)
                 {
-                    // IVSwiftLogger.Instance.LogInfo($"Attempting to see if I should switch {material.name} to {targetMat.name}, the name I am looking for is {name}");
-                    if (material.name.Replace(" (Clone)", "").Replace(" (Instance)", "") != name) continue;
-                    // IVSwiftLogger.Instance.LogInfo("Switched!");
+                    if (material.name.Replace(" (Clone)", "").Replace(" (Instance)", "") != name)
+                        continue;
+
                     material.CopyPropertiesFromMaterial(targetMat);
                 }
             }
@@ -114,7 +109,9 @@ namespace VSwift.Modules.Transformers
             {
                 foreach (var material in renderer.materials)
                 {
-                    if (material == null) continue;
+                    if (material == null)
+                        continue;
+
                     var name = material.name.Replace(" (Clone)", "").Replace(" (Instance)", "");
                     if (Swaps.ContainsKey(name)) yield return material;
                 }

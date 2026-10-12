@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 using VSwift.Modules.Behaviours;
 using VSwift.Modules.Extensions;
 using VSwift.Modules.Reverters;
-using VSwift.Modules.UI;
+using VSwift.UI;
 
 namespace VSwift.Modules.Transformers
 {
@@ -55,11 +55,13 @@ namespace VSwift.Modules.Transformers
         {
             var data = modulePartSwitch.OABPart.AvailablePart.PartData;
             var field = data.GetType().GetField(Key);
-            if (field == null) return new VisualElement();
+            if (field == null)
+                return new VisualElement();
+
             var value = field.GetValue(data);
             if (value != null && PartScalarTransformer.Visualizers.TryGetValue(Key, out var visualizer))
             {
-                return IVSwiftUI.Instance.CreateStatBlock(visualizer.locKey,
+                return VSwiftUI.CreateStatBlock(visualizer.locKey,
                     string.Format(visualizer.formatKey, visualizer.stringConverter(value.ToJToken())));
             }
             return new VisualElement();

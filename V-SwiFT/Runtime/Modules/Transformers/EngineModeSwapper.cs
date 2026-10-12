@@ -13,7 +13,7 @@ using VSwift.Modules.Behaviours;
 using VSwift.Modules.Extensions;
 using VSwift.Modules.InformationLoaders;
 using VSwift.Modules.Reverters;
-using VSwift.Modules.UI;
+using VSwift.UI;
 
 namespace VSwift.Modules.Transformers
 {
@@ -57,12 +57,16 @@ namespace VSwift.Modules.Transformers
         /// <inheritdoc />
         public void ApplyInOab(Module_PartSwitch partSwitch)
         {
-            if (!partSwitch.OABPart.TryGetModule(out Module_Engine moduleEngine)) return;
+            if (!partSwitch.OABPart.TryGetModule(out Module_Engine moduleEngine))
+                return;
+
             moduleEngine.Shutdown();
             var clonedData = moduleEngine.DataEngine.JsonClone();
             clonedData.engineModes = clonedData.engineModes.Select(x =>
             {
-                if (x == null) return x;
+                if (x == null)
+                    return x;
+
                 foreach (var engineMode in Modes.Where(engineMode => engineMode.engineID == x.engineID))
                 {
                     return engineMode;
@@ -85,18 +89,20 @@ namespace VSwift.Modules.Transformers
             return (typeof(EngineModeSwapLoader), JToken.Parse(IOProvider.ToJson(Modes)));
         }
 
-        private const string SingleMode = "SingleMode";
-        private const string MultiMode = "MultiMode";
+        private const string SINGLE_MODE = "SingleMode";
+        private const string MULTI_MODE = "MultiMode";
 
         /// <inheritdoc />
         public VisualElement? VisualizeInformation(Module_PartSwitch modulePartSwitch)
         {
             var database = GameManager.Instance.Game.ResourceDefinitionDatabase;
             var element = new VisualElement();
-            var engineModeString = Modes.Count != 1 ? MultiMode : SingleMode;
+            var engineModeString = Modes.Count != 1 ? MULTI_MODE : SINGLE_MODE;
             foreach (var engineMode in Modes)
             {
-                if (engineMode == null) continue;
+                if (engineMode == null)
+                    continue;
+
                 LocalizedString displayName = engineMode.EngineDisplayName;
 
                 // First show the propellant name
@@ -104,7 +110,7 @@ namespace VSwift.Modules.Transformers
 
                 LocalizedString propName = database
                     .GetDefinitionData(database.GetResourceIDFromName(propellant.mixtureName)).displayNameKey;
-                element.Add(IVSwiftUI.Instance.CreateStatBlock(GetLocalizedStatBlockName("Propellant"), propName));
+                element.Add(VSwiftUI.CreateStatBlock(GetLocalizedStatBlockName("Propellant"), propName));
 
                 // Next show the thrust
                 var vacuumThrust = engineMode.GetThrust(0, 1);
@@ -112,7 +118,7 @@ namespace VSwift.Modules.Transformers
                 var digitsVacuumThrust = Math.Max(3 - (int)Math.Floor(Math.Log10(vacuumThrust)), 0);
                 var digitsSeaLevelThrust = Math.Max(3 - (int)Math.Floor(Math.Log10(seaLevelThrust)), 0);
                 element.Add(
-                    IVSwiftUI.Instance.CreateStatBlock(
+                    VSwiftUI.CreateStatBlock(
                         GetLocalizedStatBlockName("Thrust"),
                         string.Format(new LocalizedString("VSwift/Thrust/SeaLevel"),seaLevelThrust.ToString($"N{digitsSeaLevelThrust}")) + "\n" +
                         string.Format(new LocalizedString("VSwift/Thrust/Vacuum"),vacuumThrust.ToString($"N{digitsVacuumThrust}"))
@@ -125,7 +131,7 @@ namespace VSwift.Modules.Transformers
                 var digitsVacuumIsp = Math.Max(3 - (int)Math.Floor(Math.Log10(vacuumIsp)), 0);
                 var digitsSeaLevelIsp = Math.Max(3 - (int)Math.Floor(Math.Log10(seaLevelIsp)), 0);
                 element.Add(
-                    IVSwiftUI.Instance.CreateStatBlock(
+                    VSwiftUI.CreateStatBlock(
                         GetLocalizedStatBlockName("ISP"),
                         string.Format(new LocalizedString("VSwift/ISP/SeaLevel"),seaLevelIsp.ToString($"N{digitsSeaLevelIsp}")) + "\n" +
                         string.Format(new LocalizedString("VSwift/ISP/Vacuum"),vacuumIsp.ToString($"N{digitsVacuumIsp}"))

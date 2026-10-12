@@ -5,7 +5,6 @@ using KSP.Modules;
 using KSP.Sim.Definitions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using VSwift.Modules.Logging;
 
 namespace VSwift.Modules.InformationLoaders
 {
@@ -25,7 +24,7 @@ namespace VSwift.Modules.InformationLoaders
 
             SerializedPartModule FilterModules(SerializedPartModule module)
             {
-                IVSwiftLogger.Instance.LogInfo($"Filtering module {module}");
+                VSwiftPlugin.Logger.LogInfo($"Filtering module {module}");
                 if (module.BehaviourType == typeof(Module_Engine))
                 {
                     module.ModuleData = module.ModuleData.Select(FilterData).ToList();
@@ -35,15 +34,19 @@ namespace VSwift.Modules.InformationLoaders
 
             SerializedModuleData FilterData(SerializedModuleData moduleData)
             {
-                IVSwiftLogger.Instance.LogInfo($"Filtering moduleData {moduleData.DataObject}");
-                if (moduleData.DataObject is not Data_Engine dataEngine) return moduleData;
+                VSwiftPlugin.Logger.LogInfo($"Filtering moduleData {moduleData.DataObject}");
+                if (moduleData.DataObject is not Data_Engine dataEngine)
+                    return moduleData;
+
                 List<Data_Engine.EngineMode> engineModes = new();
                 foreach (var engineMode in dataEngine.engineModes)
                 {
 
                     foreach (var engineModeTwo in modes)
                     {
-                        if (engineMode.engineID != engineModeTwo.engineID) continue;
+                        if (engineMode.engineID != engineModeTwo.engineID)
+                            continue;
+
                         engineModes.Add(engineModeTwo);
                         goto found;
                     }

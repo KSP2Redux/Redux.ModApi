@@ -1,40 +1,31 @@
-using System;
-using JetBrains.Annotations;
-using KSP.Assets;
-using KSP.Game;
+using UnityEngine;
 using UnityEngine.UIElements;
-using VSwift.Modules.Behaviours;
-using VSwift.Modules.UI;
-using VSwift.Modules.Variants;
 
 namespace VSwift.UI
 {
     /// <summary>
-    /// <see cref="Modules.UI.IVSwiftUI" /> implementation backed by UI Toolkit, displaying the part-switch popout window and constructing variant-info stat blocks.
+    /// Builds the stat blocks the part-switch popout shows for each variant.
     /// </summary>
-    public class VSwiftUI : IVSwiftUI
+    public static class VSwiftUI
     {
-        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+        /// <summary>
+        /// The stat block template, loaded by <see cref="VSwiftPlugin.OnInitialized" />.
+        /// </summary>
+        internal static VisualTreeAsset StatBlockContainer;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             StatBlockContainer = null;
         }
 
-        /// <inheritdoc />
-        public void ShowUIFor(Module_PartSwitch modulePartSwitch, VariantSet variantSet)
-        {
-            PartSwitchPopoutWindowController.ShowFor(modulePartSwitch, variantSet);
-        }
-
-        internal static VisualTreeAsset StatBlockContainer;
-
-        // _statBlockContainer ??= AssetManager.GetAsset<VisualTreeAsset>(
-        //     $"{VSwiftPlugin.ModGuid}/" +
-        //     "VSwift_ui/" +
-        //     "ui/partswitchpopout/partstatistic.uxml");
-        //
-        /// <inheritdoc />
-        public VisualElement CreateStatBlock(string statBlockTitle, string statBlockText)
+        /// <summary>
+        /// Creates a single-statistic visual element for variant-info display.
+        /// </summary>
+        /// <param name="statBlockTitle">The stat name (e.g. <c>Engine ISP - Reverse</c>).</param>
+        /// <param name="statBlockText">The stat value (e.g. <c>Sea Level 300s / Vacuum 1000000s</c>).</param>
+        /// <returns>The stat block visual element.</returns>
+        public static VisualElement CreateStatBlock(string statBlockTitle, string statBlockText)
         {
             var clone = StatBlockContainer.CloneTree();
             var container = clone.Q<VisualElement>("variant-stat");

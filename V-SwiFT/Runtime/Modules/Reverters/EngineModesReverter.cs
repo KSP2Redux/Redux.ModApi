@@ -4,7 +4,6 @@ using KSP.Modules;
 using UniLinq;
 using VSwift.Modules.Behaviours;
 using VSwift.Modules.Extensions;
-using VSwift.Modules.Logging;
 
 namespace VSwift.Modules.Reverters
 {
@@ -37,7 +36,9 @@ namespace VSwift.Modules.Reverters
         /// <inheritdoc />
         public void Revert(Module_PartSwitch partSwitch, object? data, bool isStartingReset)
         {
-            if (!partSwitch.OABPart.TryGetModule(out Module_Engine moduleEngine)) return;
+            if (!partSwitch.OABPart.TryGetModule(out Module_Engine moduleEngine))
+                return;
+
             moduleEngine.Shutdown();
             var clonedData = moduleEngine.DataEngine.JsonClone();
             clonedData.engineModes = ((List<Data_Engine.EngineMode>)data!).ToArray();

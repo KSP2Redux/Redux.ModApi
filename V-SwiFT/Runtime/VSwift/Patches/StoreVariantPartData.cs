@@ -9,7 +9,6 @@ using VSwift.Extensions;
 using VSwift.Modules.Behaviours;
 using VSwift.Modules.Components;
 using VSwift.Modules.Data;
-using VSwift.Modules.Logging;
 
 namespace VSwift.Patches
 {

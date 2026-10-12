@@ -3,7 +3,7 @@ using I2.Loc;
 using UnityEngine.UIElements;
 using VSwift.Modules.Behaviours;
 using VSwift.Modules.Reverters;
-using VSwift.Modules.UI;
+using VSwift.UI;
 
 namespace VSwift.Modules.Transformers
 {
@@ -49,7 +49,7 @@ namespace VSwift.Modules.Transformers
         {
             var originalMass = modulePartSwitch.OABPart.AvailablePart.Mass;
             var digits = Math.Max(3 - (int)Math.Floor(Math.Log10(originalMass)), 0);
-            return IVSwiftUI.Instance.CreateStatBlock(MassKey,
+            return VSwiftUI.CreateStatBlock(MassKey,
                 string.Format(DescKey, originalMass.ToString($"N{digits}")));
         }
     }

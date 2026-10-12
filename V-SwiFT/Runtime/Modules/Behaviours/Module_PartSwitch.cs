@@ -15,10 +15,9 @@ using Newtonsoft.Json.Linq;
 using UnityEngine;
 using VSwift.Modules.Components;
 using VSwift.Modules.Data;
-using VSwift.Modules.Logging;
 using VSwift.Modules.Reverters;
-using VSwift.Modules.UI;
 using VSwift.Modules.Variants;
+using VSwift.UI;
 
 namespace VSwift.Modules.Behaviours
 {
@@ -111,7 +110,7 @@ namespace VSwift.Modules.Behaviours
 
             void ShowUI()
             {
-                IVSwiftUI.Instance.ShowUIFor(this, variantSet);
+                PartSwitchPopoutWindowController.ShowFor(this, variantSet);
             }
         }
 
@@ -130,20 +129,22 @@ namespace VSwift.Modules.Behaviours
             variantSetDropdown.SetValue(_dataPartSwitch.ActiveVariants[j]);
             variantSetDropdown.OnChangedValue += newVariant =>
             {
-                IVSwiftLogger.Instance.LogInfo($"{OABPart.Name} switched variant to {newVariant}");
+                VSwiftPlugin.Logger.LogInfo($"{OABPart.Name} switched variant to {newVariant}");
                 try
                 {
                     SelectVariantInOab(j, newVariant);
                 }
                 catch (Exception e)
                 {
-                    IVSwiftLogger.Instance.LogError(e);
+                    VSwiftPlugin.Logger.LogError(e);
                 }
             };
             var list = new DropdownItemList();
             foreach (var variant in variantSet.Variants)
             {
-                if (!AreAllTechsUnlocked(variant.VariantTechs)) continue;
+                if (!AreAllTechsUnlocked(variant.VariantTechs))
+                    continue;
+
                 list.Add(variant.VariantId, new DropdownItem
                 {
                     key = variant.VariantId,
@@ -233,9 +234,7 @@ namespace VSwift.Modules.Behaviours
         public void QueuePamUpdate()
         {
             if (gameObject == null || !isActiveAndEnabled || !gameObject.activeInHierarchy)
-            {
                 return;
-            }
 
             StartCoroutine(UpdatePam());
         }
@@ -244,9 +243,7 @@ namespace VSwift.Modules.Behaviours
         {
             yield return new WaitForEndOfFrame();
             if (gameObject == null || !isActiveAndEnabled || !gameObject.activeInHierarchy)
-            {
                 yield break;
-            }
 
             var objectAssemblyPart = (ObjectAssemblyPart)OABPart;
             Game.PartsManager.IsVisible = true;
@@ -255,7 +252,8 @@ namespace VSwift.Modules.Behaviours
         }
 
         /// <summary>
-        /// Queues a coroutine that refreshes the part's color application after a half-second delay; falls back to immediate refresh when the part is not active.
+        /// Queues a coroutine that refreshes the part's color application after a half-second delay, or refreshes at once
+        /// when the part is not active.
         /// </summary>
         public void QueueUpdateColors()
         {
@@ -328,7 +326,9 @@ namespace VSwift.Modules.Behaviours
         private Dictionary<string, double> SnapshotContainerStoredUnits()
         {
             var snapshot = new Dictionary<string, double>();
-            if (OABPart is not ObjectAssemblyPart { Container: { } container }) return snapshot;
+            if (OABPart is not ObjectAssemblyPart { Container: { } container })
+                return snapshot;
+
             var database = GameManager.Instance.Game.ResourceDefinitionDatabase;
             foreach (var resourceID in container)
             {
@@ -339,8 +339,12 @@ namespace VSwift.Modules.Behaviours
 
         private void RestoreContainerStoredUnits(Dictionary<string, double> snapshot)
         {
-            if (snapshot.Count == 0) return;
-            if (OABPart is not ObjectAssemblyPart { Container: { } container }) return;
+            if (snapshot.Count == 0)
+                return;
+
+            if (OABPart is not ObjectAssemblyPart { Container: { } container })
+                return;
+
             var database = GameManager.Instance.Game.ResourceDefinitionDatabase;
             foreach (var resourceID in container)
             {
@@ -373,9 +377,7 @@ namespace VSwift.Modules.Behaviours
 
             VariantSet variantSet = _dataPartSwitch.VariantSets[variantSetIndex];
             if (variantSet.Variants.All(variant => variant.VariantId != variantId))
-            {
                 return;
-            }
 
             EnsureActiveVariant(variantSetIndex, variantSet);
             _dataPartSwitch.ActiveVariants[variantSetIndex] = variantId;
@@ -388,9 +390,7 @@ namespace VSwift.Modules.Behaviours
         private void ApplySelectionToSymmetrySet(int variantSetIndex, string variantId)
         {
             if (OABPart?.SymmetrySet?.Parts == null)
-            {
                 return;
-            }
 
             foreach (IObjectAssemblyPart symmetryPart in OABPart.SymmetrySet.Parts)
             {
@@ -405,9 +405,7 @@ namespace VSwift.Modules.Behaviours
 
                 VariantSet symmetryVariantSet = partSwitch.DataPartSwitch.VariantSets[variantSetIndex];
                 if (symmetryVariantSet.Variants.All(variant => variant.VariantId != variantId))
-                {
                     continue;
-                }
 
                 partSwitch.EnsureActiveVariant(variantSetIndex, symmetryVariantSet);
                 partSwitch.DataPartSwitch.ActiveVariants[variantSetIndex] = variantId;
@@ -437,9 +435,7 @@ namespace VSwift.Modules.Behaviours
             {
                 string defaultVariant = _dataPartSwitch.DefaultActiveVariants[index];
                 if (variantSet.Variants.Any(variant => variant.VariantId == defaultVariant))
-                {
                     return defaultVariant;
-                }
             }
 
             return variantSet.Variants.First().VariantId;
@@ -455,10 +451,8 @@ namespace VSwift.Modules.Behaviours
         private void ResetToOriginalState(bool isStarting=false,VariantSet? swapped=null)
         {
             _dataPartSwitch!.MassModifier = 0.0f;
-            // IVSwiftLogger.Instance.LogInfo("ResetToOriginalState() called");
             foreach (var (instance, data) in _storedState!.OriginalTransformerData)
             {
-                // IVSwiftLogger.Instance.LogInfo($"Reverting {instance} with data {data}");
                 if (!instance.RequiresInVariantSet || isStarting ||
                     (swapped != null && swapped.Variants.Any(x => x.Transformers.Any(y => y.Reverter == instance))))
                     instance.Revert(this, data, isStarting);
@@ -482,7 +476,9 @@ namespace VSwift.Modules.Behaviours
 
         private static bool AreAllTechsUnlocked(IEnumerable<string> techs)
         {
-            if (!GameManager.Instance.GameModeManager.IsGameModeFeatureEnabled("SciencePoints")) return true;
+            if (!GameManager.Instance.GameModeManager.IsGameModeFeatureEnabled("SciencePoints"))
+                return true;
+
             var scienceManager = GameManager.Instance.Game.ScienceManager;
             return techs.All(tech => scienceManager.IsNodeUnlocked(tech));
         }
@@ -491,7 +487,6 @@ namespace VSwift.Modules.Behaviours
         protected override void OnShutdown()
         {
             base.OnShutdown();
-            // IVSwiftLogger.Instance.LogInfo("Shutting Down");
             IsInitialized = false;
         }
 

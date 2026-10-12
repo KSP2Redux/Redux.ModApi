@@ -4,45 +4,38 @@ using JetBrains.Annotations;
 using KSP.Game;
 using Redux.ExtraModTypes;
 using SpaceWarp2;
+using SpaceWarp2.API.Logging;
 using SpaceWarp2.API.Mods;
-using VSwift.UI;
 using UitkForKsp2.API;
 using UnityEngine;
 using UnityEngine.UIElements;
-using VSwift.Logging;
-using VSwift.Modules.Logging;
-using VSwift.Modules.UI;
+using VSwift.UI;
+using ILogger = SpaceWarp2.API.Logging.ILogger;
 
 namespace VSwift
 {
     /// <summary>
-    /// V-SwiFT entry point as a SpaceWarp <see cref="KerbalMod" />, wiring up the logger and UI implementations and loading the part-switch popout window assets.
+    /// V-SwiFT entry point as a SpaceWarp <see cref="KerbalMod" />, loading the part-switch popout window assets.
     /// </summary>
     public class VSwiftPlugin : KerbalMod
     {
+        private static ILogger _logger;
+
         /// <summary>
         /// Gets the singleton plugin instance, set during <see cref="OnInitialized" />.
         /// </summary>
         [PublicAPI] public static VSwiftPlugin Instance { get; set; }
 
+        /// <summary>
+        /// Gets the logger V-SwiFT's modules, loaders and transformers write to.
+        /// </summary>
+        internal static ILogger Logger => _logger ??= LogManager.GetLogger(ModIds.V_SWIFT);
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             Instance = null;
-        }
-
-        // AppBar button IDs
-        internal const string ToolbarFlightButtonID = "BTN-VSwiftFlight";
-        internal const string ToolbarOabButtonID = "BTN-VSwiftOAB";
-        internal const string ToolbarKscButtonID = "BTN-VSwiftKSC";
-
-        /// <summary>
-        /// Wires the V-SwiFT logger and UI implementations into the module-side interfaces so the assembly that defines the gameplay modules can use them without referencing the main assembly.
-        /// </summary>
-        public void Awake()
-        {
-            IVSwiftLogger.Instance = new VSwiftReduxLogger(SWLogger);
-            IVSwiftUI.Instance = new VSwiftUI();
+            _logger = null;
         }
 
         /// <inheritdoc />

@@ -10,7 +10,7 @@ using VSwift.Modules.Behaviours;
 using VSwift.Modules.Extensions;
 using VSwift.Modules.InformationLoaders;
 using VSwift.Modules.Reverters;
-using VSwift.Modules.UI;
+using VSwift.UI;
 
 namespace VSwift.Modules.Transformers
 {
@@ -122,7 +122,7 @@ namespace VSwift.Modules.Transformers
         {
             if (Visualizers.TryGetValue(Key, out var visualizer))
             {
-                return IVSwiftUI.Instance.CreateStatBlock(visualizer.locKey,
+                return VSwiftUI.CreateStatBlock(visualizer.locKey,
                     string.Format(visualizer.formatKey, visualizer.stringConverter(Value)));
             }
             return new VisualElement();

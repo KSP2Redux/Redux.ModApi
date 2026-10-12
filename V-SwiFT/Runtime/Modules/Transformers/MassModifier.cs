@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using VSwift.Modules.Behaviours;
 using VSwift.Modules.Reverters;
-using VSwift.Modules.UI;
+using VSwift.UI;
 
 namespace VSwift.Modules.Transformers
 {
@@ -60,7 +60,7 @@ namespace VSwift.Modules.Transformers
         public VisualElement? VisualizeInformation(Module_PartSwitch modulePartSwitch)
         {
             var digits = Math.Max(3 - (int)Math.Floor(Math.Log10(Modifier)), 0);
-            return IVSwiftUI.Instance.CreateStatBlock(MassKey,
+            return VSwiftUI.CreateStatBlock(MassKey,
                 string.Format(DescKey, (Modifier >= 0.0 ? "+" : "") + Modifier.ToString($"N{digits}")));
         }
     }

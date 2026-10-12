@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using VSwift.Modules.Behaviours;
 using VSwift.Modules.Reverters;
-using VSwift.Modules.UI;
+using VSwift.UI;
 
 namespace VSwift.Modules.Transformers
 {
@@ -60,7 +60,7 @@ namespace VSwift.Modules.Transformers
         /// <inheritdoc />
         public VisualElement? VisualizeInformation(Module_PartSwitch modulePartSwitch)
         {
-            return IVSwiftUI.Instance.CreateStatBlock(new LocalizedString(TitleKey).ToString() ?? TitleKey, new LocalizedString(DescriptionKey).ToString() ?? DescriptionKey);
+            return VSwiftUI.CreateStatBlock(new LocalizedString(TitleKey).ToString() ?? TitleKey, new LocalizedString(DescriptionKey).ToString() ?? DescriptionKey);
         }
     }
 }

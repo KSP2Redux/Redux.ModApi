@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using VSwift.Modules.Behaviours;
-using VSwift.Modules.Logging;
 
 namespace VSwift.Modules.Reverters
 {
@@ -32,7 +31,7 @@ namespace VSwift.Modules.Reverters
                 var t = partSwitch.gameObject.transform.Find(transformName);
                 if (ReferenceEquals(t, null) || t == null)
                 {
-                    IVSwiftLogger.Instance?.LogError($"Could not find child of {partSwitch.gameObject.name} with name {transformName}");
+                    VSwiftPlugin.Logger.LogError($"Could not find child of {partSwitch.gameObject.name} with name {transformName}");
                     continue;
                 }
                 t.gameObject.SetActive(false);
