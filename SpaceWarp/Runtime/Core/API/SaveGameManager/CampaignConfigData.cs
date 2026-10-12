@@ -31,7 +31,7 @@ namespace SpaceWarp2.API.SaveGameManager
         /// </summary>
         public static void Register()
         {
-            Dictionary<string, JsonConfigFile> configs = PluginList.AllEnabledAndActivePlugins
+            Dictionary<string, JsonConfigFile> configs = PluginList.AllLoadedPlugins
                 .ToDictionary(mod => mod.Guid, mod => mod.CampaignConfigFile);
             ModSaves.RegisterSaveLoadGameData<CampaignConfigData>(
                 SAVE_ID,

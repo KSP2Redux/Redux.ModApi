@@ -91,7 +91,7 @@ namespace SpaceWarp2
             ModuleManager.LoadAllModules();
             PluginRegister.RegisterAllMods();
             PluginList.ResolveDependenciesAndLoadOrder();
-            FeatureRegistry.AddLoadedMods(PluginList.AllEnabledAndActivePlugins.Select(plugin => plugin.SWInfo));
+            FeatureRegistry.AddLoadedMods(PluginList.AllLoadedPlugins.Select(plugin => plugin.SWInfo));
             PluginList.LoadAllMods();
             SetupBeforeGameLoadActions();
             SetupAfterGameLoadActions();
@@ -102,7 +102,7 @@ namespace SpaceWarp2
 
         private static void SetupBeforeGameLoadActions()
         {
-            foreach (var plugin in PluginList.AllEnabledAndActivePlugins)
+            foreach (var plugin in PluginList.AllLoadedPlugins)
             {
                 if (plugin.IsKsp1)
                     continue;
@@ -113,7 +113,7 @@ namespace SpaceWarp2
         private static void SetupAfterGameLoadActions()
         {
 
-            foreach (var plugin in PluginList.AllEnabledAndActivePlugins)
+            foreach (var plugin in PluginList.AllLoadedPlugins)
             {
                 if (plugin.IsKsp1)
                     continue;
@@ -137,7 +137,7 @@ namespace SpaceWarp2
                 AfterGameLoadActions.Add(actionGenerator());
             }
 
-            foreach (var plugin in PluginList.AllEnabledAndActivePlugins)
+            foreach (var plugin in PluginList.AllLoadedPlugins)
             {
                 if (plugin.IsKsp1)
                     continue;
@@ -145,7 +145,7 @@ namespace SpaceWarp2
                 AfterGameLoadActions.Add(new InitializeModAction(plugin));
             }
 
-            foreach (var plugin in PluginList.AllEnabledAndActivePlugins)
+            foreach (var plugin in PluginList.AllLoadedPlugins)
             {
                 if (plugin.IsKsp1)
                     continue;

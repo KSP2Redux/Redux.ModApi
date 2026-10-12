@@ -51,7 +51,7 @@ namespace SpaceWarp2.API.Features
         public static void Activate(IEnumerable<string>? features)
         {
             _enabled = features == null ? null : new HashSet<string>(features, StringComparer.OrdinalIgnoreCase);
-            foreach (SpaceWarpPluginDescriptor descriptor in PluginList.AllEnabledAndActivePlugins)
+            foreach (SpaceWarpPluginDescriptor descriptor in PluginList.AllLoadedPlugins)
             {
                 if (descriptor.Plugin != null)
                 {

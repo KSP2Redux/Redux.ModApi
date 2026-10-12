@@ -25,7 +25,7 @@ using UnityEngine;
 //     public void LoadScreens(Curtain curtain)
 //     {
 //         List<string> allKeysToAdd = new();
-//         foreach (var mod in PluginList.AllEnabledAndActivePlugins.Where(x => x.DoLoadingActions))
+//         foreach (var mod in PluginList.AllLoadedPlugins.Where(x => x.DoLoadingActions))
 //         {
 //             var directoryInfo = new DirectoryInfo(Path.Combine(mod.Folder.FullName, "assets", "loading_screens"));
 //             if (!directoryInfo.Exists) continue;

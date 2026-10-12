@@ -123,7 +123,7 @@ namespace PatchManager.Core.Assets
         /// <param name="singleFileModIds">Mod IDs for single-file patches that are not registered as plugins.</param>
         public static void GenerateUniverse(HashSet<string> singleFileModIds)
         {
-            var loadedPlugins = PluginList.AllEnabledAndActivePlugins.Select(x => x.Guid).ToList();
+            var loadedPlugins = PluginList.AllLoadedPlugins.Select(x => x.Guid).ToList();
             loadedPlugins.AddRange(singleFileModIds);
             Universe = new(Logging.LogError, Logging.LogMessage,
                 loadedPlugins);
@@ -146,7 +146,7 @@ namespace PatchManager.Core.Assets
         /// <returns>The enabled feature ids.</returns>
         internal static IReadOnlyCollection<string> MainMenuFeatures()
         {
-            var installed = PluginList.AllEnabledAndActivePlugins.Select(descriptor => descriptor.Guid);
+            var installed = PluginList.AllLoadedPlugins.Select(descriptor => descriptor.Guid);
             return MainMenuSet(FeatureRegistry.Instance, installed);
         }
 
@@ -314,7 +314,7 @@ namespace PatchManager.Core.Assets
 
         private static void ResolvePrefabPatchPlans(Action resolve, Action<string> reject)
         {
-            var manifestSources = PluginList.AllEnabledAndActivePlugins
+            var manifestSources = PluginList.AllLoadedPlugins
                 .Where(descriptor => !string.IsNullOrWhiteSpace(descriptor.AddressablePrefabPatchLabel))
                 .Select(descriptor => new PrefabPatchManifestSource
                 {
@@ -425,7 +425,7 @@ namespace PatchManager.Core.Assets
         // Every pack's and every single-player save's set, whose caches eviction keeps whatever their age
         private static ISet<string> PinnedSetIds()
         {
-            var installed = PluginList.AllEnabledAndActivePlugins.Select(descriptor => descriptor.Guid);
+            var installed = PluginList.AllLoadedPlugins.Select(descriptor => descriptor.Guid);
             var packs = GameManager.Instance?.CampaignPacks?.AllCampaignPacks()
                     .Select(pack => (IReadOnlyCollection<string>)pack.Features)
                 ?? Enumerable.Empty<IReadOnlyCollection<string>>();
@@ -483,7 +483,7 @@ namespace PatchManager.Core.Assets
         /// </remarks>
         public static void HashScriptFiles()
         {
-            foreach (var descriptor in PluginList.AllEnabledAndActivePlugins)
+            foreach (var descriptor in PluginList.AllLoadedPlugins)
             {
                 // KSP1 mods carry no Lua and their folders are whole GameData trees, so sweeping them is a lot
                 // of directory walking for nothing.
@@ -538,7 +538,7 @@ namespace PatchManager.Core.Assets
         /// </summary>
         public static void CollectScriptResults()
         {
-            foreach (var descriptor in PluginList.AllEnabledAndActivePlugins)
+            foreach (var descriptor in PluginList.AllLoadedPlugins)
             {
                 foreach (var script in descriptor.LoadedScripts)
                 {
@@ -564,7 +564,7 @@ namespace PatchManager.Core.Assets
         public static bool InvalidateCacheIfNeeded()
         {
             var folderByMod = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var descriptor in PluginList.AllEnabledAndActivePlugins)
+            foreach (var descriptor in PluginList.AllLoadedPlugins)
             {
                 folderByMod[descriptor.Guid] = descriptor.Folder?.FullName;
                 // A mod's manifest stands in for its content assets, whose versions it names

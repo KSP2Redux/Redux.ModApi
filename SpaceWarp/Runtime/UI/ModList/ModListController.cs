@@ -142,9 +142,7 @@ namespace SpaceWarp2.UI.ModList
         private void OnEnable()
         {
             if (_isLoaded)
-            {
                 return;
-            }
 
             // Prevent re-entry. The deferred root callback completes the one-time load.
             _isLoaded = true;
@@ -245,12 +243,12 @@ namespace SpaceWarp2.UI.ModList
             _detailsConflictList = _container.Q<VisualElement>("details-conflicts-list");
 
             // Show only categories that have any mods in them
-            if (PluginList.AllEnabledAndActivePlugins.Any(x => !x.IsCore && !x.IsKsp1))
+            if (PluginList.AllLoadedPlugins.Any(x => !x.IsCore && !x.IsKsp1))
             {
                 _enabledModFoldout.style.display = DisplayStyle.Flex;
             }
 
-            if (PluginList.AllEnabledAndActivePlugins.Any(x => x.IsKsp1))
+            if (PluginList.AllLoadedPlugins.Any(x => x.IsKsp1))
             {
                 _ksp1ModFoldout.style.display = DisplayStyle.Flex;
             }
@@ -268,7 +266,7 @@ namespace SpaceWarp2.UI.ModList
 
         private void FillModLists()
         {
-            foreach (var plugin in PluginList.AllEnabledAndActivePlugins)
+            foreach (var plugin in PluginList.AllLoadedPlugins)
             {
                 if (plugin.IsCore)
                 {
@@ -640,7 +638,9 @@ namespace SpaceWarp2.UI.ModList
 
                     void GenerateFoldoutCallback(ChangeEvent<bool> evt)
                     {
-                        if (!evt.newValue) return;
+                        if (!evt.newValue)
+                            return;
+
                         foreach (var child in _detailsContainer.Children())
                         {
                             child.style.display = DisplayStyle.Flex;
@@ -698,9 +698,7 @@ namespace SpaceWarp2.UI.ModList
             _detailsDependenciesFoldout.visible = dependencies is { Count: > 0 };
 
             if (dependencies == null)
-            {
                 return;
-            }
 
             foreach (var (id, version) in dependencies)
             {
@@ -771,9 +769,7 @@ namespace SpaceWarp2.UI.ModList
             foreach (var element in _modItemElements.Values)
             {
                 if (element.userData is not ModListItemController data || data.Info.IsCore || data.Info.IsKsp1)
-                {
                     continue;
-                }
 
                 element.Q<Toggle>().SetValueWithoutNotify(_toggles[data.Guid]);
             }

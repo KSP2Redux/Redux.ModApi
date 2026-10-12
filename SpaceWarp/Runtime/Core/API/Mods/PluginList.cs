@@ -53,7 +53,7 @@ namespace SpaceWarp2.API.Mods
         /// </summary>
         /// <param name="guid">GUID of the plugin</param>
         /// <returns><see cref="SpaceWarpPluginDescriptor" /> of the plugin or null if not found</returns>
-        public static SpaceWarpPluginDescriptor? TryGetDescriptor(string guid) => AllEnabledAndActivePlugins.FirstOrDefault(item => item.Guid == guid);
+        public static SpaceWarpPluginDescriptor? TryGetDescriptor(string guid) => AllLoadedPlugins.FirstOrDefault(item => item.Guid == guid);
 
         /// <summary>
         /// Gets the mod an assembly belongs to, for registrations made through APIs that take no mod id.
@@ -64,13 +64,13 @@ namespace SpaceWarp2.API.Mods
         /// assembly or a library.
         /// </remarks>
         /// <param name="assembly">The assembly.</param>
-        /// <returns>The mod's id, or null when no enabled mod loaded the assembly, or several did.</returns>
+        /// <returns>The mod's id, or null when no loaded mod owns the assembly, or several do.</returns>
         public static string? ModIdOf(System.Reflection.Assembly assembly)
         {
             if (assembly == typeof(PluginList).Assembly)
                 return ModIds.KSP2_REDUX;
 
-            var owners = AllEnabledAndActivePlugins
+            var owners = AllLoadedPlugins
                 .Where(descriptor => descriptor.Assemblies.Contains(assembly))
                 .Take(2)
                 .ToList();
@@ -83,7 +83,7 @@ namespace SpaceWarp2.API.Mods
         /// <typeparam name="T">The type of the plugin class</typeparam>
         /// <returns>Plugin instance or null if not found</returns>
         public static T? TryGetPlugin<T>() where T : class, ISpaceWarpMod =>
-            AllEnabledAndActivePlugins.FirstOrDefault(x => x.Plugin is T)?.Plugin as T;
+            AllLoadedPlugins.FirstOrDefault(x => x.Plugin is T)?.Plugin as T;
 
         /// <summary>
         /// Retrieves the instance of a plugin class with the given GUID.
@@ -98,22 +98,26 @@ namespace SpaceWarp2.API.Mods
 
         #region Registering Plugins
 
-        private static List<SpaceWarpPluginDescriptor> _allEnabledAndActivePlugins = new() { };
+        private static List<SpaceWarpPluginDescriptor> _allLoadedPlugins = new() { };
         private static List<SpaceWarpPluginDescriptor> _allDisabledPlugins = new() { };
         private static List<SpaceWarpErrorDescription> _allErroredPlugins = new() { };
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
-            _allEnabledAndActivePlugins = new() { };
+            _allLoadedPlugins = new() { };
             _allDisabledPlugins = new() { };
             _allErroredPlugins = new() { };
         }
 
         /// <summary>
-        /// All plugins that are enabled and active (not errored)
+        /// All plugins that loaded: not disabled in the mod list and not errored.
         /// </summary>
-        public static IReadOnlyList<SpaceWarpPluginDescriptor> AllEnabledAndActivePlugins => _allEnabledAndActivePlugins;
+        /// <remarks>
+        /// A loaded mod can still be off in a campaign. Whether it is on in the active feature set is
+        /// <see cref="SpaceWarpPluginDescriptor.Enabled" />.
+        /// </remarks>
+        public static IReadOnlyList<SpaceWarpPluginDescriptor> AllLoadedPlugins => _allLoadedPlugins;
 
         /// <summary>
         /// All disabled plugins
@@ -128,7 +132,7 @@ namespace SpaceWarp2.API.Mods
         /// <summary>
         /// All plugins, including disabled and errored
         /// </summary>
-        public static IEnumerable<SpaceWarpPluginDescriptor> AllPlugins => _allEnabledAndActivePlugins
+        public static IEnumerable<SpaceWarpPluginDescriptor> AllPlugins => _allLoadedPlugins
             .Concat(_allDisabledPlugins)
             .Concat(_allErroredPlugins.Select(x => x.Plugin));
 
@@ -140,12 +144,12 @@ namespace SpaceWarp2.API.Mods
             }
 
             SpaceWarpPlugin.Logger.LogInfo($"Registered plugin: {plugin.Guid}");
-            _allEnabledAndActivePlugins.Add(plugin);
+            _allLoadedPlugins.Add(plugin);
         }
 
         internal static void Disable(string guid)
         {
-            var descriptor = _allEnabledAndActivePlugins.FirstOrDefault(
+            var descriptor = _allLoadedPlugins.FirstOrDefault(
                 x => string.Equals(
                     x.Guid,
                     guid,
@@ -155,7 +159,7 @@ namespace SpaceWarp2.API.Mods
 
             if (descriptor != null)
             {
-                _allEnabledAndActivePlugins.Remove(descriptor);
+                _allLoadedPlugins.Remove(descriptor);
                 _allDisabledPlugins.Add(descriptor);
             }
         }
@@ -165,9 +169,9 @@ namespace SpaceWarp2.API.Mods
             if (_allErroredPlugins.Any(x => x.Plugin == plugin))
                 return _allErroredPlugins.First(x => x.Plugin == plugin);
 
-            if (_allEnabledAndActivePlugins.Any(x => x == plugin))
+            if (_allLoadedPlugins.Any(x => x == plugin))
             {
-                _allEnabledAndActivePlugins.Remove(plugin);
+                _allLoadedPlugins.Remove(plugin);
             }
 
             var newError = new SpaceWarpErrorDescription(plugin);
@@ -251,9 +255,9 @@ namespace SpaceWarp2.API.Mods
         private static void GetLoadOrder()
         {
             // Convert spacewarp dependencies if there isn't a legacy wrapper, as this usually means a part mod
-            if (_allEnabledAndActivePlugins.All(x => x.Guid != "com.github.x606.spacewarp"))
+            if (_allLoadedPlugins.All(x => x.Guid != "com.github.x606.spacewarp"))
             {
-                foreach (var dependency in _allEnabledAndActivePlugins.SelectMany(x => x.SWInfo.Dependencies))
+                foreach (var dependency in _allLoadedPlugins.SelectMany(x => x.SWInfo.Dependencies))
                 {
                     if (dependency.ID == "com.github.x606.spacewarp")
                     {
@@ -266,20 +270,20 @@ namespace SpaceWarp2.API.Mods
             while (changed)
             {
                 changed = false;
-                for (var i = _allEnabledAndActivePlugins.Count - 1; i >= 0; i--)
+                for (var i = _allLoadedPlugins.Count - 1; i >= 0; i--)
                 {
-                    if (!DependencyResolved(_allEnabledAndActivePlugins[i], newOrder))
+                    if (!DependencyResolved(_allLoadedPlugins[i], newOrder))
                         continue;
 
-                    newOrder.Add(_allEnabledAndActivePlugins[i]);
-                    _allEnabledAndActivePlugins.RemoveAt(i);
+                    newOrder.Add(_allLoadedPlugins[i]);
+                    _allLoadedPlugins.RemoveAt(i);
                     changed = true;
                 }
             }
 
-            for (var i = _allEnabledAndActivePlugins.Count - 1; i >= 0; i--)
+            for (var i = _allLoadedPlugins.Count - 1; i >= 0; i--)
             {
-                var info = _allEnabledAndActivePlugins[i];
+                var info = _allLoadedPlugins[i];
                 SpaceWarpPlugin.Logger.LogError($"Missing dependency for mod: {info.Name}, this mod will not be loaded");
                 var error = GetErrorDescriptor(info);
                 error.MissingDependencies = info.SWInfo
@@ -289,7 +293,7 @@ namespace SpaceWarp2.API.Mods
                     .ToList();
             }
 
-            _allEnabledAndActivePlugins = newOrder;
+            _allLoadedPlugins = newOrder;
         }
 
         private static void GetDependencyErrors()
@@ -301,7 +305,7 @@ namespace SpaceWarp2.API.Mods
                 for (var i = erroredPlugin.MissingDependencies.Count - 1; i >= 0; i--)
                 {
                     var dep = erroredPlugin.MissingDependencies[i];
-                    if (AllEnabledAndActivePlugins.Any(x =>
+                    if (AllLoadedPlugins.Any(x =>
                             string.Equals(x.Guid, dep, StringComparison.InvariantCultureIgnoreCase)))
                     {
                         erroredPlugin.UnsupportedDependencies.Add(dep);
@@ -325,15 +329,15 @@ namespace SpaceWarp2.API.Mods
 
         private static void CheckCompatibility()
         {
-            var incompatibilities = _allEnabledAndActivePlugins
+            var incompatibilities = _allLoadedPlugins
                 .Select(x => (Key: x.Guid, Value: new HashSet<string>()))
                 .ToDictionary(x => x.Key, x => x.Value);
-            var versionLookup = _allEnabledAndActivePlugins
+            var versionLookup = _allLoadedPlugins
                 .Select(x => (Key: x.Guid, Value: x.SWInfo.Version))
                 .ToDictionary(x => x.Key, x => x.Value);
-            var pluginDictionary = _allEnabledAndActivePlugins
+            var pluginDictionary = _allLoadedPlugins
                 .ToDictionary(x => x.Guid, x => x);
-            foreach (var mod in _allEnabledAndActivePlugins)
+            foreach (var mod in _allLoadedPlugins)
             {
                 var swinfo = mod.SWInfo;
                 if (swinfo.Spec < SpecVersion.V2_0)
@@ -365,7 +369,7 @@ namespace SpaceWarp2.API.Mods
 
         internal static void LoadAllMods()
         {
-            foreach (var mod in AllEnabledAndActivePlugins)
+            foreach (var mod in AllLoadedPlugins)
             {
                 if (mod.Plugin is UnloadedMod unloadedMod)
                 {
