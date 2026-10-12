@@ -150,7 +150,13 @@ public static class ModScriptRuntime
     /// <param name="descriptor">The mod to fork an environment for.</param>
     /// <returns>The forked environment's globals table.</returns>
     public static Table CreateModEnv(SpaceWarpPluginDescriptor descriptor) =>
-        CreateEnv(descriptor.Guid, descriptor.Folder?.FullName, descriptor.Logger, descriptor.ConfigFile);
+        CreateEnv(
+            descriptor.Guid,
+            descriptor.Folder?.FullName,
+            descriptor.Logger,
+            descriptor.ConfigFile,
+            descriptor.CampaignConfigFile
+        );
 
     /// <summary>
     /// Forks the shared console environment, carrying the same globals a mod environment gets.
@@ -165,7 +171,14 @@ public static class ModScriptRuntime
     {
         var logger = LogManager.GetLogger(ConsoleModId);
         var configFile = new JsonConfigFile(Path.Combine(CommonPaths.LuaFolder, "spacewarp-console-config.json"));
-        var env = CreateEnv(ConsoleModId, Path.GetFullPath(CommonPaths.LuaFolder), logger, configFile);
+        // The console belongs to no campaign, so its campaign config is never stored
+        var env = CreateEnv(
+            ConsoleModId,
+            Path.GetFullPath(CommonPaths.LuaFolder),
+            logger,
+            configFile,
+            JsonConfigFile.InMemory()
+        );
         foreach (var pair in ConsoleGlobals)
         {
             env[pair.Key] = pair.Value;
@@ -174,7 +187,13 @@ public static class ModScriptRuntime
         return env;
     }
 
-    private static Table CreateEnv(string modId, string location, ILogger logger, IConfigFile configFile)
+    private static Table CreateEnv(
+        string modId,
+        string location,
+        ILogger logger,
+        IConfigFile configFile,
+        IConfigFile campaignConfigFile
+    )
     {
         var root = ReduxScriptRuntime.RootGlobals;
         var script = root.OwnerScript;
@@ -196,6 +215,7 @@ public static class ModScriptRuntime
         child["Log"] = new ModLogger(logger);
         ConfigTypes.ContributeTo(child);
         child["Config"] = new ModConfig(configFile);
+        child["CampaignConfig"] = new ModConfig(campaignConfigFile, descriptor => descriptor.CampaignConfigFile);
         child["Console"] = new ConsoleLibrary();
         child["Features"] = FeaturesLibrary.Instance;
         // The console is not a mod, so it has no Enabled to keep up to date
