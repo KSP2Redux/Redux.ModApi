@@ -35,4 +35,22 @@ public static class AssemblyExtensions
             return ex.Types.OfType<Type>();
         }
     }
+
+    /// <summary>
+    /// Returns the types in every assembly loaded into a domain, for registries that discover their entries by
+    /// scanning.
+    /// </summary>
+    /// <remarks>
+    /// Dynamic assemblies are skipped. A runtime evaluator such as the CLI's C# REPL leaves them behind with
+    /// unfinished types, which make <see cref="Assembly.GetTypes" /> throw, and nothing in them belongs in a
+    /// registry. Partially loadable assemblies are handled as in <see cref="GetLoadableTypes(Assembly)" />.
+    /// </remarks>
+    /// <param name="domain">The domain to scan, usually <see cref="AppDomain.CurrentDomain" />.</param>
+    /// <returns>Every type that loaded successfully from a static assembly.</returns>
+    public static IEnumerable<Type> GetLoadableTypes(this AppDomain domain)
+    {
+        return domain.GetAssemblies()
+            .Where(assembly => !assembly.IsDynamic)
+            .SelectMany(assembly => assembly.GetLoadableTypes());
+    }
 }

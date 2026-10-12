@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using KSP.Sim.Definitions;
 using KSP.Sim.impl;
+using SpaceWarp2.API.Reflection;
 
 namespace VSwift.Modules
 {
@@ -14,7 +15,7 @@ namespace VSwift.Modules
         private static Dictionary<string, (Type componentModule, Type behaviour)>? _componentModules;
 
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStatics()
+        internal static void ResetStatics()
         {
             _componentModules = null;
             _dataModules = null;
@@ -23,27 +24,24 @@ namespace VSwift.Modules
         private static void BuildComponentModuleDictionary()
         {
             _componentModules = new();
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (var type in AppDomain.CurrentDomain.GetLoadableTypes().Where(type => !type.IsAbstract).Where(type => type.IsSubclassOf(typeof(PartComponentModule))))
             {
-                foreach (var type in assembly.GetTypes().Where(type => !type.IsAbstract).Where(type => type.IsSubclassOf(typeof(PartComponentModule))))
+                try
                 {
-                    try
+                    var mod = (PartComponentModule)Activator.CreateInstance(type);
+                    var behaviour = mod.PartBehaviourModuleType;
+                    var tuple = (type, behaviour);
+                    var name1 = type.Name;
+                    var name2 = name1.Replace("PartComponent", "");
+                    _componentModules[name1] = tuple;
+                    if (!name1.Equals(name2))
                     {
-                        var mod = (PartComponentModule)Activator.CreateInstance(type);
-                        var behaviour = mod.PartBehaviourModuleType;
-                        var tuple = (type, behaviour);
-                        var name1 = type.Name;
-                        var name2 = name1.Replace("PartComponent", "");
-                        _componentModules[name1] = tuple;
-                        if (!name1.Equals(name2))
-                        {
-                            _componentModules[name2] = tuple;
-                        }
+                        _componentModules[name2] = tuple;
                     }
-                    catch
-                    {
-                        //ignored
-                    }
+                }
+                catch
+                {
+                    //ignored
                 }
             }
         }
@@ -67,18 +65,15 @@ namespace VSwift.Modules
         private static void BuildDataModuleDictionary()
         {
             _dataModules = new();
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (var type in AppDomain.CurrentDomain.GetLoadableTypes().Where(type => !type.IsAbstract)
+                         .Where(type => type.IsSubclassOf(typeof(ModuleData))))
             {
-                foreach (var type in assembly.GetTypes().Where(type => !type.IsAbstract)
-                             .Where(type => type.IsSubclassOf(typeof(ModuleData))))
+                var name1 = type.Name;
+                var name2 = name1.Replace("Data_", "");
+                _dataModules[name1] = type;
+                if (!name1.Equals(name2))
                 {
-                    var name1 = type.Name;
-                    var name2 = name1.Replace("Data_", "");
-                    _dataModules[name1] = type;
-                    if (!name1.Equals(name2))
-                    {
-                        _dataModules[name2] = type;
-                    }
+                    _dataModules[name2] = type;
                 }
             }
         }

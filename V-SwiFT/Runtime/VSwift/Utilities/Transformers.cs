@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SpaceWarp2.API.Reflection;
 using VSwift.Modules.Logging;
 using VSwift.Modules.Transformers;
 
@@ -16,7 +17,7 @@ namespace VSwift.Utilities
         static Transformers()
         {
             TransformerTypes = new Dictionary<string, Type> { };
-            foreach (var type in AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes()))
+            foreach (var type in AppDomain.CurrentDomain.GetLoadableTypes())
             {
                 var attr = type.GetCustomAttributes(typeof(Transformer), false).FirstOrDefault();
                 if (attr is Transformer transformer)

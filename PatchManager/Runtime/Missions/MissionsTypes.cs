@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using KSP.Game.Missions;
 using KSP.Messages;
 using KSP.Messages.PropertyWatchers;
+using SpaceWarp2.API.Reflection;
 using UniLinq;
 
 namespace PatchManager.Missions
@@ -31,7 +32,7 @@ namespace PatchManager.Missions
 
         static MissionsTypes()
         {
-            foreach (var type in AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes()).Where(t => !t.IsAbstract))
+            foreach (var type in AppDomain.CurrentDomain.GetLoadableTypes().Where(t => !t.IsAbstract))
             {
                 if (type.IsSubclassOf(typeof(Condition)))
                 {
