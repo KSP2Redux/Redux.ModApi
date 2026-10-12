@@ -19,29 +19,139 @@ using ILocalizer = UitkForKsp2.API.ILocalizer;
 using ILogger = SpaceWarp2.API.Logging.ILogger;
 using ReduxManager = Redux.ReduxManager;
 
-namespace SpaceWarp2;
-
-public sealed class SpaceWarpPlugin : GeneralMod
+namespace SpaceWarp2
 {
-    /// <summary>
-    /// SpaceWarp plugin instance.
-    /// </summary>
-    public static SpaceWarpPlugin Instance;
-
-    internal static ILogger Logger;
-
-    private static Assembly _pathsAssembly;
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
-    public static void LoadSpaceWarp()
+    public sealed class SpaceWarpPlugin : GeneralMod
     {
-        // With Domain Reload disabled this runs on every Play Mode enter, so reset mutable
-        // static state (UDR0002) and re-subscribe idempotently to the static event (UDR0003).
-        Instance = null;
-        Logger = null;
-        BeforeGameLoadActions = new();
-        AfterGameLoadActions = new();
-        SpaceWarpModInfo = new()
+        /// <summary>
+        /// SpaceWarp plugin instance.
+        /// </summary>
+        public static SpaceWarpPlugin Instance;
+
+        internal static ILogger Logger;
+
+        private static Assembly _pathsAssembly;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
+        public static void LoadSpaceWarp()
+        {
+            // With Domain Reload disabled this runs on every Play Mode enter, so reset mutable
+            // static state (UDR0002) and re-subscribe idempotently to the static event (UDR0003).
+            Instance = null;
+            Logger = null;
+            BeforeGameLoadActions = new();
+            AfterGameLoadActions = new();
+            SpaceWarpModInfo = new()
+            {
+                Spec = SpecVersion.V3_0,
+                ModID = "SpaceWarp2",
+                Name = "Space Warp",
+                Author = "Space Warp Dev + Rendezvous Entertainment",
+                Description = "A C# modding API for KSP2 Redux Modding",
+                Source = "https://github.com/SpaceWarpDev/SpaceWarp",
+                Version = "2.0.0",
+                Dependencies = new List<DependencyInfo>(),
+                SupportedKsp2Versions = new SupportedVersionsInfo
+                {
+                    Min = "0.2.2.0.32914",
+                    Max = "*"
+                },
+                VersionCheck = null,
+                Conflicts = new List<DependencyInfo>(),
+                Patchers = new List<string>(),
+                MainAssembly = null
+            };
+
+            ModList.Initialize();
+            _pathsAssembly = SpaceWarpPathsGenerator.GenerateSpaceWarpPathsAssembly();
+            ReduxManager.OnInitialized -= CreateMonoBehaviours;
+            ReduxManager.OnInitialized += CreateMonoBehaviours;
+
+            Loading.AddAddressablesLoadingAction<TextAsset>("Loading addressables localizations (csv)", "loc_csv", OnCsvLoaded);
+            Loading.AddAddressablesLoadingAction<TextAsset>("Loading addressables localizations (i2csv)", "loc_i2csv", OnI2CsvLoaded);
+        }
+
+        private static void OnCsvLoaded(TextAsset csv)
+        {
+            var text = csv.text.Replace("\r\n", "\n");
+            ILocalizer.Instance.AddCsvSource(text);
+        }
+
+        private static void OnI2CsvLoaded(TextAsset i2Csv)
+        {
+
+            var text = i2Csv.text.Replace("\r\n", "\n");
+            ILocalizer.Instance.AddI2CsvSource(text);
+        }
+
+        private static void CreateMonoBehaviours()
+        {
+            Logger = LogManager.GetLogger("Space Warp");
+            ModuleManager.LoadAllModules();
+            PluginRegister.RegisterAllMods();
+            PluginList.ResolveDependenciesAndLoadOrder();
+            FeatureRegistry.BuildInstance(PluginList.AllEnabledAndActivePlugins.Select(plugin => plugin.SWInfo));
+            PluginList.LoadAllMods();
+            SetupBeforeGameLoadActions();
+            SetupAfterGameLoadActions();
+    #if UNITY_EDITOR
+            AddressablesFixes.Install();
+    #endif
+        }
+
+        private static void SetupBeforeGameLoadActions()
+        {
+            foreach (var plugin in PluginList.AllEnabledAndActivePlugins)
+            {
+                if (plugin.IsKsp1) continue;
+                BeforeGameLoadActions.Add(new PreInitializeModAction(plugin));
+            }
+        }
+        private static void SetupAfterGameLoadActions()
+        {
+
+            foreach (var plugin in PluginList.AllEnabledAndActivePlugins)
+            {
+                if (plugin.IsKsp1) continue;
+
+                // Space Warps addressables are already loaded by redux at this point
+                if (plugin.Guid != "spacewarp")
+                    AfterGameLoadActions.Add(new LoadAddressablesAction(plugin));
+
+                AfterGameLoadActions.Add(new LoadLocalizationAction(plugin));
+
+                foreach (var action in Loading.DescriptorLoadingActionGenerators)
+                {
+                    AfterGameLoadActions.Add(action(plugin));
+                }
+
+                AfterGameLoadActions.Add(new RunModScriptsAction(plugin));
+            }
+
+            foreach (var actionGenerator in Loading.GeneralLoadingActions)
+            {
+                AfterGameLoadActions.Add(actionGenerator());
+            }
+
+            foreach (var plugin in PluginList.AllEnabledAndActivePlugins)
+            {
+                if (plugin.IsKsp1) continue;
+                AfterGameLoadActions.Add(new InitializeModAction(plugin));
+            }
+
+            foreach (var plugin in PluginList.AllEnabledAndActivePlugins)
+            {
+                if (plugin.IsKsp1) continue;
+                AfterGameLoadActions.Add(new PostInitializeModAction(plugin));
+            }
+        }
+
+        public SpaceWarpPlugin()
+        {
+            Instance = this;
+        }
+
+        internal static ModInfo SpaceWarpModInfo = new()
         {
             Spec = SpecVersion.V3_0,
             ModID = "SpaceWarp2",
@@ -56,142 +166,33 @@ public sealed class SpaceWarpPlugin : GeneralMod
                 Min = "0.2.2.0.32914",
                 Max = "*"
             },
+            // We are actually going to have to make a swinfo.json at some point, but this is kinda built into redux
             VersionCheck = null,
             Conflicts = new List<DependencyInfo>(),
             Patchers = new List<string>(),
             MainAssembly = null
         };
 
-        ModList.Initialize();
-        _pathsAssembly = SpaceWarpPathsGenerator.GenerateSpaceWarpPathsAssembly();
-        ReduxManager.OnInitialized -= CreateMonoBehaviours;
-        ReduxManager.OnInitialized += CreateMonoBehaviours;
-
-        Loading.AddAddressablesLoadingAction<TextAsset>("Loading addressables localizations (csv)", "loc_csv", OnCsvLoaded);
-        Loading.AddAddressablesLoadingAction<TextAsset>("Loading addressables localizations (i2csv)", "loc_i2csv", OnI2CsvLoaded);
-    }
-
-    private static void OnCsvLoaded(TextAsset csv)
-    {
-        var text = csv.text.Replace("\r\n", "\n");
-        ILocalizer.Instance.AddCsvSource(text);
-    }
-
-    private static void OnI2CsvLoaded(TextAsset i2Csv)
-    {
-
-        var text = i2Csv.text.Replace("\r\n", "\n");
-        ILocalizer.Instance.AddI2CsvSource(text);
-    }
-
-    private static void CreateMonoBehaviours()
-    {
-        Logger = LogManager.GetLogger("Space Warp");
-        ModuleManager.LoadAllModules();
-        PluginRegister.RegisterAllMods();
-        PluginList.ResolveDependenciesAndLoadOrder();
-        FeatureRegistry.BuildInstance(PluginList.AllEnabledAndActivePlugins.Select(plugin => plugin.SWInfo));
-        PluginList.LoadAllMods();
-        SetupBeforeGameLoadActions();
-        SetupAfterGameLoadActions();
-#if UNITY_EDITOR
-        AddressablesFixes.Install();
-#endif
-    }
-
-    private static void SetupBeforeGameLoadActions()
-    {
-        foreach (var plugin in PluginList.AllEnabledAndActivePlugins)
+        public override void OnPreInitialized()
         {
-            if (plugin.IsKsp1) continue;
-            BeforeGameLoadActions.Add(new PreInitializeModAction(plugin));
-        }
-    }
-    private static void SetupAfterGameLoadActions()
-    {
-
-        foreach (var plugin in PluginList.AllEnabledAndActivePlugins)
-        {
-            if (plugin.IsKsp1) continue;
-
-            // Space Warps addressables are already loaded by redux at this point
-            if (plugin.Guid != "spacewarp")
-                AfterGameLoadActions.Add(new LoadAddressablesAction(plugin));
-
-            AfterGameLoadActions.Add(new LoadLocalizationAction(plugin));
-
-            foreach (var action in Loading.DescriptorLoadingActionGenerators)
-            {
-                AfterGameLoadActions.Add(action(plugin));
-            }
-
-            AfterGameLoadActions.Add(new RunModScriptsAction(plugin));
+            ModuleManager.PreInitializeAllModules();
         }
 
-        foreach (var actionGenerator in Loading.GeneralLoadingActions)
+        public override void OnInitialized()
         {
-            AfterGameLoadActions.Add(actionGenerator());
+            ModuleManager.InitializeAllModules();
         }
 
-        foreach (var plugin in PluginList.AllEnabledAndActivePlugins)
+        public override void OnPostInitialized()
         {
-            if (plugin.IsKsp1) continue;
-            AfterGameLoadActions.Add(new InitializeModAction(plugin));
+            ModuleManager.PostInitializeAllModules();
         }
 
-        foreach (var plugin in PluginList.AllEnabledAndActivePlugins)
-        {
-            if (plugin.IsKsp1) continue;
-            AfterGameLoadActions.Add(new PostInitializeModAction(plugin));
-        }
+        #region Space Warp Loading Actions
+
+        public static List<IFlowAction> BeforeGameLoadActions = new();
+        public static List<IFlowAction> AfterGameLoadActions = new();
+
+        #endregion
     }
-
-    public SpaceWarpPlugin()
-    {
-        Instance = this;
-    }
-
-    internal static ModInfo SpaceWarpModInfo = new()
-    {
-        Spec = SpecVersion.V3_0,
-        ModID = "SpaceWarp2",
-        Name = "Space Warp",
-        Author = "Space Warp Dev + Rendezvous Entertainment",
-        Description = "A C# modding API for KSP2 Redux Modding",
-        Source = "https://github.com/SpaceWarpDev/SpaceWarp",
-        Version = "2.0.0",
-        Dependencies = new List<DependencyInfo>(),
-        SupportedKsp2Versions = new SupportedVersionsInfo
-        {
-            Min = "0.2.2.0.32914",
-            Max = "*"
-        },
-        // We are actually going to have to make a swinfo.json at some point, but this is kinda built into redux
-        VersionCheck = null,
-        Conflicts = new List<DependencyInfo>(),
-        Patchers = new List<string>(),
-        MainAssembly = null
-    };
-
-    public override void OnPreInitialized()
-    {
-        ModuleManager.PreInitializeAllModules();
-    }
-
-    public override void OnInitialized()
-    {
-        ModuleManager.InitializeAllModules();
-    }
-
-    public override void OnPostInitialized()
-    {
-        ModuleManager.PostInitializeAllModules();
-    }
-
-    #region Space Warp Loading Actions
-
-    public static List<IFlowAction> BeforeGameLoadActions = new();
-    public static List<IFlowAction> AfterGameLoadActions = new();
-
-    #endregion
 }
