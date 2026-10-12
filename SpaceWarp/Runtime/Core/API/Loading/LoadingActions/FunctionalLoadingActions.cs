@@ -17,9 +17,7 @@ namespace SpaceWarp2.API.Loading.LoadingActions
         {
             var assetBundle = AssetBundle.LoadFromFile(filename);
             if (assetBundle == null)
-            {
                 throw new Exception($"Failed to load AssetBundle {internalPath} ({filename})");
-            }
 
             internalPath = internalPath.Replace(".bundle", "");
             var names = assetBundle.GetAllAssetNames();

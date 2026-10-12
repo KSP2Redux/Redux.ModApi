@@ -27,11 +27,11 @@ namespace SpaceWarp2.API.Mods
 
 
         /// <summary>
-        /// Retrieves the <see cref="ModInfo"/> of the specified plugin. Returns null if the specified plugin guid doesn't
-        /// have an associated <see cref="ModInfo"/>.
+        /// Retrieves the <see cref="ModInfo" /> of the specified plugin. Returns null if the specified plugin guid doesn't
+        /// have an associated <see cref="ModInfo" />.
         /// </summary>
         /// <param name="guid">GUID of the plugin</param>
-        /// <returns><see cref="ModInfo"/> of the plugin or null if not found</returns>
+        /// <returns><see cref="ModInfo" /> of the plugin or null if not found</returns>
         public static ModInfo TryGetSwinfo(string guid)
         {
             if (TryGetDescriptor(guid) is { SWInfo: var swInfo })
@@ -48,11 +48,11 @@ namespace SpaceWarp2.API.Mods
         }
 
         /// <summary>
-        /// Retrieves the <see cref="SpaceWarpPluginDescriptor"/> of the specified plugin. Returns null if the specified plugin guid doesn't
-        /// have an associated <see cref="SpaceWarpPluginDescriptor"/>.
+        /// Retrieves the <see cref="SpaceWarpPluginDescriptor" /> of the specified plugin. Returns null if the specified plugin guid doesn't
+        /// have an associated <see cref="SpaceWarpPluginDescriptor" />.
         /// </summary>
         /// <param name="guid">GUID of the plugin</param>
-        /// <returns><see cref="SpaceWarpPluginDescriptor"/> of the plugin or null if not found</returns>
+        /// <returns><see cref="SpaceWarpPluginDescriptor" /> of the plugin or null if not found</returns>
         public static SpaceWarpPluginDescriptor? TryGetDescriptor(string guid) => AllEnabledAndActivePlugins.FirstOrDefault(item => item.Guid == guid);
 
         /// <summary>
@@ -163,9 +163,7 @@ namespace SpaceWarp2.API.Mods
         internal static SpaceWarpErrorDescription GetErrorDescriptor(SpaceWarpPluginDescriptor plugin)
         {
             if (_allErroredPlugins.Any(x => x.Plugin == plugin))
-            {
                 return _allErroredPlugins.First(x => x.Plugin == plugin);
-            }
 
             if (_allEnabledAndActivePlugins.Any(x => x == plugin))
             {
@@ -231,7 +229,9 @@ namespace SpaceWarp2.API.Mods
             List<SpaceWarpPluginDescriptor> resolvedPlugins
         )
         {
-            if (descriptor.SWInfo.Spec < SpecVersion.V1_3) return true;
+            if (descriptor.SWInfo.Spec < SpecVersion.V1_3)
+                return true;
+
             return !(from dependency in descriptor.SWInfo.Dependencies
                 let info = resolvedPlugins.FirstOrDefault(
                     x => string.Equals(
@@ -268,7 +268,9 @@ namespace SpaceWarp2.API.Mods
                 changed = false;
                 for (var i = _allEnabledAndActivePlugins.Count - 1; i >= 0; i--)
                 {
-                    if (!DependencyResolved(_allEnabledAndActivePlugins[i], newOrder)) continue;
+                    if (!DependencyResolved(_allEnabledAndActivePlugins[i], newOrder))
+                        continue;
+
                     newOrder.Add(_allEnabledAndActivePlugins[i]);
                     _allEnabledAndActivePlugins.RemoveAt(i);
                     changed = true;
@@ -335,9 +337,7 @@ namespace SpaceWarp2.API.Mods
             {
                 var swinfo = mod.SWInfo;
                 if (swinfo.Spec < SpecVersion.V2_0)
-                {
                     continue;
-                }
 
                 foreach (var conflict in swinfo.Conflicts)
                 {
@@ -355,9 +355,7 @@ namespace SpaceWarp2.API.Mods
             foreach (var incompatibility in incompatibilities)
             {
                 if (incompatibility.Value.Count <= 0)
-                {
                     continue;
-                }
 
                 var descriptor = GetErrorDescriptor(pluginDictionary[incompatibility.Key]);
                 descriptor.Incompatibilities.AddRange(incompatibility.Value);

@@ -96,9 +96,7 @@ namespace SpaceWarp2.API.Lifecycle
         public static void RunMod(SpaceWarpPluginDescriptor descriptor)
         {
             if (descriptor.ScriptFiles.Count == 0)
-            {
                 return;
-            }
 
             var env = CreateModEnv(descriptor);
             foreach (var file in descriptor.ScriptFiles)
@@ -118,9 +116,7 @@ namespace SpaceWarp2.API.Lifecycle
         public static void RunModSources(SpaceWarpPluginDescriptor descriptor, IReadOnlyList<(string key, string content)> sources)
         {
             if (sources.Count == 0)
-            {
                 return;
-            }
 
             var env = CreateModEnv(descriptor);
             foreach (var (key, content) in sources)

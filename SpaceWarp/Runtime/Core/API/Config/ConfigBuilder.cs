@@ -25,11 +25,11 @@ namespace SpaceWarp2.API.Config
         private string _description = string.Empty;
         private string _nameLoc;
         private string _descLoc;
-        private const int DefaultSliderSteps = 1024;
+        private const int DEFAULT_SLIDER_STEPS = 1024;
 
         private double _rangeMin;
         private double _rangeMax;
-        private int _rangeSteps = DefaultSliderSteps;
+        private int _rangeSteps = DEFAULT_SLIDER_STEPS;
         private string _rangeFormat;
         private bool _hasRange;
         private DynValue _values = DynValue.Nil;
@@ -50,9 +50,7 @@ namespace SpaceWarp2.API.Config
         public ConfigBuilder Type(DynValue type)
         {
             if (type.Type != DataType.UserData || type.UserData.Object is not IConfigType configType)
-            {
                 throw new ScriptRuntimeException("Config :Type expects a config type such as String, Double, or Color.");
-            }
 
             _type = configType;
             return this;
@@ -70,7 +68,7 @@ namespace SpaceWarp2.API.Config
         /// and <paramref name="format" /> the slider's number format, which defaults to a type-appropriate format
         /// when omitted.
         /// </summary>
-        public ConfigBuilder Range(double min, double max, int steps = DefaultSliderSteps, string format = null)
+        public ConfigBuilder Range(double min, double max, int steps = DEFAULT_SLIDER_STEPS, string format = null)
         {
             _rangeMin = min;
             _rangeMax = max;
@@ -129,9 +127,7 @@ namespace SpaceWarp2.API.Config
         public ConfigHandle Bind()
         {
             if (_type == null)
-            {
                 throw new ScriptRuntimeException($"Config entry '{_section}/{_name}' needs a :Type before :Bind.");
-            }
 
             var storageDefault = _type.Serialize(_default);
             var constraint = BuildConstraint();
@@ -144,14 +140,10 @@ namespace SpaceWarp2.API.Config
         private IValueConstraint BuildConstraint()
         {
             if (_hasRange)
-            {
                 return MakeRange();
-            }
 
             if (_values.Type == DataType.Table)
-            {
                 return MakeList();
-            }
 
             return null;
         }

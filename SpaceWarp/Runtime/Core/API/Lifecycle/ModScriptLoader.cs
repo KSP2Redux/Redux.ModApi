@@ -30,16 +30,17 @@ namespace SpaceWarp2.API.Lifecycle
         public object LoadFile(string file, Table globalContext)
         {
             if (!File.Exists(file))
-            {
                 throw new ScriptRuntimeException($"File {file} does not exist.");
-            }
+
             return File.ReadAllText(file);
         }
 
         [CanBeNull]
         private string GetRoot(string pluginGuid)
         {
-            if (PluginList.TryGetDescriptor(pluginGuid) is not { } plugin) return null;
+            if (PluginList.TryGetDescriptor(pluginGuid) is not { } plugin)
+                return null;
+
             return plugin.Folder.FullName;
         }
 
@@ -47,7 +48,7 @@ namespace SpaceWarp2.API.Lifecycle
         /// Resolves a relative filename against the script's <c>Location</c> global.
         /// </summary>
         /// <param name="filename">The relative filename to resolve.</param>
-        /// <param name="globalContext">The script's globals; the <c>Location</c> entry is the base directory.</param>
+        /// <param name="globalContext">The script's globals, whose <c>Location</c> entry is the base directory.</param>
         /// <returns>The combined path.</returns>
         public string ResolveFileName(string filename, Table globalContext)
         {
@@ -67,7 +68,7 @@ namespace SpaceWarp2.API.Lifecycle
         /// inside another mod's folder when the name uses the <c>otherMod:moduleName</c> convention.
         /// </summary>
         /// <param name="modname">The module name passed to <c>require</c>.</param>
-        /// <param name="globalContext">The script's globals; the <c>ModId</c> entry identifies the host mod for unqualified names.</param>
+        /// <param name="globalContext">The script's globals, whose <c>ModId</c> entry names the host mod for unqualified names.</param>
         /// <returns>The resolved file path, or <c>null</c> when the host mod is not registered or no matching file exists.</returns>
         public string ResolveModuleName(string modname, Table globalContext)
         {

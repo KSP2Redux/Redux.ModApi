@@ -48,21 +48,15 @@ namespace SpaceWarp2.API.Lifecycle
         {
             var phase = postInit ? "PostInit" : "Init";
             if (fn.Type != DataType.Function)
-            {
                 throw new ScriptRuntimeException($"SW.{phase} expects a function.");
-            }
 
             var env = context.CurrentGlobalEnv;
             if (env == null)
-            {
                 throw new ScriptRuntimeException($"SW.{phase} requires a ModId on the calling environment.");
-            }
 
             var modId = ModScriptRuntime.ModIdOf(env);
             if (string.IsNullOrEmpty(modId))
-            {
                 throw new ScriptRuntimeException($"SW.{phase} requires a ModId on the calling environment.");
-            }
 
             var descriptor = PluginList.TryGetDescriptor(modId);
             if (descriptor == null)
