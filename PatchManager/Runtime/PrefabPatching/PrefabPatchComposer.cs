@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
+using SpaceWarp2.API.Reflection;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -466,6 +467,7 @@ namespace PatchManager.PrefabPatching
             gameObject.AddComponent<PrefabPatchObjectId>().Id = fragment.ObjectId;
             patchOwned.Add(key, gameObject);
             foreach (var component in fragment.Components)
+            {
                 AddComponent(
                     gameObject,
                     component,
@@ -476,7 +478,10 @@ namespace PatchManager.PrefabPatching
                     patchId,
                     operationId
                 );
+            }
+
             foreach (var child in fragment.Children)
+            {
                 CreateFragment(
                     patchId,
                     child,
@@ -487,6 +492,8 @@ namespace PatchManager.PrefabPatching
                     pendingReferences,
                     operationId
                 );
+            }
+
             return gameObject;
         }
 
@@ -1435,18 +1442,7 @@ namespace PatchManager.PrefabPatching
                 _ => null
             };
 
-        private static Type ResolveType(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-                return null;
-            var type = Type.GetType(name, false);
-            if (type != null)
-                return type;
-            return AppDomain.CurrentDomain
-                .GetAssemblies()
-                .Select(assembly => assembly.GetType(name, false))
-                .FirstOrDefault(value => value != null);
-        }
+        private static Type ResolveType(string name) => AppDomain.CurrentDomain.FindType(name);
 
         private static Exception MissingTarget(PrefabPatchOperation operation) =>
             new InvalidOperationException(

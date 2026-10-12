@@ -69,29 +69,21 @@ namespace SpaceWarp2.Modules
             //         _moduleManagerLogSource.LogError($"Could not load module(s) from path {module} due to error: {e}");
             //     }
             // }
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (var type in AppDomain.CurrentDomain.GetLoadableTypes())
             {
-                // Runtime evaluators leave dynamic assemblies in the AppDomain when Domain Reload is
-                // disabled. Those assemblies can contain unfinished types and throw from GetTypes on
-                // the next Play Mode enter; they cannot contain compile-time SpaceWarp modules.
-                if (assembly.IsDynamic) continue;
-                foreach (var type in assembly.GetLoadableTypes())
+                if (type.IsAbstract || !type.IsSubclassOf(typeof(SpaceWarpModule)))
+                    continue;
+
+                try
                 {
-                    if (type.IsAbstract) continue;
-                    if (type.IsSubclassOf(typeof(SpaceWarpModule)))
-                    {
-                        try
-                        {
-                            _moduleManagerLogSource.LogInfo($"Loading module of type: {type}");
-                            var mod = (SpaceWarpModule)Activator.CreateInstance(type);
-                            _moduleManagerLogSource.LogInfo($"Module name: {mod.Name}");
-                            AllSpaceWarpModules.Add(mod);
-                        }
-                        catch (Exception e)
-                        {
-                            _moduleManagerLogSource.LogError($"Could not load module {type} due to error: {e}");
-                        }
-                    }
+                    _moduleManagerLogSource.LogInfo($"Loading module of type: {type}");
+                    var mod = (SpaceWarpModule)Activator.CreateInstance(type);
+                    _moduleManagerLogSource.LogInfo($"Module name: {mod.Name}");
+                    AllSpaceWarpModules.Add(mod);
+                }
+                catch (Exception e)
+                {
+                    _moduleManagerLogSource.LogError($"Could not load module {type} due to error: {e}");
                 }
             }
 
@@ -140,7 +132,9 @@ namespace SpaceWarp2.Modules
                         topologicalOrder.Any(x => x.Name == prerequisite)
                     );
                     changed = changed || resolved;
-                    if (!resolved) continue;
+                    if (!resolved)
+                        continue;
+
                     clone.RemoveAt(i);
                     topologicalOrder.Add(module);
                 }

@@ -24,15 +24,16 @@ namespace SpaceWarp2.API.Config
 
         static ConfigTypes()
         {
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (var type in AppDomain.CurrentDomain.GetLoadableTypes())
             {
-                foreach (var type in assembly.GetLoadableTypes())
-                {
-                    if (type.IsAbstract || type.IsInterface || !typeof(IConfigType).IsAssignableFrom(type)) continue;
-                    var attribute = type.GetCustomAttribute<ConfigTypeAttribute>();
-                    if (attribute == null) continue;
-                    Register(type, attribute.GlobalName);
-                }
+                if (type.IsAbstract || type.IsInterface || !typeof(IConfigType).IsAssignableFrom(type))
+                    continue;
+
+                var attribute = type.GetCustomAttribute<ConfigTypeAttribute>();
+                if (attribute == null)
+                    continue;
+
+                Register(type, attribute.GlobalName);
             }
         }
 
@@ -78,9 +79,7 @@ namespace SpaceWarp2.API.Config
         public static IConfigType Resolve(Type storageType)
         {
             if (ByStorageType.TryGetValue(storageType, out var type))
-            {
                 return type;
-            }
 
             throw new ScriptRuntimeException($"Config :Get does not support stored type '{storageType.Name}'.");
         }
@@ -162,9 +161,7 @@ namespace SpaceWarp2.API.Config
         public object Serialize(DynValue value)
         {
             if (value.Type == DataType.UserData && value.UserData.Object is LuaColor luaColor)
-            {
                 return luaColor.ToColor();
-            }
 
             return TableToColor(value.Table);
         }
@@ -175,9 +172,7 @@ namespace SpaceWarp2.API.Config
         private static Color TableToColor(Table t)
         {
             if (t == null)
-            {
                 return default;
-            }
 
             return new Color(
                 ReadChannel(t, 1, "r", "red", 0f),
@@ -191,21 +186,15 @@ namespace SpaceWarp2.API.Config
         {
             var v = t.Get(shortKey);
             if (v.Type == DataType.Number)
-            {
                 return (float)v.Number;
-            }
 
             v = t.Get(longKey);
             if (v.Type == DataType.Number)
-            {
                 return (float)v.Number;
-            }
 
             v = t.Get(index);
             if (v.Type == DataType.Number)
-            {
                 return (float)v.Number;
-            }
 
             return fallback;
         }

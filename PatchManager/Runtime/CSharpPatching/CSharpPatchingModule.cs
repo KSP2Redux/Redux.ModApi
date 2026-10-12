@@ -30,41 +30,38 @@ namespace PatchManager.CSharpPatching
                 return;
             }
 
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (var type in AppDomain.CurrentDomain.GetLoadableTypes())
             {
-                foreach (var type in assembly.GetLoadableTypes())
+                var pmPatch = type.GetCustomAttribute<PMPatchAttribute>();
+                if (pmPatch == null)
+                    continue;
+
+                object owner;
+                try
                 {
-                    var pmPatch = type.GetCustomAttribute<PMPatchAttribute>();
-                    if (pmPatch == null)
-                        continue;
+                    owner = Activator.CreateInstance(type);
+                }
+                catch (Exception ex)
+                {
+                    Logging.LogError($"CSharpPatchingModule: failed to construct [PMPatch] class {type.FullName}: {ex.Message}");
+                    continue;
+                }
 
-                    object owner;
-                    try
-                    {
-                        owner = Activator.CreateInstance(type);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logging.LogError($"CSharpPatchingModule: failed to construct [PMPatch] class {type.FullName}: {ex.Message}");
-                        continue;
-                    }
+                var modId = string.IsNullOrEmpty(pmPatch.ModId) ? PluginList.ModIdOf(type.Assembly) : pmPatch.ModId;
+                if (modId == null)
+                {
+                    Logging.LogError(
+                        $"CSharpPatchingModule: [PMPatch] class {type.FullName} names no ModId, and no single mod loaded its assembly");
+                    continue;
+                }
 
-                    var modId = string.IsNullOrEmpty(pmPatch.ModId) ? PluginList.ModIdOf(type.Assembly) : pmPatch.ModId;
-                    if (modId == null)
-                    {
-                        Logging.LogError(
-                            $"CSharpPatchingModule: [PMPatch] class {type.FullName} names no ModId, and no single mod loaded its assembly");
+                var methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+                foreach (var method in methods)
+                {
+                    var target = method.GetCustomAttribute<PatchAttribute>();
+                    if (target == null)
                         continue;
-                    }
-
-                    foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic |
-                                                           BindingFlags.Instance | BindingFlags.Static))
-                    {
-                        var target = method.GetCustomAttribute<PatchAttribute>();
-                        if (target == null)
-                            continue;
-                        RegisterPatch(universe, owner, method, target, modId);
-                    }
+                    RegisterPatch(universe, owner, method, target, modId);
                 }
             }
         }

@@ -41,36 +41,33 @@ namespace PatchManager.LuaPatching
                 UserData.RegisterAssembly(assembly, false);
             }
 
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (var type in AppDomain.CurrentDomain.GetLoadableTypes())
             {
-                foreach (var type in assembly.GetLoadableTypes())
+                var attributes = type.GetCustomAttributes(true);
+                if (attributes.OfType<MoonSharpUserDataAttribute>().Any())
                 {
-                    var attributes = type.GetCustomAttributes(true);
-                    if (attributes.OfType<MoonSharpUserDataAttribute>().Any())
+                    DelegateRegistry.RegisterDelegatesFromMethodsOf(type);
+                }
+
+                if (attributes.OfType<PatchManagerModuleAttribute>().FirstOrDefault() is { } pmma)
+                {
+                    if (!attributes.OfType<MoonSharpUserDataAttribute>().Any())
                     {
-                        DelegateRegistry.RegisterDelegatesFromMethodsOf(type);
+                        Logging.LogWarning($"LuaPatchingModule: found Patch Manager module {pmma.SubmoduleName} without MoonSharpUserData attribute, skipping!");
+                        continue;
                     }
 
-                    if (attributes.OfType<PatchManagerModuleAttribute>().FirstOrDefault() is { } pmma)
-                    {
-                        if (!attributes.OfType<MoonSharpUserDataAttribute>().Any())
-                        {
-                            Logging.LogWarning($"LuaPatchingModule: found Patch Manager module {pmma.SubmoduleName} without MoonSharpUserData attribute, skipping!");
-                            continue;
-                        }
+                    Universe.SubmoduleTypes[pmma.SubmoduleName] = type;
+                }
 
-                        Universe.SubmoduleTypes[pmma.SubmoduleName] = type;
-                    }
-
-                    if (attributes.OfType<ConverterAttribute>().FirstOrDefault() is { } conv)
+                if (attributes.OfType<ConverterAttribute>().FirstOrDefault() is { } conv)
+                {
+                    if (!typeof(IConverter).IsAssignableFrom(type))
                     {
-                        if (!typeof(IConverter).IsAssignableFrom(type))
-                        {
-                            Logging.LogWarning($"LuaPatchingModule: found Patch Manager converter {conv.Name} that does not implement IConverter, skipping");
-                            continue;
-                        }
-                        Universe.Converters[conv.Name] = (IConverter)Activator.CreateInstance(type);
+                        Logging.LogWarning($"LuaPatchingModule: found Patch Manager converter {conv.Name} that does not implement IConverter, skipping");
+                        continue;
                     }
+                    Universe.Converters[conv.Name] = (IConverter)Activator.CreateInstance(type);
                 }
             }
         }
