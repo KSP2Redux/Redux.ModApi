@@ -43,11 +43,20 @@ namespace SpaceWarp2.API.Lifecycle
         /// <returns>A new table with each enabled id as a key mapped to true, or nil before any set is active.</returns>
         public DynValue All(ScriptExecutionContext context)
         {
-            if (ActiveFeatures.Enabled == null)
-                return DynValue.Nil;
+            return ActiveFeatures.Enabled == null ? DynValue.Nil : SetTable(context.GetScript(), ActiveFeatures.Enabled);
+        }
 
-            var set = new Table(context.GetScript());
-            foreach (string id in ActiveFeatures.Enabled)
+        /// <summary>
+        /// Builds a feature set as Lua sees it, wherever a script is handed one.
+        /// </summary>
+        /// <param name="script">The script the table belongs to.</param>
+        /// <param name="ids">The feature ids.</param>
+        /// <returns>A new table with each id as a key mapped to true.</returns>
+        [MoonSharpHidden]
+        public static DynValue SetTable(Script script, IEnumerable<string> ids)
+        {
+            var set = new Table(script);
+            foreach (string id in ids)
             {
                 set[id] = true;
             }

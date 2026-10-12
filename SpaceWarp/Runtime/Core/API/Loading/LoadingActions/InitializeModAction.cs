@@ -1,5 +1,6 @@
 #nullable enable
 
+using KSP.Game.Flow;
 using System;
 using SpaceWarp2.API.Loading;
 using SpaceWarp2.API.Mods;
@@ -9,16 +10,17 @@ namespace SpaceWarp2.Patching.LoadingActions
     /// <summary>
     /// Initializes a mod by firing its Lua init hooks and its C# OnInitialized callback.
     /// </summary>
-    internal sealed class InitializeModAction : BaseFlowAction
+    internal sealed class InitializeModAction : FlowAction
     {
         private readonly SpaceWarpPluginDescriptor _plugin;
 
-        public InitializeModAction(SpaceWarpPluginDescriptor plugin) : base($"Initialization for plugin {plugin.Name}", $"Initializing {plugin.Name}")
+        public InitializeModAction(SpaceWarpPluginDescriptor plugin) : base($"Initialization for plugin {plugin.Name}")
         {
+            Description = $"Initializing {plugin.Name}";
             _plugin = plugin;
         }
 
-        public override void DoAction(Action resolve, Action<string> reject)
+        protected override void DoAction(Action resolve, Action<string> reject)
         {
             try
             {
@@ -39,6 +41,11 @@ namespace SpaceWarp2.Patching.LoadingActions
                 if (_plugin.DoLoadingActions)
                 {
                     _plugin.Plugin?.OnInitialized();
+                }
+
+                if (_plugin.Plugin is ICampaignLifecycle lifecycle)
+                {
+                    SaveLoad.AddCampaignLifecycle(_plugin.Guid, _plugin.Name, lifecycle);
                 }
 
                 resolve();

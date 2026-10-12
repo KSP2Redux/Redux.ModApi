@@ -236,44 +236,6 @@ namespace PatchManager.LuaPatching.Builtin
         public FeatureGatedAction OnEndRun(ScriptExecutionContext context, Closure callback) =>
             AddRunCallback(_universe.EndRunCallbacks, context, callback);
 
-        /// <summary>
-        /// Registers a callback that runs whenever a feature set becomes active, for data a mod keeps per set.
-        /// </summary>
-        /// <remarks>
-        /// Runs at boot for the main menu set and on every switch to another set, never on a reload into the
-        /// same set, and only while the mod and the callback's selected features are on.
-        /// </remarks>
-        /// <param name="context">The Lua execution context. Its env's <c>ModId</c> global names the registering mod.</param>
-        /// <param name="callback">The callback, handed the set just activated as a table of each id mapped to true.</param>
-        /// <returns>The registered action, for gating it with features.</returns>
-        public FeatureGatedAction OnSetActivated(ScriptExecutionContext context, Closure callback)
-        {
-            string modId = ModScriptRuntime.ModIdOf(context);
-            Script script = context.GetScript();
-            FeatureGatedAction action = Loading.AddSetAction(
-                modId,
-                $"{modId} set data",
-                () => { },
-                done =>
-                {
-                    // One mod's failing callback must not stop the others from loading their data
-                    try
-                    {
-                        callback.Call(SetTable(script, ActiveFeatures.Enabled ?? Array.Empty<string>()));
-                    }
-                    catch (InterpreterException e)
-                    {
-                        Shared.Logging.LogError($"{modId}'s set activation callback failed: {e.DecoratedMessage}");
-                    }
-
-                    done();
-                }
-            );
-            action.Selector.AddOpenScopes();
-
-            return action;
-        }
-
         private FeatureGatedAction AddRunCallback(
             List<FeatureGatedAction> into,
             ScriptExecutionContext context,
@@ -287,25 +249,13 @@ namespace PatchManager.LuaPatching.Builtin
             Script script = context.GetScript();
             var registered = new FeatureGatedAction(modId, $"{modId} run callback", done =>
             {
-                callback.Call(SetTable(script, _universe.EnabledFeatures ?? new HashSet<string>()));
+                callback.Call(FeaturesLibrary.SetTable(script, _universe.EnabledFeatures ?? new HashSet<string>()));
                 done();
             });
             registered.Selector.AddOpenScopes();
 
             into.Add(registered);
             return registered;
-        }
-
-        // A set as Lua sees it, which is how the Features global hands it out too
-        private static DynValue SetTable(Script script, IEnumerable<string> ids)
-        {
-            var set = new Table(script);
-            foreach (string id in ids)
-            {
-                set[id] = true;
-            }
-
-            return DynValue.NewTable(set);
         }
 
         private static IEnumerable<string> StringsIn(DynValue list)

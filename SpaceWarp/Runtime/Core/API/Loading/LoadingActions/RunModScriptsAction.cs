@@ -1,5 +1,6 @@
 #nullable enable
 
+using KSP.Game.Flow;
 using System;
 using System.Collections.Generic;
 using Redux.ApiImpls;
@@ -17,17 +18,17 @@ namespace SpaceWarp2.Patching.LoadingActions
     /// Runs the declared script files plus the text assets of the addressable script label when one is present.
     /// Forks the mod's environment through the <see cref="ModScriptRuntime" />.
     /// </remarks>
-    internal sealed class RunModScriptsAction : BaseFlowAction
+    internal sealed class RunModScriptsAction : FlowAction
     {
         private readonly SpaceWarpPluginDescriptor _plugin;
 
-        public RunModScriptsAction(SpaceWarpPluginDescriptor plugin)
-            : base($"Running mod scripts for {plugin.Name}", $"Running scripts for {plugin.Name}")
+        public RunModScriptsAction(SpaceWarpPluginDescriptor plugin) : base($"Running mod scripts for {plugin.Name}")
         {
+            Description = $"Running scripts for {plugin.Name}";
             _plugin = plugin;
         }
 
-        public override void DoAction(Action resolve, Action<string> reject)
+        protected override void DoAction(Action resolve, Action<string> reject)
         {
             try
             {

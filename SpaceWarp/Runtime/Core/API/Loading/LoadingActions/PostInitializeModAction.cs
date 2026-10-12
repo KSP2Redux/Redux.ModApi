@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using KSP.Game.Flow;
 using System;
 using SpaceWarp2.API.Loading;
 using SpaceWarp2.API.Mods;
@@ -9,17 +10,17 @@ namespace SpaceWarp2.Patching.LoadingActions
     /// <summary>
     /// Post-initializes a mod by firing its Lua post-init hooks and its C# OnPostInitialized callback.
     /// </summary>
-    internal sealed class PostInitializeModAction : BaseFlowAction
+    internal sealed class PostInitializeModAction : FlowAction
     {
         private readonly SpaceWarpPluginDescriptor _plugin;
 
-        public PostInitializeModAction(SpaceWarpPluginDescriptor plugin)
-            : base($"Post-initialization for plugin {plugin.Name}", "Post-initialization")
+        public PostInitializeModAction(SpaceWarpPluginDescriptor plugin) : base($"Post-initialization for plugin {plugin.Name}")
         {
+            Description = "Post-initialization";
             _plugin = plugin;
         }
 
-        public override void DoAction(Action resolve, Action<string> reject)
+        protected override void DoAction(Action resolve, Action<string> reject)
         {
             try
             {

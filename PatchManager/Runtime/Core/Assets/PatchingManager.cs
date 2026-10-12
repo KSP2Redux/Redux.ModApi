@@ -303,9 +303,7 @@ namespace PatchManager.Core.Assets
         /// Lists the steps that clear and reload the data mods keep per feature set, for the set just activated.
         /// </summary>
         /// <returns>The steps, in order.</returns>
-        internal static IEnumerable<GenericFlowAction> SetLoadingSteps() =>
-            Loading.SetActionSteps(Loading.RegisteredSetActions)
-                .Select(step => new GenericFlowAction(step.name, (resolve, _) => step.work(resolve)));
+        internal static IEnumerable<GenericFlowAction> SetLoadingSteps() => SaveLoad.SetSteps();
 
         private static void SavePatchSummary(Action resolve, Action<string> reject)
         {

@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using KSP.Game.Flow;
 using System;
 using System.IO;
 using SpaceWarp2.API.Loading;
@@ -12,18 +13,18 @@ namespace SpaceWarp2.Patching.LoadingActions
     /// <summary>
     /// Loads a mod's addressables catalog when its addressables folder contains one.
     /// </summary>
-    internal sealed class LoadAddressablesAction : BaseFlowAction
+    internal sealed class LoadAddressablesAction : FlowAction
     {
         private static readonly ILogger Logger = LogManager.GetLogger("Addressables Loader");
         private readonly SpaceWarpPluginDescriptor _plugin;
 
-        public LoadAddressablesAction(SpaceWarpPluginDescriptor plugin) : base(
-            $"Loading addressables for {plugin.SWInfo.Name}", "Loading addressables")
+        public LoadAddressablesAction(SpaceWarpPluginDescriptor plugin) : base($"Loading addressables for {plugin.SWInfo.Name}")
         {
+            Description = "Loading addressables";
             _plugin = plugin;
         }
 
-        public override void DoAction(Action resolve, Action<string> reject)
+        protected override void DoAction(Action resolve, Action<string> reject)
         {
             try
             {

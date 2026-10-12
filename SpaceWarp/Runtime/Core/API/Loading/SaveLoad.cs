@@ -1,54 +1,45 @@
-﻿#nullable enable
+#nullable enable
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Runtime.CompilerServices;
+using System.Linq;
 using JetBrains.Annotations;
+using KSP.Game.Flow;
 using SpaceWarp2.API.Features;
-using SpaceWarp2.API.Mods;
 using UnityEngine;
 
 namespace SpaceWarp2.API.Loading
 {
     /// <summary>
-    /// An API to register flow actions to be run during loading and saving.
+    /// The one registry of work mods do as feature sets activate and campaigns load, save and unload, and the runner
+    /// that turns it into steps of the game's flows.
     /// </summary>
+    /// <remarks>
+    /// Every piece of work is a <see cref="FeatureGatedAction" />, registered under what triggers it. Each step
+    /// decides when it runs whether its action applies, which is after the set it belongs to has activated.
+    /// </remarks>
     [PublicAPI]
     public static class SaveLoad
     {
-        public static Dictionary<string, List<IFlowAction>> GameInitializingFlowActions = new();
-        public static Dictionary<string, List<IFlowAction>> LoadingFlowActions = new();
-        public static Dictionary<string, List<Type>> LoadingFlowActionTypes = new();
-        public static Dictionary<string, List<IFlowAction>> SavingFlowActions = new();
-        public static Dictionary<string, List<Type>> SavingFlowActionTypes = new();
+        private const string SET_TRIGGER = "set activated";
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStaticState()
-        {
-            GameInitializingFlowActions = new();
-            LoadingFlowActions = new();
-            LoadingFlowActionTypes = new();
-            SavingFlowActions = new();
-            SavingFlowActionTypes = new();
-            // A play session that ended without unloading leaves nothing for the next one to tear down
-            CampaignActions.Clear();
-            OwedUnloads.Clear();
-            AnchoredOwners.Clear();
-        }
-
-        // The mod each anchored action or action type was registered for, so it runs only while that mod is enabled
-        private static readonly Dictionary<object, string> AnchoredOwners = new();
-
-        // Work mods do every time a campaign loads, by where in loading it runs
-        private static readonly Dictionary<CampaignPhase, List<FeatureGatedAction>> CampaignActions = new();
+        // Every registered action, by what triggers it, in registration order
+        private static readonly Dictionary<string, List<FeatureGatedAction>> Actions = new();
 
         // Teardown owed for the campaign loaded now, run latest first when it unloads
         private static readonly List<Action> OwedUnloads = new();
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            // A play session that ended without unloading leaves nothing for the next one to tear down
+            Actions.Clear();
+            OwedUnloads.Clear();
+        }
+
         /// <summary>
-        /// Registers work a mod does every time a campaign it is enabled in loads, a quickload or revert into the same
-        /// set included.
+        /// Registers work a mod does every time a campaign it is enabled in loads, a quickload or revert into the
+        /// same set included.
         /// </summary>
         /// <param name="modId">The mod the work belongs to.</param>
         /// <param name="name">The name shown while it runs.</param>
@@ -61,42 +52,29 @@ namespace SpaceWarp2.API.Loading
             string name,
             CampaignPhase phase,
             Action<Action> load
-        )
-        {
-            var action = new FeatureGatedAction(modId, name, load);
-            if (!CampaignActions.TryGetValue(phase, out List<FeatureGatedAction> actions))
-            {
-                CampaignActions[phase] = actions = new List<FeatureGatedAction>();
-            }
-
-            actions.Add(action);
-            return action;
-        }
+        ) => Register(TriggerOf(phase), new FeatureGatedAction(modId, name, load));
 
         /// <summary>
-        /// Registers something a mod sets up every time a campaign it is enabled in loads, and disposes when the
-        /// campaign unloads.
+        /// Registers a step a mod adds straight after a named step of one of the game's own flows.
         /// </summary>
-        /// <param name="modId">The mod the scope belongs to.</param>
-        /// <param name="name">The name shown while it is set up.</param>
-        /// <param name="phase">Where in loading it is set up.</param>
-        /// <param name="open">Sets the scope up and returns what disposing tears it down.</param>
+        /// <remarks>
+        /// A step can follow another mod's step too, by its name. A step added to the campaign load or save flow
+        /// runs on every load or save.
+        /// </remarks>
+        /// <param name="modId">The mod the step belongs to.</param>
+        /// <param name="name">The step's name, which other steps can follow.</param>
+        /// <param name="flow">The flow the step joins.</param>
+        /// <param name="afterStep">The name of the step it follows.</param>
+        /// <param name="work">The work, given a callback to call once done and one to call with an error, which
+        /// stops the flow.</param>
         /// <returns>The action, for chaining feature selectors.</returns>
-        public static FeatureGatedAction AddCampaignScope(
+        public static FeatureGatedAction AddStepAfter(
             string modId,
             string name,
-            CampaignPhase phase,
-            Func<IDisposable> open
-        ) => AddCampaignLoadAction(modId, name, phase, done =>
-        {
-            IDisposable scope = open();
-            if (scope != null)
-            {
-                OnCampaignUnload(scope.Dispose);
-            }
-
-            done();
-        });
+            StockFlow flow,
+            string afterStep,
+            Action<Action, Action<string>> work
+        ) => Register(TriggerAfter(flow, afterStep), new FeatureGatedAction(modId, name, work));
 
         /// <summary>
         /// Registers teardown for something set up for the campaign loaded now, run when the campaign unloads.
@@ -109,76 +87,6 @@ namespace SpaceWarp2.API.Loading
         public static void OnCampaignUnload(Action unload)
         {
             OwedUnloads.Add(unload);
-        }
-
-        /// <summary>
-        /// Gets the work registered for one phase of loading a campaign, in registration order.
-        /// </summary>
-        /// <param name="phase">The phase.</param>
-        /// <returns>The actions.</returns>
-        public static IReadOnlyList<FeatureGatedAction> CampaignActionsIn(CampaignPhase phase) =>
-            CampaignActions.TryGetValue(phase, out List<FeatureGatedAction> actions)
-                ? actions
-                : Array.Empty<FeatureGatedAction>();
-
-        /// <summary>
-        /// Lists the steps that run campaign load work.
-        /// </summary>
-        /// <remarks>
-        /// Each step decides whether its action applies when it runs, which is after the campaign's set activated.
-        /// </remarks>
-        /// <param name="actions">The actions, normally <see cref="CampaignActionsIn" /> for one phase.</param>
-        /// <returns>Each step's name and work, the work given a callback to call once done.</returns>
-        public static List<(string name, Action<Action> work)> CampaignSteps(IEnumerable<FeatureGatedAction> actions)
-        {
-            var steps = new List<(string name, Action<Action> work)>();
-            foreach (FeatureGatedAction action in actions)
-            {
-                steps.Add((action.Name, done =>
-                {
-                    if (!action.Applies())
-                    {
-                        done();
-                        return;
-                    }
-
-                    try
-                    {
-                        action.Run(done);
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError($"[SpaceWarp] Campaign load action {action.Name} of {action.ModId} failed: {e}");
-                        done();
-                    }
-                }));
-            }
-
-            return steps;
-        }
-
-        /// <summary>
-        /// Tells each enabled plugin that the campaign has loaded, and owes it the matching unload.
-        /// </summary>
-        /// <param name="plugins">Each plugin with its mod id.</param>
-        public static void NotifyCampaignLoaded(IEnumerable<(string modId, ICampaignLifecycle plugin)> plugins)
-        {
-            foreach ((string modId, ICampaignLifecycle plugin) in plugins)
-            {
-                if (!ActiveFeatures.IsModEnabled(modId))
-                    continue;
-
-                try
-                {
-                    plugin.OnCampaignLoaded();
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"[SpaceWarp] {modId} failed to load its campaign state: {e}");
-                }
-
-                OwedUnloads.Add(plugin.OnCampaignUnloading);
-            }
         }
 
         /// <summary>
@@ -203,351 +111,133 @@ namespace SpaceWarp2.API.Loading
         }
 
         /// <summary>
-        ///     <para>Add a <cref>FlowAction</cref> to the Game's load sequence.</para>
-        ///
-        ///     <para>The action will be run after the first FlowAction with a name equal to referenceAction.
-        ///     If referenceAction is <c>null</c>, the action will be the first action run.</para>
-        ///
-        ///     <para>
-        ///         The FlowActions that occur in this sequence by default are: (Updated for KSP 0.1.1.0)
-        ///         <list type="number">
-        ///             <item><c>"Creating Splash Screens Prefab"</c></item>
-        ///             <item><c>"Set Loading Optimizations"</c></item>
-        ///             <item><c>"Initialize Addressables system"</c></item>
-        ///             <item><c>"Creating Game Instance"</c></item>
-        ///             <item><c>"Initializing Game Instance"</c></item>
-        ///             <item><c>"Creating Graphics Manager"</c></item>
-        ///             <item><c>"Creating Main Menu"</c></item>
-        ///             <item><c>"Load UI Background Scenes"</c></item>
-        ///             <item><c>"Parsing Loading Screens"</c></item>
-        ///             <item><c>"Set Loading Optimizations"</c></item>
-        ///             <item><c>"loading addressable localizations"</c> (Added by SpaceWarp)</item>
-        ///         </list>
-        ///     </para>
+        /// Lists the steps that run one phase of campaign load work.
         /// </summary>
-        /// <param name="flowAction">The FlowAction to insert</param>
-        /// <param name="referenceAction">The name of the action to insert a TFlowActionType after. Use <c>null</c> to insert it at the start.</param>
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void AddFlowActionToGameLoadAfter(IFlowAction flowAction, string referenceAction)
-        {
-            AddFlowActionToGameLoadAfter(PluginList.ModIdOf(Assembly.GetCallingAssembly()), flowAction, referenceAction);
-        }
+        /// <param name="phase">The phase.</param>
+        /// <returns>The steps, in registration order.</returns>
+        public static List<GenericFlowAction> CampaignSteps(CampaignPhase phase) => StepsFor(TriggerOf(phase));
 
         /// <summary>
-        ///     <para>Add a <cref>FlowAction</cref> to the save file loading sequence. A new <c>TFlowActionType</c> is constructed every load.</para>
-        ///
-        ///     <para>
-        ///         TFlowActionType must have a public constructor that at most one of each of the following types:
-        ///         <list type="bullet">
-        ///             <item><cref>SaveLoadManager</cref></item>
-        ///             <item><cref>LoadOrSaveCampaignTicket</cref></item>
-        ///             <item><cref>LoadGameData</cref></item>
-        ///         </list>
-        ///     </para>
-        ///
-        ///     <para>The action will be run after the first FlowAction with a name equal to referenceAction.
-        ///     If referenceAction is <c>null</c>, the action will be the first action run.</para>
-        ///
-        ///     <para>
-        ///         The FlowActions that occur in this sequence by default are: (Updated for KSP 0.1.1.0)
-        ///         <list type="number">
-        ///             <item><c>"Deserializing Save File Contents"</c></item>
-        ///             <item><c>"Starting..."</c></item>
-        ///             <item><c>"Loading session manager data"</c></item>
-        ///             <item><c>"Set Loading Optimizations"</c></item>
-        ///             <item><c>"Setup local player"</c></item>
-        ///             <item><c>"Load Session Guid"</c></item>
-        ///             <item><c>"Loading KSP2 mission base"</c></item>
-        ///             <item><c>"Load Campaign Players"</c></item>
-        ///             <item><c>"Load Agencies"</c></item>
-        ///             <item><c>"Load Fixup Player And Agency"</c></item>
-        ///             <item><c>"Setup OAB Part Seed Counter"</c></item>
-        ///             <item><c>"Unload Main Menu"</c></item>
-        ///             <item><c>"Validating Version Number"</c></item>
-        ///             <item><c>"Initializing Session Data"</c></item>
-        ///             <item><c>"Load required assets"</c></item>
-        ///             <item><c>"Parsing resource assets"</c></item>
-        ///             <item><c>"Freezing resource definition database"</c></item>
-        ///             <item><c>"Parsing procedural part assets"</c></item>
-        ///             <item><c>"Freezing procedural part definition database"</c></item>
-        ///             <item><c>"Loading Kerbal Prefab Data"</c></item>
-        ///             <item><c>"Loading Kerbal Roster Data"</c></item>
-        ///             <item><c>"Loading Colony Data"</c></item>
-        ///             <item><c>"Setup Properties"</c></item>
-        ///             <item><c>"Creating Simulation"</c></item>
-        ///             <item><c>"Loading Celestial Body Data"</c></item>
-        ///             <item><c>"Parsing interstellar universe"</c></item>
-        ///             <item><c>"Parsing parts text assets"</c></item>
-        ///             <item><c>"Creating Celestial Bodies"</c></item>
-        ///             <item><c>"Pumping Sim Once"</c></item>
-        ///             <item><c>"Creating Universe"</c></item>
-        ///             <item><c>"Creating ViewController"</c></item>
-        ///             <item><c>"Pumping Sim Once"</c></item>
-        ///             <item><c>"Spawning initial local-space body..."</c></item>
-        ///             <item><c>"Loading Map Systems"</c></item>
-        ///             <item><c>"Loading UI Manager"</c></item>
-        ///             <item><c>"Loading KSP2 missions"</c></item>
-        ///             <item><c>"Setting Universe State"</c></item>
-        ///             <item><c>"Creating Vessel"</c></item>
-        ///             <item><c>"Set Active Vessel for Local Player"</c></item>
-        ///             <item><c>"Loading Travel Log Data"</c></item>
-        ///             <item><c>"Pumping Sim Once"</c></item>
-        ///             <item><c>"Loading dashboard for the user"</c></item>
-        ///             <item><c>"Setting Camera State"</c></item>
-        ///             <item><c>"Starting Sim"</c></item>
-        ///             <item><c>"Pumping Sim Once"</c></item>
-        ///             <item><c>"Applying flight control state"</c></item>
-        ///             <item><c>"Applying legacy module data to vessel parts"</c></item>
-        ///             <item><c>"Load Planted Flags"</c></item>
-        ///             <item><c>"Wait for async handles"</c></item>
-        ///             <item><c>"Load Done"</c></item>
-        ///             <item><c>"Set Loading Optimizations"</c></item>
-        ///             <item><c>"Ending..."</c></item>
-        ///         </list>
-        ///     </para>
+        /// Lists the steps that follow a named step of one of the game's own flows.
         /// </summary>
-        /// <typeparam name="TFlowActionType">The type of FlowAction to insert</typeparam>
-        /// <param name="referenceAction">The name of the action to insert a TFlowActionType after. Use <c>null</c> to insert it at the start.</param>
-        /// <exception cref="InvalidOperationException">Thrown if <c>TFlowActionType</c> does not have a valid Constructor</exception>
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void AddFlowActionToCampaignLoadAfter<TFlowActionType>(string referenceAction) where TFlowActionType : IFlowAction
-        {
-            AddFlowActionToCampaignLoadAfter<TFlowActionType>(PluginList.ModIdOf(Assembly.GetCallingAssembly()), referenceAction);
-        }
+        /// <param name="flow">The flow.</param>
+        /// <param name="stepName">The name of the step just added to it.</param>
+        /// <returns>The steps, in registration order.</returns>
+        public static List<GenericFlowAction> StepsAfter(StockFlow flow, string stepName) =>
+            StepsFor(TriggerAfter(flow, stepName));
 
         /// <summary>
-        ///     <para>Add a <cref>FlowAction</cref> to the save file loading sequence. The same object is used for every load.</para>
-        ///
-        ///     <para>The action will be run after the first FlowAction with a name equal to referenceAction.
-        ///     If referenceAction is <c>null</c>, the action will be the first action run.</para>
-        ///
-        ///     <para>
-        ///         The FlowActions that occur in this sequence by default are: (Updated for KSP 0.1.1.0)
-        ///         <list type="number">
-        ///             <item><c>"Deserializing Save File Contents"</c></item>
-        ///             <item><c>"Starting..."</c></item>
-        ///             <item><c>"Loading session manager data"</c></item>
-        ///             <item><c>"Set Loading Optimizations"</c></item>
-        ///             <item><c>"Setup local player"</c></item>
-        ///             <item><c>"Load Session Guid"</c></item>
-        ///             <item><c>"Loading KSP2 mission base"</c></item>
-        ///             <item><c>"Load Campaign Players"</c></item>
-        ///             <item><c>"Load Agencies"</c></item>
-        ///             <item><c>"Load Fixup Player And Agency"</c></item>
-        ///             <item><c>"Setup OAB Part Seed Counter"</c></item>
-        ///             <item><c>"Unload Main Menu"</c></item>
-        ///             <item><c>"Validating Version Number"</c></item>
-        ///             <item><c>"Initializing Session Data"</c></item>
-        ///             <item><c>"Load required assets"</c></item>
-        ///             <item><c>"Parsing resource assets"</c></item>
-        ///             <item><c>"Freezing resource definition database"</c></item>
-        ///             <item><c>"Parsing procedural part assets"</c></item>
-        ///             <item><c>"Freezing procedural part definition database"</c></item>
-        ///             <item><c>"Loading Kerbal Prefab Data"</c></item>
-        ///             <item><c>"Loading Kerbal Roster Data"</c></item>
-        ///             <item><c>"Loading Colony Data"</c></item>
-        ///             <item><c>"Setup Properties"</c></item>
-        ///             <item><c>"Creating Simulation"</c></item>
-        ///             <item><c>"Loading Celestial Body Data"</c></item>
-        ///             <item><c>"Parsing interstellar universe"</c></item>
-        ///             <item><c>"Parsing parts text assets"</c></item>
-        ///             <item><c>"Creating Celestial Bodies"</c></item>
-        ///             <item><c>"Pumping Sim Once"</c></item>
-        ///             <item><c>"Creating Universe"</c></item>
-        ///             <item><c>"Creating ViewController"</c></item>
-        ///             <item><c>"Pumping Sim Once"</c></item>
-        ///             <item><c>"Spawning initial local-space body..."</c></item>
-        ///             <item><c>"Loading Map Systems"</c></item>
-        ///             <item><c>"Loading UI Manager"</c></item>
-        ///             <item><c>"Loading KSP2 missions"</c></item>
-        ///             <item><c>"Setting Universe State"</c></item>
-        ///             <item><c>"Creating Vessel"</c></item>
-        ///             <item><c>"Set Active Vessel for Local Player"</c></item>
-        ///             <item><c>"Loading Travel Log Data"</c></item>
-        ///             <item><c>"Pumping Sim Once"</c></item>
-        ///             <item><c>"Loading dashboard for the user"</c></item>
-        ///             <item><c>"Setting Camera State"</c></item>
-        ///             <item><c>"Starting Sim"</c></item>
-        ///             <item><c>"Pumping Sim Once"</c></item>
-        ///             <item><c>"Applying flight control state"</c></item>
-        ///             <item><c>"Applying legacy module data to vessel parts"</c></item>
-        ///             <item><c>"Load Planted Flags"</c></item>
-        ///             <item><c>"Wait for async handles"</c></item>
-        ///             <item><c>"Load Done"</c></item>
-        ///             <item><c>"Set Loading Optimizations"</c></item>
-        ///             <item><c>"Ending..."</c></item>
-        ///         </list>
-        ///     </para>
+        /// Lists the steps that load mods' per-set data: every action's clearing first, then each load that applies.
         /// </summary>
-        /// <param name="flowAction">The FlowAction to insert</param>
-        /// <param name="referenceAction">The name of the action to insert a FlowActionType after. Use <c>null</c> to insert it at the start.</param>
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void AddFlowActionToCampaignLoadAfter(IFlowAction flowAction, string referenceAction)
-        {
-            AddFlowActionToCampaignLoadAfter(PluginList.ModIdOf(Assembly.GetCallingAssembly()), flowAction, referenceAction);
-        }
+        /// <returns>The steps, in order.</returns>
+        public static List<GenericFlowAction> SetSteps() => SetSteps(ActionsFor(SET_TRIGGER));
 
         /// <summary>
-        ///     <para>Add a <cref>FlowAction</cref> to the save file writing sequence. A new <c>TFlowActionType</c> is constructed every load.</para>
-        ///
-        ///     <para>
-        ///         TFlowActionType must have a public constructor that at most one of each of the following types:
-        ///         <list type="bullet">
-        ///             <item><cref>SaveLoadManager</cref></item>
-        ///             <item><cref>LoadOrSaveCampaignTicket</cref></item>
-        ///         </list>
-        ///     </para>
-        ///
-        ///     <para>The action will be run after the first FlowAction with a name equal to referenceAction.
-        ///     If referenceAction is <c>null</c>, the action will be the first action run.</para>
-        ///
-        ///     <para>
-        ///         The FlowActions that occur in this sequence by default are: (Updated for KSP 0.1.1.0)
-        ///         <list type="number">
-        ///             <item><c>"Collecting vessel data for serialization"</c></item>
-        ///             <item><c>"Saving session manager"</c></item>
-        ///             <item><c>"Setting version"</c></item>
-        ///             <item><c>"Saving session guid"</c></item>
-        ///             <item><c>"Collecting game session metadata"</c></item>
-        ///             <item><c>"Saving Kerbal roster"</c></item>
-        ///             <item><c>"Saving colony data"</c></item>
-        ///             <item><c>"Saving Travel Log"</c></item>
-        ///             <item><c>"Collecting mission data for serialization"</c></item>
-        ///             <item><c>"Collecting OAB workspace data for serialization"</c></item>
-        ///             <item><c>"Saving planted flags"</c></item>
-        ///             <item><c>"Saving agencies"</c></item>
-        ///             <item><c>"Saving campaign players"</c></item>
-        ///             <item><c>"Serializing Save File Contents"</c></item>
-        ///         </list>
-        ///     </para>
+        /// Lists the steps that load per-set data for given actions: every action's clearing first, then each load
+        /// that applies.
         /// </summary>
-        /// <typeparam name="TFlowActionType">The type of FlowAction to insert</typeparam>
-        /// <param name="referenceAction">The name of the action to insert a TFlowActionType after. Use <c>null</c> to insert it at the start.</param>
-        /// <exception cref="InvalidOperationException">Thrown if <c>TFlowActionType</c> does not have a valid Constructor</exception>
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void AddFlowActionToCampaignSaveAfter<TFlowActionType>(string referenceAction) where TFlowActionType : IFlowAction
+        /// <param name="actions">The actions, in registration order.</param>
+        /// <returns>The steps, in order.</returns>
+        internal static List<GenericFlowAction> SetSteps(IReadOnlyList<FeatureGatedAction> actions)
         {
-            AddFlowActionToCampaignSaveAfter<TFlowActionType>(PluginList.ModIdOf(Assembly.GetCallingAssembly()), referenceAction);
-        }
-
-        /// <summary>
-        ///     <para>Add a <cref>FlowAction</cref> to the save file writing sequence. The same object is used for every load.</para>
-        ///
-        ///     <para>The action will be run after the first FlowAction with a name equal to referenceAction.
-        ///     If referenceAction is <c>null</c>, the action will be the first action run.</para>
-        ///
-        ///     <para>
-        ///         The FlowActions that occur in this sequence by default are: (Updated for KSP 0.1.1.0)
-        ///         <list type="number">
-        ///             <item><c>"Collecting vessel data for serialization"</c></item>
-        ///             <item><c>"Saving session manager"</c></item>
-        ///             <item><c>"Setting version"</c></item>
-        ///             <item><c>"Saving session guid"</c></item>
-        ///             <item><c>"Collecting game session metadata"</c></item>
-        ///             <item><c>"Saving Kerbal roster"</c></item>
-        ///             <item><c>"Saving colony data"</c></item>
-        ///             <item><c>"Saving Travel Log"</c></item>
-        ///             <item><c>"Collecting mission data for serialization"</c></item>
-        ///             <item><c>"Collecting OAB workspace data for serialization"</c></item>
-        ///             <item><c>"Saving planted flags"</c></item>
-        ///             <item><c>"Saving agencies"</c></item>
-        ///             <item><c>"Saving campaign players"</c></item>
-        ///             <item><c>"Serializing Save File Contents"</c></item>
-        ///         </list>
-        ///     </para>
-        /// </summary>
-        /// <param name="flowAction">The FlowAction to insert</param>
-        /// <param name="referenceAction">The name of the action to insert a FlowActionType after. Use <c>null</c> to insert it at the start.</param>
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void AddFlowActionToCampaignSaveAfter(IFlowAction flowAction, string referenceAction)
-        {
-            AddFlowActionToCampaignSaveAfter(PluginList.ModIdOf(Assembly.GetCallingAssembly()), flowAction, referenceAction);
-        }
-
-        /// <summary>
-        /// Adds a flow action to the game's load sequence, after the first action with the given name, owned by a mod.
-        /// </summary>
-        /// <param name="modId">The mod the action belongs to, or null for an action that always runs.</param>
-        /// <param name="flowAction">The FlowAction to insert.</param>
-        /// <param name="referenceAction">The name of the action to insert it after.</param>
-        public static void AddFlowActionToGameLoadAfter(string modId, IFlowAction flowAction, string referenceAction)
-        {
-            Anchor(GameInitializingFlowActions, referenceAction, flowAction, modId);
-        }
-
-        /// <summary>
-        /// Adds a flow action type to the save file loading sequence that runs only while its mod is enabled in the
-        /// loaded campaign's feature set. A new <c>TFlowActionType</c> is constructed every load.
-        /// </summary>
-        /// <typeparam name="TFlowActionType">The type of FlowAction to insert.</typeparam>
-        /// <param name="modId">The mod the action belongs to, or null for an action that always runs.</param>
-        /// <param name="referenceAction">The name of the action to insert it after.</param>
-        public static void AddFlowActionToCampaignLoadAfter<TFlowActionType>(string modId, string referenceAction)
-            where TFlowActionType : IFlowAction
-        {
-            Anchor(LoadingFlowActionTypes, referenceAction, typeof(TFlowActionType), modId);
-        }
-
-        /// <summary>
-        /// Adds a flow action to the save file loading sequence that runs only while its mod is enabled in the loaded
-        /// campaign's feature set. The same object is used for every load.
-        /// </summary>
-        /// <param name="modId">The mod the action belongs to, or null for an action that always runs.</param>
-        /// <param name="flowAction">The FlowAction to insert.</param>
-        /// <param name="referenceAction">The name of the action to insert it after.</param>
-        public static void AddFlowActionToCampaignLoadAfter(string modId, IFlowAction flowAction, string referenceAction)
-        {
-            Anchor(LoadingFlowActions, referenceAction, flowAction, modId);
-        }
-
-        /// <summary>
-        /// Adds a flow action type to the save file saving sequence that runs only while its mod is enabled in the
-        /// campaign's feature set. A new <c>TFlowActionType</c> is constructed every save.
-        /// </summary>
-        /// <typeparam name="TFlowActionType">The type of FlowAction to insert.</typeparam>
-        /// <param name="modId">The mod the action belongs to, or null for an action that always runs.</param>
-        /// <param name="referenceAction">The name of the action to insert it after.</param>
-        public static void AddFlowActionToCampaignSaveAfter<TFlowActionType>(string modId, string referenceAction)
-            where TFlowActionType : IFlowAction
-        {
-            Anchor(SavingFlowActionTypes, referenceAction, typeof(TFlowActionType), modId);
-        }
-
-        /// <summary>
-        /// Adds a flow action to the save file saving sequence that runs only while its mod is enabled in the campaign's
-        /// feature set. The same object is used for every save.
-        /// </summary>
-        /// <param name="modId">The mod the action belongs to, or null for an action that always runs.</param>
-        /// <param name="flowAction">The FlowAction to insert.</param>
-        /// <param name="referenceAction">The name of the action to insert it after.</param>
-        public static void AddFlowActionToCampaignSaveAfter(string modId, IFlowAction flowAction, string referenceAction)
-        {
-            Anchor(SavingFlowActions, referenceAction, flowAction, modId);
-        }
-
-        /// <summary>
-        /// Gets the mod an anchored flow action or flow action type was registered for.
-        /// </summary>
-        /// <param name="actionOrType">The registered action, or the registered action type.</param>
-        /// <returns>The mod's id, or null for an action that always runs.</returns>
-        public static string OwnerOf(object actionOrType) => AnchoredOwners.GetValueOrDefault(actionOrType);
-
-        private static void Anchor<T>(Dictionary<string, List<T>> anchors, string referenceAction, T entry, string modId)
-        {
-            if (anchors.TryGetValue(referenceAction, out List<T> entries))
+            var steps = new List<GenericFlowAction>();
+            foreach (FeatureGatedAction action in actions)
             {
-                entries.Add(entry);
-            }
-            else
-            {
-                anchors[referenceAction] = new List<T> { entry };
+                steps.Add(new GenericFlowAction($"Clearing {action.Name}", (resolve, _) =>
+                {
+                    action.Reset?.Invoke();
+                    resolve();
+                }));
             }
 
-            if (modId != null)
+            foreach (FeatureGatedAction action in actions)
             {
-                AnchoredOwners[entry] = modId;
+                steps.Add(StepFor(action, $"Loading {action.Name}"));
             }
+
+            return steps;
         }
+
+        /// <summary>
+        /// Registers a plugin to hear when each campaign its mod is enabled in loads, and owes it the matching unload.
+        /// </summary>
+        /// <param name="modId">The plugin's mod.</param>
+        /// <param name="name">The plugin's name.</param>
+        /// <param name="plugin">The plugin.</param>
+        internal static void AddCampaignLifecycle(string modId, string name, ICampaignLifecycle plugin) =>
+            Register(TriggerOf(CampaignPhase.Loaded), LifecycleAction(modId, name, plugin));
+
+        /// <summary>
+        /// Builds the action that tells a plugin its campaign has loaded, and owes it the matching unload.
+        /// </summary>
+        /// <param name="modId">The plugin's mod.</param>
+        /// <param name="name">The plugin's name.</param>
+        /// <param name="plugin">The plugin.</param>
+        /// <returns>The action.</returns>
+        internal static FeatureGatedAction LifecycleAction(string modId, string name, ICampaignLifecycle plugin) =>
+            new(modId, $"{name}: campaign state", done =>
+            {
+                plugin.OnCampaignLoaded();
+                OnCampaignUnload(plugin.OnCampaignUnloading);
+                done();
+            });
+
+        /// <summary>
+        /// Registers work a mod loads per feature set.
+        /// </summary>
+        /// <param name="action">The action, whose reset clears what an earlier set loaded.</param>
+        /// <returns>The action.</returns>
+        internal static FeatureGatedAction AddSetAction(FeatureGatedAction action) => Register(SET_TRIGGER, action);
+
+        /// <summary>
+        /// Builds the step that runs one action: nothing when it does not apply, and logging rather than stopping
+        /// the flow when it throws.
+        /// </summary>
+        /// <param name="action">The action.</param>
+        /// <param name="name">The step's name, the action's own when null.</param>
+        /// <returns>The step.</returns>
+        internal static GenericFlowAction StepFor(FeatureGatedAction action, string? name = null) =>
+            new(name ?? action.Name, (resolve, reject) =>
+            {
+                if (!action.Applies())
+                {
+                    resolve();
+                    return;
+                }
+
+                try
+                {
+                    action.Run(resolve, reject);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[SpaceWarp] {action.Name} of {action.ModId} failed: {e}");
+                    resolve();
+                }
+            });
+
+        private static FeatureGatedAction Register(string trigger, FeatureGatedAction action)
+        {
+            if (!Actions.TryGetValue(trigger, out List<FeatureGatedAction> actions))
+            {
+                Actions[trigger] = actions = new List<FeatureGatedAction>();
+            }
+
+            actions.Add(action);
+            return action;
+        }
+
+        private static IReadOnlyList<FeatureGatedAction> ActionsFor(string trigger) =>
+            Actions.TryGetValue(trigger, out List<FeatureGatedAction> actions)
+                ? actions
+                : Array.Empty<FeatureGatedAction>();
+
+        private static List<GenericFlowAction> StepsFor(string trigger) =>
+            ActionsFor(trigger).Select(action => StepFor(action)).ToList();
+
+        private static string TriggerOf(CampaignPhase phase) => $"campaign {phase}";
+
+        private static string TriggerAfter(StockFlow flow, string stepName) => $"{flow} after {stepName}";
     }
 
     /// <summary>
@@ -570,6 +260,28 @@ namespace SpaceWarp2.API.Loading
         /// Once the campaign has finished loading.
         /// </summary>
         Loaded
+    }
+
+    /// <summary>
+    /// One of the game's own flows, which <see cref="SaveLoad.AddStepAfter" /> adds steps to.
+    /// </summary>
+    [PublicAPI]
+    public enum StockFlow
+    {
+        /// <summary>
+        /// Starting the game, up to the main menu.
+        /// </summary>
+        GameLoad,
+
+        /// <summary>
+        /// Loading a campaign.
+        /// </summary>
+        CampaignLoad,
+
+        /// <summary>
+        /// Saving a campaign.
+        /// </summary>
+        CampaignSave
     }
 
     /// <summary>

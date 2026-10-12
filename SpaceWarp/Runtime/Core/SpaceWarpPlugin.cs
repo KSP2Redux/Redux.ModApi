@@ -3,6 +3,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using KSP.Game.Flow;
 using SpaceWarp2.API;
 using SpaceWarp2.API.Backend.Modding;
 using SpaceWarp2.API.Features;
@@ -190,8 +191,8 @@ namespace SpaceWarp2
 
         #region Space Warp Loading Actions
 
-        public static List<IFlowAction> BeforeGameLoadActions = new();
-        public static List<IFlowAction> AfterGameLoadActions = new();
+        public static List<FlowAction> BeforeGameLoadActions = new();
+        public static List<FlowAction> AfterGameLoadActions = new();
 
         #endregion
     }

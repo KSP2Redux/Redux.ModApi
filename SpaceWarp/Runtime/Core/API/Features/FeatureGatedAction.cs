@@ -17,7 +17,7 @@ namespace SpaceWarp2.API.Features
     [MoonSharpUserData]
     public class FeatureGatedAction
     {
-        private readonly Action<Action> _work;
+        private readonly Action<Action, Action<string>> _work;
 
         static FeatureGatedAction()
         {
@@ -33,6 +33,19 @@ namespace SpaceWarp2.API.Features
         /// <param name="reset">Work that runs whether or not the action applies, such as clearing what an earlier set
         /// loaded, or null.</param>
         public FeatureGatedAction(string modId, string name, Action<Action> work, Action reset = null)
+            : this(modId, name, (resolve, _) => work(resolve), reset)
+        {
+        }
+
+        /// <summary>
+        /// Creates an action whose work can fail, without registering it.
+        /// </summary>
+        /// <param name="modId">The mod the action belongs to.</param>
+        /// <param name="name">The name shown while it runs.</param>
+        /// <param name="work">The work, given a callback to call once done and one to call with an error.</param>
+        /// <param name="reset">Work that runs whether or not the action applies, such as clearing what an earlier set
+        /// loaded, or null.</param>
+        public FeatureGatedAction(string modId, string name, Action<Action, Action<string>> work, Action reset = null)
         {
             ModId = modId;
             Name = name;
@@ -106,7 +119,18 @@ namespace SpaceWarp2.API.Features
         [MoonSharpHidden]
         public void Run(Action done)
         {
-            _work(done);
+            _work(done, error => throw new InvalidOperationException(error));
+        }
+
+        /// <summary>
+        /// Runs the work, without checking whether the action applies.
+        /// </summary>
+        /// <param name="resolve">Called once the work is done.</param>
+        /// <param name="reject">Called with an error when the work fails.</param>
+        [MoonSharpHidden]
+        public void Run(Action resolve, Action<string> reject)
+        {
+            _work(resolve, reject);
         }
     }
 }

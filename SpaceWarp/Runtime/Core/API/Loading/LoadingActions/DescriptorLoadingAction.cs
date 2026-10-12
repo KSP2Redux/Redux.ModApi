@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using KSP.Game.Flow;
 using System;
 using JetBrains.Annotations;
 using SpaceWarp2.API.Loading;
@@ -13,7 +14,7 @@ namespace SpaceWarp2.Patching.LoadingActions
     /// A general loading action for a mod descriptor.
     /// </summary>
     [PublicAPI]
-    public class DescriptorLoadingAction : BaseFlowAction
+    public class DescriptorLoadingAction : FlowAction
     {
         private readonly Action<SpaceWarpPluginDescriptor> _action;
         private readonly SpaceWarpPluginDescriptor _plugin;
@@ -28,8 +29,9 @@ namespace SpaceWarp2.Patching.LoadingActions
             string actionName,
             Action<SpaceWarpPluginDescriptor> action,
             SpaceWarpPluginDescriptor plugin
-        ) : base($"{plugin.SWInfo.Name}: {actionName}", actionName)
+        ) : base($"{plugin.SWInfo.Name}: {actionName}")
         {
+            Description = actionName;
             _action = action;
             _plugin = plugin;
         }
@@ -38,7 +40,7 @@ namespace SpaceWarp2.Patching.LoadingActions
         /// </summary>
         /// <param name="resolve">Callback to call when the action is resolved.</param>
         /// <param name="reject">Callback to call when the action is rejected.</param>
-        public override void DoAction(Action resolve, Action<string> reject)
+        protected override void DoAction(Action resolve, Action<string> reject)
         {
             try
             {

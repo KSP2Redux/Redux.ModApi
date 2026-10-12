@@ -16,7 +16,6 @@ using SpaceWarp2.API.Mods;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
-using FlowAction = PatchManager.Core.Flow.FlowAction;
 
 namespace PatchManager.Core
 {
@@ -53,9 +52,9 @@ namespace PatchManager.Core
         {
             _wasCacheInvalidated = false;
             SpaceWarp2.API.Loading.Loading.GeneralLoadingActions.Insert(0,
-                () => new FlowAction("Patch Manager: Closing Registration", CloseRegistration));
+                () => new GenericFlowAction("Patch Manager: Closing Registration", CloseRegistration));
             SpaceWarp2.API.Loading.Loading.GeneralLoadingActions.Insert(1,
-                () => new FlowAction("Patch Manager: Deciding Cache Validity", DecideCacheValidity));
+                () => new GenericFlowAction("Patch Manager: Deciding Cache Validity", DecideCacheValidity));
         }
 
         private void DecideCacheValidity(Action resolve, Action<string> reject)

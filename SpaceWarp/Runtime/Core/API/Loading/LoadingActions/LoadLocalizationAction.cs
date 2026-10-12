@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using KSP.Game.Flow;
 using System;
 using System.IO;
 using SpaceWarp2.API.Loading;
@@ -11,17 +12,17 @@ namespace SpaceWarp2.Patching.LoadingActions
     /// <summary>
     /// Loads a mod's localizations from its localizations folder.
     /// </summary>
-    internal sealed class LoadLocalizationAction : BaseFlowAction
+    internal sealed class LoadLocalizationAction : FlowAction
     {
         private readonly SpaceWarpPluginDescriptor _plugin;
 
-        public LoadLocalizationAction(SpaceWarpPluginDescriptor plugin)
-            : base($"Loading localizations for plugin {plugin.SWInfo.Name}", "Loading localizations")
+        public LoadLocalizationAction(SpaceWarpPluginDescriptor plugin) : base($"Loading localizations for plugin {plugin.SWInfo.Name}")
         {
+            Description = "Loading localizations";
             _plugin = plugin;
         }
 
-        public override void DoAction(Action resolve, Action<string> reject)
+        protected override void DoAction(Action resolve, Action<string> reject)
         {
             try
             {

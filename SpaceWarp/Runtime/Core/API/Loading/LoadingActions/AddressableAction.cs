@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using KSP.Game.Flow;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +20,7 @@ namespace SpaceWarp2.API.Loading.LoadingActions
     /// </summary>
     /// <typeparam name="T">The type of assets to load.</typeparam>
     [PublicAPI]
-    public class AddressableAction<T> : BaseFlowAction where T : UnityObject
+    public class AddressableAction<T> : FlowAction where T : UnityObject
     {
         private string _label;
         private Action<T> _action;
@@ -31,8 +32,9 @@ namespace SpaceWarp2.API.Loading.LoadingActions
         /// <param name="name">Name of the action.</param>
         /// <param name="label">Label of the asset to load.</param>
         /// <param name="action">Action to perform on the loaded asset.</param>
-        public AddressableAction(string name, string label, Action<T> action) : base(name,name)
+        public AddressableAction(string name, string label, Action<T> action) : base(name)
         {
+            Description = name;
             _label = label;
             _action = action;
         }
@@ -57,7 +59,7 @@ namespace SpaceWarp2.API.Loading.LoadingActions
         /// </summary>
         /// <param name="resolve">Callback to call when the action is resolved.</param>
         /// <param name="reject">Callback to call when the action is rejected.</param>
-        public override void DoAction(Action resolve, Action<string> reject)
+        protected override void DoAction(Action resolve, Action<string> reject)
         {
             if (!DoesLabelExist(_label))
             {

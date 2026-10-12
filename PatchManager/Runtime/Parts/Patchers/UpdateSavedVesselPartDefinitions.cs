@@ -1,19 +1,19 @@
 using System;
 using System.Collections.Generic;
 using KSP.Game;
+using KSP.Game.Flow;
 using KSP.Game.Load;
 using KSP.Sim.State;
 using PatchManager.Shared;
-using SpaceWarp2.API.Loading;
 using UniLinq;
 
 namespace PatchManager.Parts.Patchers
 {
     /// <summary>
-    /// IFlowAction that brings saved-vessel data into sync with the current part definitions: trims removed modules,
+    /// Flow action that brings saved-vessel data into sync with the current part definitions: trims removed modules,
     /// adds new modules, fills in new resource containers, and drops vessels whose parts no longer exist.
     /// </summary>
-    internal class UpdateSavedVesselPartDefinitions : IFlowAction
+    internal class UpdateSavedVesselPartDefinitions : FlowAction
     {
         private LoadGameData _loadGameData;
 
@@ -21,19 +21,14 @@ namespace PatchManager.Parts.Patchers
         /// Creates the flow action bound to the given save-load context.
         /// </summary>
         /// <param name="loadGameData">The save-load context whose vessels will be updated.</param>
-        public UpdateSavedVesselPartDefinitions(LoadGameData loadGameData)
+        public UpdateSavedVesselPartDefinitions(LoadGameData loadGameData) : base("Updating saved vessel part definitions")
         {
+            Description = Name;
             _loadGameData = loadGameData;
         }
 
         /// <inheritdoc />
-        public string Name => "Updating saved vessel part definitions";
-
-        /// <inheritdoc />
-        public string Description => "Updating saved vessel part definitions";
-
-        /// <inheritdoc />
-        public void DoAction(Action resolve, Action<string> reject)
+        protected override void DoAction(Action resolve, Action<string> reject)
         {
             if (_loadGameData.SavedGame.Vessels == null)
             {
