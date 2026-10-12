@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using ReduxLib.Configuration;
+using SpaceWarp2.API.Configuration;
 using SpaceWarp2.API.Backend.SaveGameManager;
 using UnityEngine;
 

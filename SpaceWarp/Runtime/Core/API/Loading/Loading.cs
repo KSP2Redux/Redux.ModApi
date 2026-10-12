@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Redux.ApiImpls;
 using SpaceWarp2.API.Features;
 using SpaceWarp2.InternalUtilities;
 using SpaceWarp2.API.Loading.LoadingActions;
@@ -171,13 +172,13 @@ public static class Loading
             done =>
             {
                 // No catalog may ship the label at all, which is not an error for data that is optional
-                if (!IAssetProvider.Instance.DoesLabelExist(label))
+                if (!ReduxAssetProvider.DoesLabelExist(label))
                 {
                     done();
                     return;
                 }
 
-                IAssetProvider.Instance.LoadByLabel<T>(
+                ReduxAssetProvider.LoadByLabel<T>(
                 label,
                 onAsset,
                 assets =>

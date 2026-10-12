@@ -1,6 +1,6 @@
 using System;
 using JetBrains.Annotations;
-using ReduxLib.Configuration.Attributes;
+using SpaceWarp2.API.Configuration.Attributes;
 
 namespace SpaceWarp2.API.Features;
 
