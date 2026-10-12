@@ -18,7 +18,8 @@ namespace SpaceWarp2.API.Features
     public class FeatureSelector
     {
         /// <summary>
-        /// The tag prefix of a config entry shown only while a feature is on, such as <c>feature:Fast</c>.
+        /// The prefix that marks something as needing a feature on: an Addressables label tagging an asset with its
+        /// feature, such as <c>feature:Ksp2Redux:Parts</c>, or a config entry tag, such as <c>feature:Fast</c>.
         /// </summary>
         public const string FEATURE_TAG_PREFIX = "feature:";
 
