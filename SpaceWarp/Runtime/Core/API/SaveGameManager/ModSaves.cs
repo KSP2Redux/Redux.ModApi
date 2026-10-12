@@ -186,45 +186,6 @@ public static class ModSaves
     }
     
     /// <summary>
-    /// Applies a campaign's stored mod settings to each mod's campaign config. A mod the campaign has none for gets
-    /// its defaults.
-    /// </summary>
-    /// <param name="data">The campaign's stored settings.</param>
-    /// <param name="configs">Each mod's campaign config, by mod id.</param>
-    public static void LoadCampaignConfigs(CampaignConfigData data, IReadOnlyDictionary<string, JsonConfigFile> configs)
-    {
-        foreach (KeyValuePair<string, JsonConfigFile> config in configs)
-        {
-            config.Value.Load(data.Mods.GetValueOrDefault(config.Key));
-        }
-    }
-
-    /// <summary>
-    /// Stores each mod's campaign config into the campaign's settings, keeping those of mods not installed now.
-    /// </summary>
-    /// <param name="data">The campaign's stored settings.</param>
-    /// <param name="configs">Each mod's campaign config, by mod id.</param>
-    public static void SaveCampaignConfigs(CampaignConfigData data, IReadOnlyDictionary<string, JsonConfigFile> configs)
-    {
-        foreach (KeyValuePair<string, JsonConfigFile> config in configs)
-        {
-            data.Mods[config.Key] = config.Value.ToJObject();
-        }
-    }
-
-    /// <summary>
-    /// Starts a new campaign's mod settings from every mod's defaults.
-    /// </summary>
-    /// <param name="configs">Each mod's campaign config, by mod id.</param>
-    /// <returns>The new campaign's settings, holding none of the previous campaign's.</returns>
-    public static CampaignConfigData ResetCampaignConfigs(IReadOnlyDictionary<string, JsonConfigFile> configs)
-    {
-        var reset = new CampaignConfigData();
-        LoadCampaignConfigs(reset, configs);
-        return reset;
-    }
-
-    /// <summary>
     /// Manually trigger a campaign save data flush
     /// </summary>
     public static void TriggerCampaignSaveDataUpdate()
