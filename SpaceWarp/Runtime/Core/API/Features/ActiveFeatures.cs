@@ -74,8 +74,7 @@ namespace SpaceWarp2.API.Features
         /// </summary>
         /// <param name="modId">The mod id.</param>
         /// <returns>True if the mod is on, if it is on in every set, or if no set is active.</returns>
-        public static bool IsModEnabled(string modId) =>
-            FeatureRegistry.IsAlwaysEnabled(modId) || IsEnabled(FeatureRegistry.DefaultFor(modId));
+        public static bool IsModEnabled(string modId) => FeatureSelector.AllowsMod(modId, _enabled);
 
         /// <summary>
         /// Checks whether a mod's runtime hooks run in the active feature set.
@@ -86,38 +85,6 @@ namespace SpaceWarp2.API.Features
         /// <param name="modId">The id the hooks were registered under.</param>
         /// <returns>True if the hooks run.</returns>
         public static bool RunsHooksOf(string modId) => modId == ModScriptRuntime.ConsoleModId || IsModEnabled(modId);
-
-        /// <summary>
-        /// The tag prefix of a config entry shown only while a feature is on, such as <c>feature:Fast</c>.
-        /// </summary>
-        public const string FEATURE_TAG_PREFIX = "feature:";
-
-        /// <summary>
-        /// The tag prefix of a config entry shown only while a feature is off.
-        /// </summary>
-        public const string NO_FEATURE_TAG_PREFIX = "nofeature:";
-
-        /// <summary>
-        /// Checks whether the active set shows a config entry with the given tags.
-        /// </summary>
-        /// <param name="modId">The mod the entry belongs to, which bare feature ids in its tags belong to.</param>
-        /// <param name="tags">The entry's tags.</param>
-        /// <returns>True if every feature the tags select is on and every one they exclude is off.</returns>
-        public static bool AllowsConfigEntry(string modId, IEnumerable<string> tags)
-        {
-            foreach (string tag in tags)
-            {
-                if (tag.StartsWith(FEATURE_TAG_PREFIX, StringComparison.Ordinal)
-                    && !IsEnabled(FeatureRegistry.Qualify(modId, tag.Substring(FEATURE_TAG_PREFIX.Length))))
-                    return false;
-
-                if (tag.StartsWith(NO_FEATURE_TAG_PREFIX, StringComparison.Ordinal)
-                    && IsEnabled(FeatureRegistry.Qualify(modId, tag.Substring(NO_FEATURE_TAG_PREFIX.Length))))
-                    return false;
-            }
-
-            return true;
-        }
 
         /// <summary>
         /// Sets each <see cref="FeatureAttribute" /> bool field of an object to whether its feature is on.

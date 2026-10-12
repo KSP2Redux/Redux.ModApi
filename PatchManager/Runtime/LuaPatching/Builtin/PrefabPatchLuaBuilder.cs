@@ -66,7 +66,7 @@ namespace PatchManager.LuaPatching.Builtin
         /// <returns>The builder for chaining.</returns>
         public PrefabPatchLuaBuilder Feature(params string[] ids)
         {
-            _builder.NeedsFeature(ids);
+            _builder.Feature(ids);
             return this;
         }
 
@@ -77,7 +77,7 @@ namespace PatchManager.LuaPatching.Builtin
         /// <returns>The builder for chaining.</returns>
         public PrefabPatchLuaBuilder NoFeature(params string[] ids)
         {
-            _builder.ConflictsFeature(ids);
+            _builder.NoFeature(ids);
             return this;
         }
 

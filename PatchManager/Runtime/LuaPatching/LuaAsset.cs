@@ -43,14 +43,9 @@ namespace PatchManager.LuaPatching
         [MoonSharpHidden] public string ModId;
 
         /// <summary>
-        /// The qualified features that must be on for the asset to be created, beyond its mod's default feature.
+        /// The features the asset needs on and off to be created, beyond its mod's default feature.
         /// </summary>
-        [MoonSharpHidden] public HashSet<string> NeedsFeatures = new(StringComparer.OrdinalIgnoreCase);
-
-        /// <summary>
-        /// The qualified features that must be off for the asset to be created.
-        /// </summary>
-        [MoonSharpHidden] public HashSet<string> ConflictsFeatures = new(StringComparer.OrdinalIgnoreCase);
+        [MoonSharpHidden] public FeatureSelector Selector = new();
 
         /// <summary>
         /// Creates the asset only when these features are on.
@@ -61,7 +56,7 @@ namespace PatchManager.LuaPatching
         {
             foreach (var id in ids)
             {
-                NeedsFeatures.Add(FeatureRegistry.Qualify(ModId, id));
+                Selector.Feature(ModId, id);
             }
 
             return this;
@@ -76,7 +71,7 @@ namespace PatchManager.LuaPatching
         {
             foreach (var id in ids)
             {
-                ConflictsFeatures.Add(FeatureRegistry.Qualify(ModId, id));
+                Selector.NoFeature(ModId, id);
             }
 
             return this;

@@ -49,61 +49,6 @@ namespace PatchManager.LuaPatching
         public static bool IsGlobalLabel(string label) => label != null && GlobalLabels.Contains(label);
 
         /// <summary>
-        /// Checks whether a patch, created asset or prefab manifest takes part in the feature set being built.
-        /// </summary>
-        /// <remarks>
-        /// Everything a mod registers needs that mod's default feature, except Redux's.
-        /// </remarks>
-        /// <param name="modId">The registering mod.</param>
-        /// <param name="needs">The qualified features that must be on.</param>
-        /// <param name="conflicts">The qualified features that must be off.</param>
-        /// <param name="enabled">The enabled features, or <c>null</c> to let everything through.</param>
-        /// <param name="reason">The first unmet requirement, when the registration is dropped.</param>
-        /// <returns>True if the registration takes part, false otherwise.</returns>
-        public static bool Allows(
-            string modId,
-            IEnumerable<string> needs,
-            IEnumerable<string> conflicts,
-            ISet<string> enabled,
-            out string reason
-        )
-        {
-            reason = null;
-            if (enabled == null)
-                return true;
-
-            if (
-                !string.IsNullOrEmpty(modId)
-                && !FeatureRegistry.IsAlwaysEnabled(modId)
-                && !enabled.Contains(FeatureRegistry.DefaultFor(modId))
-            )
-            {
-                reason = FeatureRegistry.DefaultFor(modId);
-                return false;
-            }
-
-            foreach (string needed in needs)
-            {
-                if (enabled.Contains(needed))
-                    continue;
-
-                reason = needed;
-                return false;
-            }
-
-            foreach (string conflicting in conflicts)
-            {
-                if (!enabled.Contains(conflicting))
-                    continue;
-
-                reason = $"not {conflicting}";
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
         /// Logs an error from patch loading or execution. Supplied by the host.
         /// </summary>
         public readonly Action<string> ErrorLogger;
@@ -205,7 +150,7 @@ namespace PatchManager.LuaPatching
         /// </summary>
         public IEnumerable<LuaAsset> EnabledNewAssets => AllNewAssets.Where(
             asset => IsGlobalLabel(asset.Label) ||
-                Allows(asset.ModId, asset.NeedsFeatures, asset.ConflictsFeatures, EnabledFeatures, out _)
+                asset.Selector.Allows(asset.ModId, EnabledFeatures)
         );
 
         /// <summary>
@@ -221,8 +166,7 @@ namespace PatchManager.LuaPatching
                     Label = asset.Label,
                     Name = asset.Name,
                     ModId = asset.ModId,
-                    NeedsFeatures = asset.NeedsFeatures,
-                    ConflictsFeatures = asset.ConflictsFeatures,
+                    Selector = asset.Selector,
                     // A run patches its copy in place, so the copy is rebuilt from the registered value's JSON
                     CurrentValue = asset.ConverterInstance.FromJson(asset.ConverterInstance.ToJson(asset.CurrentValue)?.DeepClone())
                 })
@@ -250,10 +194,9 @@ namespace PatchManager.LuaPatching
 
         private void FireRunCallbacks(List<FeatureGatedAction> callbacks)
         {
-            var enabled = (EnabledFeatures ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)).ToList();
             foreach (var callback in callbacks)
             {
-                if (!callback.AppliesIn(enabled))
+                if (!callback.AppliesIn(EnabledFeatures))
                     continue;
 
                 try
@@ -487,7 +430,7 @@ namespace PatchManager.LuaPatching
                 }
 
                 if (!IsGlobalLabel(patch.Label) &&
-                    !Allows(patch.PatchModId, patch.NeedsFeatures, patch.ConflictsFeatures, EnabledFeatures, out var unmet))
+                    !patch.Selector.Allows(patch.PatchModId, EnabledFeatures, out var unmet))
                 {
                     Summary.Remove(patch.Name, "FEATURE", $"feature - {unmet}");
                     continue;

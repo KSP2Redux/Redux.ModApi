@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using SpaceWarp2.API.Mods;
 using SpaceWarp2.API.Mods.JSON;
 using UnityEngine;
 
@@ -39,18 +38,6 @@ namespace SpaceWarp2.API.Features
         /// <param name="modId">The mod id.</param>
         /// <returns>The default feature id, <c>ModId:ModId</c>.</returns>
         public static string DefaultFor(string modId) => $"{modId}{SEPARATOR}{modId}";
-
-        /// <summary>
-        /// Checks whether a mod is enabled in every set, so its default feature never gates what it registers.
-        /// </summary>
-        /// <remarks>
-        /// Only Redux is. It is the game, and each piece of its content states the feature it belongs to instead.
-        /// </remarks>
-        /// <param name="modId">The mod id.</param>
-        /// <returns>True if the mod is enabled in every set.</returns>
-        public static bool IsAlwaysEnabled(string modId) =>
-            string.Equals(modId, ModIds.KSP2_REDUX, StringComparison.OrdinalIgnoreCase);
-
         /// <summary>
         /// Gets the namespace of a qualified feature id, the part before the separator.
         /// </summary>

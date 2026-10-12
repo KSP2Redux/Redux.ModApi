@@ -364,9 +364,7 @@ namespace PatchManager.Core.Assets
             foreach (var (key, hash) in hashes)
             {
                 var owner = OwnerOf(key, folderByMod);
-                if (owner == null ||
-                    FeatureRegistry.IsAlwaysEnabled(owner) ||
-                    enabled.Contains(FeatureRegistry.DefaultFor(owner)))
+                if (FeatureSelector.AllowsMod(owner, enabled))
                 {
                     scoped[key] = hash;
                 }
@@ -409,9 +407,7 @@ namespace PatchManager.Core.Assets
             IReadOnlyDictionary<string, List<(string filename, string reason)>> errorsByMod,
             ISet<string> enabled
         ) => errorsByMod
-            .Where(pair =>
-                FeatureRegistry.IsAlwaysEnabled(pair.Key) ||
-                enabled.Contains(FeatureRegistry.DefaultFor(pair.Key)))
+            .Where(pair => FeatureSelector.AllowsMod(pair.Key, enabled))
             .SelectMany(pair => pair.Value)
             .ToList();
 

@@ -40,6 +40,10 @@ namespace SpaceWarp2.API.Config
             _file = file;
             _section = section;
             _name = name;
+            foreach (string featureId in FeatureSelector.OpenScopeFeatures)
+            {
+                Feature(featureId);
+            }
         }
 
         /// <summary>Sets the entry's config type (built-in such as <c>Double</c>, or a custom type).</summary>
@@ -114,12 +118,12 @@ namespace SpaceWarp2.API.Config
         /// <summary>
         /// Shows the entry in the settings menu only while a feature is on. A bare id names one of this mod's features.
         /// </summary>
-        public ConfigBuilder Feature(string featureId) => Tag(ActiveFeatures.FEATURE_TAG_PREFIX + featureId);
+        public ConfigBuilder Feature(string featureId) => Tag(FeatureSelector.FEATURE_TAG_PREFIX + featureId);
 
         /// <summary>
         /// Shows the entry in the settings menu only while a feature is off. A bare id names one of this mod's features.
         /// </summary>
-        public ConfigBuilder NoFeature(string featureId) => Tag(ActiveFeatures.NO_FEATURE_TAG_PREFIX + featureId);
+        public ConfigBuilder NoFeature(string featureId) => Tag(FeatureSelector.NO_FEATURE_TAG_PREFIX + featureId);
 
         /// <summary>Binds the entry and returns a live handle over it.</summary>
         public ConfigHandle Bind()

@@ -24,8 +24,6 @@ namespace PatchManager.PrefabPatching
         private readonly HashSet<string> _conflictsMods = new(
             StringComparer.Ordinal
         );
-        private readonly HashSet<string> _needsFeatures = new(StringComparer.OrdinalIgnoreCase);
-        private readonly HashSet<string> _conflictsFeatures = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _needsPatches = new(StringComparer.Ordinal);
         private readonly HashSet<string> _conflictsPatches = new(
             StringComparer.Ordinal
@@ -118,13 +116,30 @@ namespace PatchManager.PrefabPatching
         public PrefabPatchBuilder ConflictsMod(params string[] ids) =>
             Add(_conflictsMods, ids);
 
+        /// <summary>Gets the features the patch needs on and off, beyond the owning mod's default feature.</summary>
+        public FeatureSelector Selector { get; } = new();
+
         /// <summary>Applies the patch only when the supplied features are on, bare IDs namespaced to the owning mod.</summary>
-        public PrefabPatchBuilder NeedsFeature(params string[] ids) =>
-            Add(_needsFeatures, QualifyFeatures(ids));
+        public PrefabPatchBuilder Feature(params string[] ids)
+        {
+            foreach (string id in FeatureIds(ids))
+            {
+                Selector.Feature(_modId, id);
+            }
+
+            return this;
+        }
 
         /// <summary>Applies the patch only when the supplied features are off, bare IDs namespaced to the owning mod.</summary>
-        public PrefabPatchBuilder ConflictsFeature(params string[] ids) =>
-            Add(_conflictsFeatures, QualifyFeatures(ids));
+        public PrefabPatchBuilder NoFeature(params string[] ids)
+        {
+            foreach (string id in FeatureIds(ids))
+            {
+                Selector.NoFeature(_modId, id);
+            }
+
+            return this;
+        }
 
         /// <summary>Requires the supplied patch IDs to be enabled.</summary>
         public PrefabPatchBuilder NeedsPatch(params string[] ids) =>
@@ -389,8 +404,8 @@ namespace PatchManager.PrefabPatching
         {
             _manifest.NeedsMods = Sorted(_needsMods);
             _manifest.ConflictsMods = Sorted(_conflictsMods);
-            _manifest.NeedsFeatures = Sorted(_needsFeatures);
-            _manifest.ConflictsFeatures = Sorted(_conflictsFeatures);
+            _manifest.Features = Sorted(Selector.Features);
+            _manifest.NoFeatures = Sorted(Selector.NoFeatures);
             _manifest.NeedsPatches = Sorted(_needsPatches);
             _manifest.ConflictsPatches = Sorted(_conflictsPatches);
             _manifest.BeforePatches = Sorted(_beforePatches);
@@ -434,10 +449,10 @@ namespace PatchManager.PrefabPatching
         private static IEnumerable<string> Normalize(IEnumerable<string> ids) =>
             ids ?? Array.Empty<string>();
 
-        private IEnumerable<string> QualifyFeatures(IEnumerable<string> ids) =>
+        private static IEnumerable<string> FeatureIds(IEnumerable<string> ids) =>
             Normalize(ids)
                 .Where(id => !string.IsNullOrWhiteSpace(id))
-                .Select(id => FeatureRegistry.Qualify(_modId, id.Trim()));
+                .Select(id => id.Trim());
 
         private static string[] Sorted(IEnumerable<string> values) =>
             values.OrderBy(value => value, StringComparer.Ordinal).ToArray();

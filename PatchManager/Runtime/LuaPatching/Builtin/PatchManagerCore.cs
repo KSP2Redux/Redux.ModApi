@@ -16,8 +16,6 @@ namespace PatchManager.LuaPatching.Builtin
     {
         private readonly Universe _universe;
 
-        // Features added by the PM:WithFeature scopes currently open, outermost first.
-        private readonly List<string> _scopedFeatures = new();
 
         /// <summary>
         /// Creates the library bound to the given universe.
@@ -69,7 +67,7 @@ namespace PatchManager.LuaPatching.Builtin
                 Name = actualName,
                 PatchModId = modId
             };
-            newPatch.NeedsFeatures.UnionWith(_scopedFeatures);
+            newPatch.Selector.AddOpenScopes();
             _universe.AddPatch(newPatch);
             return newPatch;
         }
@@ -154,7 +152,7 @@ namespace PatchManager.LuaPatching.Builtin
                 name,
                 identity
             );
-            builder.NeedsFeature(_scopedFeatures.ToArray());
+            builder.Selector.AddOpenScopes();
             return new PrefabPatchLuaBuilder(builder);
         }
 
@@ -172,7 +170,7 @@ namespace PatchManager.LuaPatching.Builtin
         {
             var asset = New(converter, label, name, newObject);
             asset.ModId = ModScriptRuntime.ModIdOf(context);
-            asset.NeedsFeatures.UnionWith(_scopedFeatures);
+            asset.Selector.AddOpenScopes();
             return asset;
         }
 
@@ -209,14 +207,14 @@ namespace PatchManager.LuaPatching.Builtin
         /// <param name="body">The function whose registrations get the feature.</param>
         public void WithFeature(ScriptExecutionContext context, string id, Closure body)
         {
-            _scopedFeatures.Add(FeatureRegistry.Qualify(ModScriptRuntime.ModIdOf(context), id));
+            FeatureSelector.OpenScope(FeatureRegistry.Qualify(ModScriptRuntime.ModIdOf(context), id));
             try
             {
                 body.Call();
             }
             finally
             {
-                _scopedFeatures.RemoveAt(_scopedFeatures.Count - 1);
+                FeatureSelector.CloseScope();
             }
         }
 
@@ -271,10 +269,7 @@ namespace PatchManager.LuaPatching.Builtin
                     done();
                 }
             );
-            foreach (string feature in _scopedFeatures)
-            {
-                action.Feature(feature);
-            }
+            action.Selector.AddOpenScopes();
 
             return action;
         }
@@ -295,10 +290,7 @@ namespace PatchManager.LuaPatching.Builtin
                 callback.Call(SetTable(script, _universe.EnabledFeatures ?? new HashSet<string>()));
                 done();
             });
-            foreach (string feature in _scopedFeatures)
-            {
-                registered.Feature(feature);
-            }
+            registered.Selector.AddOpenScopes();
 
             into.Add(registered);
             return registered;

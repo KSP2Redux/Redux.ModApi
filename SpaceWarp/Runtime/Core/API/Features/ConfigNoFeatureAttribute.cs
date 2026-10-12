@@ -19,7 +19,7 @@ namespace SpaceWarp2.API.Features
         /// Shows the value only while the feature is off.
         /// </summary>
         /// <param name="featureId">The feature id, bare or qualified.</param>
-        public ConfigNoFeatureAttribute(string featureId) : base(ActiveFeatures.NO_FEATURE_TAG_PREFIX + featureId)
+        public ConfigNoFeatureAttribute(string featureId) : base(FeatureSelector.NO_FEATURE_TAG_PREFIX + featureId)
         {
         }
     }

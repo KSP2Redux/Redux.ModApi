@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using PatchManager.LuaPatching;
 using PatchManager.Shared;
+using SpaceWarp2.API.Features;
 
 namespace PatchManager.PrefabPatching
 {
@@ -31,13 +32,9 @@ namespace PatchManager.PrefabPatching
         ) =>
             manifests.Where(manifest =>
                 manifest != null
-                && Universe.Allows(
-                    manifest.ModId,
-                    Safe(manifest.NeedsFeatures),
-                    Safe(manifest.ConflictsFeatures),
-                    enabledFeatures,
-                    out _
-                )
+                && FeatureSelector
+                    .Of(Safe(manifest.Features), Safe(manifest.NoFeatures))
+                    .Allows(manifest.ModId, enabledFeatures)
             );
 
         /// <summary>Resolves manifests for one stock prefab into an executable plan.</summary>

@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using PatchManager.LuaPatching.Utility;
 using PatchManager.PrefabPatching;
 using PatchManager.Shared;
+using SpaceWarp2.API.Features;
 
 namespace PatchManager.LuaPatching
 {
@@ -173,9 +174,10 @@ namespace PatchManager.LuaPatching
         }
 
         /// <summary>
-        /// The qualified features that must be on for this patch to run, beyond its mod's default feature.
+        /// The features this patch needs on and off, beyond its mod's default feature.
         /// </summary>
-        public HashSet<string> NeedsFeatures = new(StringComparer.OrdinalIgnoreCase);
+        [MoonSharpHidden]
+        public readonly FeatureSelector Selector = new();
 
         /// <summary>
         /// Makes the patch run only when these features are on.
@@ -186,16 +188,11 @@ namespace PatchManager.LuaPatching
         {
             foreach (var id in ids)
             {
-                NeedsFeatures.Add(NormalizeId(id));
+                Selector.Feature(PatchModId, id);
             }
 
             return this;
         }
-
-        /// <summary>
-        /// The qualified features that must be off for this patch to run.
-        /// </summary>
-        public HashSet<string> ConflictsFeatures = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Makes the patch run only when these features are off.
@@ -206,7 +203,7 @@ namespace PatchManager.LuaPatching
         {
             foreach (var id in ids)
             {
-                ConflictsFeatures.Add(NormalizeId(id));
+                Selector.NoFeature(PatchModId, id);
             }
 
             return this;

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using JetBrains.Annotations;
 using MoonSharp.Interpreter;
 
@@ -18,8 +17,6 @@ namespace SpaceWarp2.API.Features
     [MoonSharpUserData]
     public class FeatureGatedAction
     {
-        private readonly List<string> _needs = new();
-        private readonly List<string> _conflicts = new();
         private readonly Action<Action> _work;
 
         static FeatureGatedAction()
@@ -50,6 +47,12 @@ namespace SpaceWarp2.API.Features
         public string ModId { get; }
 
         /// <summary>
+        /// Gets the features the action needs on and off.
+        /// </summary>
+        [MoonSharpHidden]
+        public FeatureSelector Selector { get; } = new();
+
+        /// <summary>
         /// Gets the name shown while the action runs.
         /// </summary>
         public string Name { get; }
@@ -67,7 +70,7 @@ namespace SpaceWarp2.API.Features
         /// <returns>This action, for chaining.</returns>
         public FeatureGatedAction Feature(string featureId)
         {
-            _needs.Add(FeatureRegistry.Qualify(ModId, featureId));
+            Selector.Feature(ModId, featureId);
             return this;
         }
 
@@ -78,7 +81,7 @@ namespace SpaceWarp2.API.Features
         /// <returns>This action, for chaining.</returns>
         public FeatureGatedAction NoFeature(string featureId)
         {
-            _conflicts.Add(FeatureRegistry.Qualify(ModId, featureId));
+            Selector.NoFeature(ModId, featureId);
             return this;
         }
 
@@ -86,24 +89,15 @@ namespace SpaceWarp2.API.Features
         /// Checks whether the action runs in the active set.
         /// </summary>
         /// <returns>True if the mod and every selected feature allow it.</returns>
-        public bool Applies() =>
-            ActiveFeatures.IsModEnabled(ModId)
-            && _needs.TrueForAll(ActiveFeatures.IsEnabled)
-            && !_conflicts.Exists(ActiveFeatures.IsEnabled);
+        public bool Applies() => AppliesIn(ActiveFeatures.EnabledSet);
 
         /// <summary>
         /// Checks whether the action runs in a given set.
         /// </summary>
-        /// <param name="enabled">The set's enabled features.</param>
+        /// <param name="enabled">The set's enabled features, or null before a set activates, which allows everything.</param>
         /// <returns>True if the mod and every selected feature allow it.</returns>
         [MoonSharpHidden]
-        public bool AppliesIn(IReadOnlyCollection<string> enabled)
-        {
-            bool IsOn(string id) => enabled.Contains(id, StringComparer.OrdinalIgnoreCase);
-            return (FeatureRegistry.IsAlwaysEnabled(ModId) || IsOn(FeatureRegistry.DefaultFor(ModId)))
-                && _needs.TrueForAll(IsOn)
-                && !_conflicts.Exists(IsOn);
-        }
+        public bool AppliesIn(ISet<string> enabled) => Selector.Allows(ModId, enabled);
 
         /// <summary>
         /// Runs the work, without checking whether the action applies.
