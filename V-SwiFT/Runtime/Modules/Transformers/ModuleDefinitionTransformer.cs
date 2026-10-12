@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using KSP.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SpaceWarp2.API.Parts;
 using UnityEngine;
 using VSwift.Modules.Behaviours;
 using VSwift.Modules.Extensions;
@@ -41,7 +42,7 @@ namespace VSwift.Modules.Transformers
         {
             get
             {
-                _behaviourType ??= ModulesUtilities.ComponentModules.TryGetValue(BehaviourType, out var tuple)
+                _behaviourType ??= PartModuleTypes.ComponentModules.TryGetValue(BehaviourType, out var tuple)
                     ? tuple.behaviour
                     : throw new Exception($"Unknown behaviour type: {BehaviourType}");
                 return _behaviourType;
@@ -66,7 +67,7 @@ namespace VSwift.Modules.Transformers
         {
             get
             {
-                _dataType ??= ModulesUtilities.DataModules.TryGetValue(DataType, out var dataType)
+                _dataType ??= PartModuleTypes.DataModules.TryGetValue(DataType, out var dataType)
                     ? dataType
                     : throw new Exception($"Unknown data type: {DataType}");
                 return _dataType;
@@ -136,12 +137,18 @@ namespace VSwift.Modules.Transformers
         /// <inheritdoc />
         public void ApplyInOab(Module_PartSwitch partSwitch)
         {
-            if (!partSwitch.OABPart.TryGetModule(ActualBehaviourType, out var toBeLoaded)) return;
+            if (!partSwitch.OABPart.TryGetModule(ActualBehaviourType, out var toBeLoaded))
+                return;
+
             toBeLoaded.Shutdown();
-            if (!toBeLoaded.DataModules.TryGetValue(ActualDataType, out var moduleData)) return;
+            if (!toBeLoaded.DataModules.TryGetValue(ActualDataType, out var moduleData))
+                return;
+
             var field = moduleData.GetType()
                 .GetField(Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (field == null) return;
+            if (field == null)
+                return;
+
             field.SetValue(moduleData, IOProvider.FromJson(Value.ToString(Formatting.None),field.FieldType));
             moduleData.RebuildDataContext();
             toBeLoaded.Initialize();
