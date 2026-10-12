@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Redux.UI.AppBar;
 using SpaceWarp2.API.Configuration;
 using SpaceWarp2.API.Configuration.Attributes;
 using SpaceWarp2.API.Loading;
@@ -9,7 +10,6 @@ using SpaceWarp2.API.Mods;
 using SpaceWarp2.Modules;
 using SpaceWarp2.UI.API;
 using SpaceWarp2.UI.API.Appbar;
-using SpaceWarp2.UI.Backend.UI.Appbar;
 using SpaceWarp2.UI.Console;
 using SpaceWarp2.UI.ModList;
 using UitkForKsp2.API;
@@ -143,9 +143,9 @@ namespace SpaceWarp2.UI
         /// <inheritdoc/>
         public override void LoadModule()
         {
-            IAppbarBackend.Instance.AppBarInFlightSubscriber.AddListener(Appbar.LoadAllButtons);
-            IAppbarBackend.Instance.AppBarOABSubscriber.AddListener(Appbar.LoadOABButtons);
-            IAppbarBackend.Instance.AppBarKSCSubscriber.AddListener(Appbar.LoadKSCButtons);
+            AppbarBackend.Instance.AppBarInFlightSubscriber.AddListener(Appbar.LoadAllButtons);
+            AppbarBackend.Instance.AppBarOABSubscriber.AddListener(Appbar.LoadOABButtons);
+            AppbarBackend.Instance.AppBarKSCSubscriber.AddListener(Appbar.LoadKSCButtons);
             // The flight tray outlives the campaign, so its buttons go when the campaign unloads and the next flight
             // builds the ones the next campaign's features allow
             SaveLoad.AddCampaignLoadAction(ModIds.SPACE_WARP, "Clearing the flight app bar", CampaignPhase.Loaded, done =>

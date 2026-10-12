@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Redux.ApiImpls;
 using SpaceWarp2.API.Backend.SaveGameManager;
 using UnityEngine;
 
@@ -86,11 +87,11 @@ namespace SpaceWarp2.API.SaveGameManager
             SpaceWarpPlugin.Instance.SWLogger.LogInfo($"Registered '{modGuid}' for {persistenceKind.ToPersistenceString()} save/load events.");
             if (persistenceKind == PersistenceKind.PerCampaign)
             {
-                ISaveGameApi.Instance.PopulateCampaignData(dataObject);
+                ReduxSaveGameApi.PopulateCampaignData(dataObject);
             }
             else
             {
-                ISaveGameApi.Instance.PopulateSaveData(dataObject);
+                ReduxSaveGameApi.PopulateSaveData(dataObject);
             }
             return (dataObject.SaveData as T)!;
 
@@ -188,7 +189,7 @@ namespace SpaceWarp2.API.SaveGameManager
         /// </summary>
         public static void TriggerCampaignSaveDataUpdate()
         {
-            ISaveGameApi.Instance.UpdateCampaignSaveData();
+            ReduxSaveGameApi.UpdateCampaignSaveData();
         }
     }
 }

@@ -3,6 +3,7 @@
 using System;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
+using Redux.ApiImpls;
 
 namespace SpaceWarp2.Game.API.Waypoints
 {
@@ -60,6 +61,6 @@ namespace SpaceWarp2.Game.API.Waypoints
         /// Deserializes the waypoint, creating an actual waypoint from it
         /// </summary>
         /// <returns>A newly created waypoint from the serialized waypoint's parameters</returns>
-        public virtual IWaypoint Deserialize() => IWaypointManager.Instance.Get(Latitude, Longitude, Altitude, BodyName, Name, State);
+        public virtual ReduxWaypoint Deserialize() => new(Latitude, Longitude, Altitude, BodyName, Name, State);
     }
 }

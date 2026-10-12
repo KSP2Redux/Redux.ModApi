@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
+using Redux.ApiImpls;
 using SpaceWarp2.API.Configuration;
 using SpaceWarp2.API.Logging;
 using SpaceWarp2.API.Mods;
@@ -38,23 +39,17 @@ namespace SpaceWarp2.API.Backend.Modding
         {
             var modsFolder = new DirectoryInfo(CommonPaths.ModsFolder);
             if (!modsFolder.Exists)
-            {
                 return;
-            }
 
             foreach (var lua in modsFolder.GetFiles("*.lua", SearchOption.AllDirectories))
             {
                 // A .lua inside a swinfo mod folder belongs to that mod, not its own mod-of-one.
                 if (HasSwinfoAncestor(lua.Directory, modsFolder))
-                {
                     continue;
-                }
 
                 var modId = Path.GetFileNameWithoutExtension(lua.Name);
                 if (ModList.DisabledPluginGuids.Contains(modId) || PluginList.TryGetDescriptor(modId) != null)
-                {
                     continue;
-                }
 
                 ISpaceWarpMod swMod = new AssetOnlyMod(modId);
                 var info = new ModInfo
@@ -85,14 +80,10 @@ namespace SpaceWarp2.API.Backend.Modding
             for (var current = dir; current != null; current = current.Parent)
             {
                 if (File.Exists(Path.Combine(current.FullName, "swinfo.json")))
-                {
                     return true;
-                }
 
                 if (string.Equals(current.FullName, stopAt.FullName, StringComparison.OrdinalIgnoreCase))
-                {
                     break;
-                }
             }
 
             return false;
@@ -100,7 +91,7 @@ namespace SpaceWarp2.API.Backend.Modding
 
         private static void RegisterKsp1Mods()
         {
-            foreach (var mod in IInternalModRegister.Instance.Ksp1PluginDescriptors)
+            foreach (var mod in ReduxInternalModRegister.Ksp1PluginDescriptors)
             {
                 mod.IsKsp1 = true;
                 if (mod.Plugin != null)
@@ -113,7 +104,7 @@ namespace SpaceWarp2.API.Backend.Modding
 
         private static void RegisterInternalMods()
         {
-            foreach (var mod in IInternalModRegister.Instance.InternalPluginDescriptors)
+            foreach (var mod in ReduxInternalModRegister.InternalPluginDescriptors)
             {
                 mod.Plugin.SWLogger ??= LogManager.GetLogger(mod.Guid);
                 mod.Plugin.SWConfiguration = mod.ConfigFile = new JsonConfigFile(Path.Combine(mod.Folder.FullName, "config.json"));
@@ -127,7 +118,8 @@ namespace SpaceWarp2.API.Backend.Modding
 
         private static bool AssertFolderPath(ISpaceWarpMod plugin, string folderPath)
         {
-            if (Path.GetFileName(folderPath) != "mods") return true;
+            if (Path.GetFileName(folderPath) != "mods")
+                return true;
 
             Logger.LogError(
                 $"Found Space Warp mod in the BepInEx/plugins directory. This mod will " +
@@ -140,9 +132,7 @@ namespace SpaceWarp2.API.Backend.Modding
         private static bool AssertModInfoExistence(ISpaceWarpMod plugin, string modInfoPath, string folderPath)
         {
             if (File.Exists(modInfoPath))
-            {
                 return true;
-            }
 
             Logger.LogError(
                 $"Found Space Warp plugin at {modInfoPath} without a swinfo.json in its folder. This mod " +
@@ -277,7 +267,9 @@ namespace SpaceWarp2.API.Backend.Modding
 
                     foreach (var type in asm.GetTypes())
                     {
-                        if (!typeof(ISpaceWarpMod).IsAssignableFrom(type) || type.IsAbstract) continue;
+                        if (!typeof(ISpaceWarpMod).IsAssignableFrom(type) || type.IsAbstract)
+                            continue;
+
                         swMod = new UnloadedMod(type);
                         break;
                     }

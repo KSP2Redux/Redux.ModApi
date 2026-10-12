@@ -6,9 +6,9 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
+using Redux.UI.AppBar;
 using SpaceWarp2.API.Features;
 using SpaceWarp2.API.Mods;
-using SpaceWarp2.UI.Backend.UI.Appbar;
 using UnityEngine;
 
 namespace SpaceWarp2.UI.API.Appbar
@@ -112,7 +112,7 @@ namespace SpaceWarp2.UI.API.Appbar
             ButtonsToBeLoaded.RemoveAll(b => b.ID == id);
             OabButtonsToBeLoaded.RemoveAll(b => b.ID == id);
             KscButtonsToBeLoaded.RemoveAll(b => b.ID == id);
-            IAppbarBackend.Instance?.RemoveButton(id);
+            AppbarBackend.Instance?.RemoveButton(id);
         }
 
         /// <summary>
@@ -146,7 +146,7 @@ namespace SpaceWarp2.UI.API.Appbar
         {
             foreach (var button in ButtonsToBeLoaded)
             {
-                IAppbarBackend.Instance?.RemoveButton(button.ID);
+                AppbarBackend.Instance?.RemoveButton(button.ID);
             }
         }
 
@@ -154,7 +154,7 @@ namespace SpaceWarp2.UI.API.Appbar
         {
             foreach (var button in ButtonsToBeLoaded.Where(button => ShowsButtonOf(button.owner)))
             {
-                IAppbarBackend.Instance.AddButton(button.text, button.icon, button.ID, button.action);
+                AppbarBackend.Instance.AddButton(button.text, button.icon, button.ID, button.action);
             }
         }
 
@@ -163,7 +163,7 @@ namespace SpaceWarp2.UI.API.Appbar
         {
             foreach (var button in OabButtonsToBeLoaded.Where(button => ShowsButtonOf(button.owner)))
             {
-                IAppbarBackend.Instance.AddOABButton(button.text, button.icon, button.ID, button.action);
+                AppbarBackend.Instance.AddOABButton(button.text, button.icon, button.ID, button.action);
             }
         }
 
@@ -172,7 +172,7 @@ namespace SpaceWarp2.UI.API.Appbar
         {
             foreach (var button in KscButtonsToBeLoaded.Where(button => ShowsButtonOf(button.owner)))
             {
-                IAppbarBackend.Instance.AddKSCButton(button.text, button.icon, button.ID, button.action);
+                AppbarBackend.Instance.AddKSCButton(button.text, button.icon, button.ID, button.action);
             }
         }
     }
