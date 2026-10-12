@@ -3,6 +3,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using KSP.Game;
+using KSP.ScriptInterop.impl.moonsharp;
 using MoonSharp.Interpreter;
 using SpaceWarp2.API.Configuration;
 using SpaceWarp2.API.Logging;
@@ -10,13 +12,12 @@ using SpaceWarp2.API;
 using SpaceWarp2.API.Config;
 using SpaceWarp2.API.Features;
 using SpaceWarp2.API.Mods;
-using ReduxScriptRuntime = Redux.ApiImpls.ReduxScriptRuntime;
 
 namespace SpaceWarp2.API.Lifecycle
 {
     /// <summary>
-    /// The SpaceWarp-owned Lua mod runtime. Forks per-mod environments off the game's root runtime
-    /// (<see cref="ReduxScriptRuntime" />), contributes the general mod-loading globals, runs registered
+    /// The SpaceWarp-owned Lua mod runtime. Forks per-mod environments off the game's root
+    /// <see cref="ScriptEnvironment" />, contributes the general mod-loading globals, runs registered
     /// <see cref="IModEnvContributor" />s, and executes mod bodies.
     /// </summary>
     /// <remarks>
@@ -208,7 +209,8 @@ namespace SpaceWarp2.API.Lifecycle
             IConfigFile campaignConfigFile
         )
         {
-            var root = ReduxScriptRuntime.RootGlobals;
+            // Read on each fork, since the game creates its root environment after the mod runtime first loads
+            var root = ((ScriptEnvironment)GameManager.Instance.Game.ScriptEnvironment).globals;
             var script = root.OwnerScript;
             script.Options.ScriptLoader = Loader;
 

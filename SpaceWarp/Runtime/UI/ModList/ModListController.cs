@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Redux.ApiImpls;
+using KSP.Game;
 using SpaceWarp2.UI.Backend.Extensions;
 using SpaceWarp2.API;
 using SpaceWarp2.API.Mods;
@@ -457,7 +457,7 @@ namespace SpaceWarp2.UI.ModList
 
             _openModSettingsButton.RegisterCallback<ClickEvent>(_ =>
             {
-                ReduxSettingsManager.OpenSettingsMenu();
+                GameManager.Instance.Game.SettingsMenuManager.ShowReduxSettings();
                 HideWindow();
             });
         }
