@@ -3,7 +3,6 @@
 using System;
 using System.Runtime.InteropServices;
 using JetBrains.Annotations;
-using SpaceWarp2.Sound.Backend;
 
 namespace SpaceWarp2.Sound.API;
 
@@ -69,14 +68,10 @@ public class Soundbank
         BankDataPtr ??= (Memory = GCHandle.Alloc(BankData, GCHandleType.Pinned)).Value.AddrOfPinnedObject();
 
         // Loads the entire array as a bank
-        var result = ISoundApi.Instance.LoadWWiseBankMemoryView(
-            BankDataPtr!.Value,
-            (uint)BankData.Length,
-            out WwiseID,
-            out errorMessage
-        );
+        var result = (int)AkSoundEngine.LoadBankMemoryView(BankDataPtr!.Value, (uint)BankData.Length, out WwiseID);
+        errorMessage = ((AKRESULT)result).ToString();
 
-        if (result == ISoundApi.Success)
+        if (result == (int)AKRESULT.AK_Success)
         {
             // BankData is held by the GCHandle or was created from a raw pointer, no need for the array
             BankData = null;
