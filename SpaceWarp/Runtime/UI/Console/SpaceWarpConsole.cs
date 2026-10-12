@@ -3,118 +3,119 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace SpaceWarp2.UI.Console;
-
-[RequireComponent(typeof(PanelRenderer))]
-internal sealed class SpaceWarpConsole : MonoBehaviour
+namespace SpaceWarp2.UI.Console
 {
-    private SpaceWarpConsoleViewModel? _viewModel;
-    private SpaceWarpConsoleView? _view;
-
-    private void Start()
+    [RequireComponent(typeof(PanelRenderer))]
+    internal sealed class SpaceWarpConsole : MonoBehaviour
     {
-        var renderer = GetComponent<PanelRenderer>();
-        _viewModel = new SpaceWarpConsoleViewModel();
-        _view = new SpaceWarpConsoleView(renderer, _viewModel);
-        _view.Load();
+        private SpaceWarpConsoleViewModel? _viewModel;
+        private SpaceWarpConsoleView? _view;
 
-        _viewModel.InitializeFromLogs(SpaceWarpConsoleLogListener.LogMessages);
-        _viewModel.CloseRequested += HideWindow;
-        _viewModel.ClearRequested += ClearLogs;
-        SpaceWarpConsoleLogListener.OnNewLog += OnNewLog;
-    }
-
-    private void OnDestroy()
-    {
-        SpaceWarpConsoleLogListener.OnNewLog -= OnNewLog;
-        _view?.Dispose();
-        if (_viewModel == null)
+        private void Start()
         {
-            return;
+            var renderer = GetComponent<PanelRenderer>();
+            _viewModel = new SpaceWarpConsoleViewModel();
+            _view = new SpaceWarpConsoleView(renderer, _viewModel);
+            _view.Load();
+
+            _viewModel.InitializeFromLogs(SpaceWarpConsoleLogListener.LogMessages);
+            _viewModel.CloseRequested += HideWindow;
+            _viewModel.ClearRequested += ClearLogs;
+            SpaceWarpConsoleLogListener.OnNewLog += OnNewLog;
         }
 
-        _viewModel.CloseRequested -= HideWindow;
-        _viewModel.ClearRequested -= ClearLogs;
-        _viewModel.Cleanup();
-    }
-
-    private void Update()
-    {
-        if (_view == null)
+        private void OnDestroy()
         {
-            return;
+            SpaceWarpConsoleLogListener.OnNewLog -= OnNewLog;
+            _view?.Dispose();
+            if (_viewModel == null)
+            {
+                return;
+            }
+
+            _viewModel.CloseRequested -= HideWindow;
+            _viewModel.ClearRequested -= ClearLogs;
+            _viewModel.Cleanup();
         }
 
-        if (_view.IsOpen)
+        private void Update()
         {
-            _viewModel?.PollCliIntegrationActivity();
+            if (_view == null)
+            {
+                return;
+            }
+
+            if (_view.IsOpen)
+            {
+                _viewModel?.PollCliIntegrationActivity();
+            }
+
+            if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.C))
+            {
+                ToggleWindow();
+            }
+
+            if (_view.IsOpen && Input.GetKeyDown(KeyCode.Escape))
+            {
+                HideWindow();
+            }
         }
 
-        if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.C))
+        private void FixedUpdate()
         {
-            ToggleWindow();
+            _viewModel?.TickLuaExecution();
         }
 
-        if (_view.IsOpen && Input.GetKeyDown(KeyCode.Escape))
+        public void Show()
+        {
+            _view?.Show();
+            _view?.ScrollToBottom();
+        }
+
+        public void Hide()
         {
             HideWindow();
         }
-    }
 
-    private void FixedUpdate()
-    {
-        _viewModel?.TickLuaExecution();
-    }
-
-    public void Show()
-    {
-        _view?.Show();
-        _view?.ScrollToBottom();
-    }
-
-    public void Hide()
-    {
-        HideWindow();
-    }
-
-    private void ToggleWindow()
-    {
-        if (_view == null)
+        private void ToggleWindow()
         {
-            return;
+            if (_view == null)
+            {
+                return;
+            }
+
+            if (_view.IsOpen)
+            {
+                HideWindow();
+                return;
+            }
+
+            Show();
         }
 
-        if (_view.IsOpen)
+        private void HideWindow()
         {
-            HideWindow();
-            return;
+            _view?.Hide();
         }
 
-        Show();
-    }
-
-    private void HideWindow()
-    {
-        _view?.Hide();
-    }
-
-    private void ClearLogs()
-    {
-        UI.Instance.SpaceWarpConsoleLogListener!.Clear();
-        _viewModel?.ClearLogs();
-    }
-
-    private void OnNewLog(SpaceWarpConsoleLogListener.LogInfo info)
-    {
-        if (_viewModel == null)
+        private void ClearLogs()
         {
-            return;
+            UI.Instance.SpaceWarpConsoleLogListener!.Clear();
+            _viewModel?.ClearLogs();
         }
 
-        _viewModel.AddLog(info);
-        if (_view is { IsOpen: true } && _viewModel.AutoScroll)
+        private void OnNewLog(SpaceWarpConsoleLogListener.LogInfo info)
         {
-            _view.ScrollToBottom();
+            if (_viewModel == null)
+            {
+                return;
+            }
+
+            _viewModel.AddLog(info);
+            if (_view is { IsOpen: true } && _viewModel.AutoScroll)
+            {
+                _view.ScrollToBottom();
+            }
         }
     }
 }
