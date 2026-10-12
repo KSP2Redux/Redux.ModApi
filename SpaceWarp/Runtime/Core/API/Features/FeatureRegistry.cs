@@ -111,13 +111,14 @@ namespace SpaceWarp2.API.Features
         /// Declares one feature of a mod outside its mod info.
         /// </summary>
         /// <remarks>
-        /// Declaring an id that already exists replaces the earlier declaration.
+        /// Declaring an id that already exists replaces the earlier declaration. A mod declares only its own features.
         /// </remarks>
         /// <param name="modId">The declaring mod.</param>
-        /// <param name="featureId">The feature id, bare or qualified.</param>
-        /// <param name="requires">The required feature ids, bare ones relative to the feature's namespace.</param>
-        /// <param name="conflicts">The conflicting feature ids, bare ones relative to the feature's namespace.</param>
+        /// <param name="featureId">The feature id, bare or qualified with the declaring mod.</param>
+        /// <param name="requires">The required feature ids, bare ones relative to the declaring mod.</param>
+        /// <param name="conflicts">The conflicting feature ids, bare ones relative to the declaring mod.</param>
         /// <returns>The declared feature.</returns>
+        /// <exception cref="ArgumentException">Thrown when the id names another mod.</exception>
         public FeatureDefinition Define(
             string modId,
             string featureId,
@@ -126,10 +127,10 @@ namespace SpaceWarp2.API.Features
         )
         {
             string id = FeatureRegistry.Qualify(modId, featureId);
-
-            // A feature belongs to the namespace in its id, which differs from the declaring mod when, for example,
-            // Redux declares the Stock features. Bare relations resolve in that namespace too.
             string owner = FeatureRegistry.NamespaceOf(id);
+            if (!string.Equals(owner, modId, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"{modId} cannot declare {id}, which belongs to {owner}.", nameof(featureId));
+
             string defaultId = FeatureRegistry.DefaultFor(owner);
 
             // A namespace's own default feature is the one feature that does not require itself.
