@@ -26,7 +26,8 @@ public class JsonConfigFile : IConfigFile
     /// <inheritdoc />
     public ConfigSectionList Sections { get; } = new();
 
-    private readonly string _file;
+    private readonly string? _file;
+    private bool _loading;
 
     /// <summary>
     /// Creates a new JSON config file object.
@@ -51,11 +52,15 @@ public class JsonConfigFile : IConfigFile
     }
 
     /// <summary>
-    /// Creates a config kept in memory rather than in a file, such as one stored in a save.
+    /// Creates a config kept in memory rather than in a file, such as one stored in a save. Its owner stores it
+    /// through <see cref="ToJObject" /> and restores it through <see cref="Load" />.
     /// </summary>
-    /// <param name="onChanged">Called whenever an entry's value changes, so the owner can store it, or null.</param>
     /// <returns>The config.</returns>
-    public static JsonConfigFile InMemory(Action? onChanged) => throw new NotImplementedException();
+    public static JsonConfigFile InMemory() => new();
+
+    private JsonConfigFile()
+    {
+    }
 
     /// <summary>
     /// Replaces every value with the given ones, keeping the bound entries so whatever shows or reads them follows.
@@ -64,13 +69,35 @@ public class JsonConfigFile : IConfigFile
     /// <param name="values">The values by section and key, or null to return every entry to its default.</param>
     public void Load(JObject? values)
     {
+        _previousConfigObject = (JObject?)values?.DeepClone();
+        _loading = true;
+        try
+        {
+            foreach (JsonConfigSection section in Sections.OfType<JsonConfigSection>())
+            {
+                section.Load(_previousConfigObject?[section.Name] as JObject);
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+
+        Save();
     }
 
     /// <summary>
     /// Gets every value by section and key, including those of entries nothing has bound.
     /// </summary>
     /// <returns>The values.</returns>
-    public JObject ToJObject() => new();
+    public JObject ToJObject()
+    {
+        string? json = BuildJson();
+        if (json != null)
+            return JObject.Parse(json);
+
+        return (JObject?)_previousConfigObject?.DeepClone() ?? new JObject();
+    }
 
     private static void QuarantineCorruptedFile(string file)
     {
@@ -114,11 +141,54 @@ public class JsonConfigFile : IConfigFile
     /// <inheritdoc />
     public void Save()
     {
+        if (_loading || _file == null)
+            return;
+
+        string? finalJson = BuildJson();
+        if (finalJson == null)
+            return;
+
+        try
+        {
+            JObject.Parse(finalJson);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Generated config JSON for '{_file}' is invalid. Aborting save to avoid corrupting file: {ex}");
+            return;
+        }
+
+        try
+        {
+            var directory = Path.GetDirectoryName(_file);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            string tempFile = _file + ".tmp";
+            File.WriteAllText(tempFile, finalJson);
+            if (File.Exists(_file))
+            {
+                File.Delete(_file);
+            }
+            File.Move(tempFile, _file);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error writing config file at '{_file}': {ex}");
+        }
+    }
+
+    // Writes the bound entries with their comments, and the sections and keys nothing has bound as they were.
+    // Returns null when nothing is bound.
+    private string? BuildJson()
+    {
         var nonEmptySections = Sections
             .OfType<JsonConfigSection>()
             .Where(s => s.Entries.Count > 0)
             .ToList();
-        if (nonEmptySections.Count == 0) return;
+        if (nonEmptySections.Count == 0) return null;
 
         var boundSections = nonEmptySections.ToDictionary(section => section.Name);
         var writtenSections = new HashSet<string>();
@@ -166,37 +236,7 @@ public class JsonConfigFile : IConfigFile
         }
         result.AppendLine("\n}");
 
-        string finalJson = result.ToString();
-        try
-        {
-            JObject.Parse(finalJson);
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Generated config JSON for '{_file}' is invalid. Aborting save to avoid corrupting file: {ex}");
-            return;
-        }
-
-        try
-        {
-            var directory = Path.GetDirectoryName(_file);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            string tempFile = _file + ".tmp";
-            File.WriteAllText(tempFile, finalJson);
-            if (File.Exists(_file))
-            {
-                File.Delete(_file);
-            }
-            File.Move(tempFile, _file);
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Error writing config file at '{_file}': {ex}");
-        }
+        return result.ToString();
     }
 
     private static List<JsonConverter>? _defaultConverters;

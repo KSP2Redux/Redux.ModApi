@@ -73,7 +73,7 @@ public class JsonConfigEntry : IConfigEntry
     }
 
     /// <inheritdoc />
-    public object Default { get; }
+    public object Default { get; internal set; }
 
     /// <inheritdoc />
     public Type ValueType { get; }

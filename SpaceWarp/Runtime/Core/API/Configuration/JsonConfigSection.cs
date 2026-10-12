@@ -16,7 +16,7 @@ namespace SpaceWarp2.API.Configuration;
 public class JsonConfigSection : IConfigSection
 {
     private readonly JsonConfigFile _file;
-    private readonly JObject? _previousSlice;
+    private JObject? _previousSlice;
 
     internal readonly Dictionary<string, JsonConfigEntry> Entries = new();
 
@@ -58,25 +58,39 @@ public class JsonConfigSection : IConfigSection
             return existing;
         }
 
-        if (_previousSlice != null && _previousSlice.TryGetValue(key, out var token))
+        object? value = StoredValueOr(key, valueType, defaultValue);
+        Entries[key] = new JsonConfigEntry(_file, valueType, description, value, constraint, nameLocalizationKey, descriptionLocalizationKey, tags)
         {
-            try
-            {
-                var previousValue = token.ToObject(valueType);
-                Entries[key] = new JsonConfigEntry(_file, valueType, description, previousValue, constraint, nameLocalizationKey, descriptionLocalizationKey, tags);
-            }
-            catch
-            {
-                Entries[key] = new JsonConfigEntry(_file, valueType, description, defaultValue, constraint, nameLocalizationKey, descriptionLocalizationKey, tags);
-            }
-        }
-        else
-        {
-            Entries[key] = new JsonConfigEntry(_file, valueType, description, defaultValue, constraint, nameLocalizationKey, descriptionLocalizationKey, tags);
-        }
+            Default = defaultValue
+        };
 
         _file.Save();
         return Entries[key];
+    }
+
+    // Sets every entry to the slice's value for it, or its default when the slice has none.
+    internal void Load(JObject? slice)
+    {
+        _previousSlice = slice;
+        foreach (KeyValuePair<string, JsonConfigEntry> entry in Entries)
+        {
+            entry.Value.Value = StoredValueOr(entry.Key, entry.Value.ValueType, entry.Value.Default);
+        }
+    }
+
+    private object? StoredValueOr(string key, Type valueType, object? fallback)
+    {
+        if (_previousSlice == null || !_previousSlice.TryGetValue(key, out JToken token))
+            return fallback;
+
+        try
+        {
+            return token.ToObject(valueType);
+        }
+        catch
+        {
+            return fallback;
+        }
     }
 
     internal void WriteTo(StringBuilder result)

@@ -131,6 +131,7 @@ public static class ConfigExtensions
 
                 var entry = (IConfigEntry)_bindPlainTyped.MakeGenericMethod(memberType)
                     .Invoke(null, new object[] { section, cva, value, constraint, tags })!;
+                member.SetMemberValue(o, entry.Value);
                 entry.RegisterCallback((_, n) => member.SetMemberValue(o, n));
             }
         }
