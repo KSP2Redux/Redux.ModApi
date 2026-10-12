@@ -4,35 +4,36 @@ using System;
 using SpaceWarp2.API.Loading;
 using SpaceWarp2.API.Mods;
 
-namespace SpaceWarp2.Patching.LoadingActions;
-
-/// <summary>
-/// Pre-initializes a mod by firing its C# OnPreInitialized callback.
-/// </summary>
-internal sealed class PreInitializeModAction : BaseFlowAction
+namespace SpaceWarp2.Patching.LoadingActions
 {
-    private readonly SpaceWarpPluginDescriptor _plugin;
-
-    public PreInitializeModAction(SpaceWarpPluginDescriptor plugin)
-        : base($"Pre-initialization for plugin {plugin.Name}", "Pre-initialization")
+    /// <summary>
+    /// Pre-initializes a mod by firing its C# OnPreInitialized callback.
+    /// </summary>
+    internal sealed class PreInitializeModAction : BaseFlowAction
     {
-        _plugin = plugin;
-    }
+        private readonly SpaceWarpPluginDescriptor _plugin;
 
-    public override void DoAction(Action resolve, Action<string> reject)
-    {
-        try
+        public PreInitializeModAction(SpaceWarpPluginDescriptor plugin)
+            : base($"Pre-initialization for plugin {plugin.Name}", "Pre-initialization")
         {
-            if (_plugin.DoLoadingActions)
-            {
-                _plugin.Plugin?.OnPreInitialized();
-            }
-            resolve();
+            _plugin = plugin;
         }
-        catch (Exception e)
+
+        public override void DoAction(Action resolve, Action<string> reject)
         {
-            _plugin.Logger.LogError(e.ToString());
-            reject(e.ToString());
+            try
+            {
+                if (_plugin.DoLoadingActions)
+                {
+                    _plugin.Plugin?.OnPreInitialized();
+                }
+                resolve();
+            }
+            catch (Exception e)
+            {
+                _plugin.Logger.LogError(e.ToString());
+                reject(e.ToString());
+            }
         }
     }
 }

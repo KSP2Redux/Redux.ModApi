@@ -4,49 +4,50 @@ using System;
 using SpaceWarp2.API.Loading;
 using SpaceWarp2.API.Mods;
 
-namespace SpaceWarp2.Patching.LoadingActions;
-
-/// <summary>
-/// Post-initializes a mod by firing its Lua post-init hooks and its C# OnPostInitialized callback.
-/// </summary>
-internal sealed class PostInitializeModAction : BaseFlowAction
+namespace SpaceWarp2.Patching.LoadingActions
 {
-    private readonly SpaceWarpPluginDescriptor _plugin;
-
-    public PostInitializeModAction(SpaceWarpPluginDescriptor plugin)
-        : base($"Post-initialization for plugin {plugin.Name}", "Post-initialization")
+    /// <summary>
+    /// Post-initializes a mod by firing its Lua post-init hooks and its C# OnPostInitialized callback.
+    /// </summary>
+    internal sealed class PostInitializeModAction : BaseFlowAction
     {
-        _plugin = plugin;
-    }
+        private readonly SpaceWarpPluginDescriptor _plugin;
 
-    public override void DoAction(Action resolve, Action<string> reject)
-    {
-        try
+        public PostInitializeModAction(SpaceWarpPluginDescriptor plugin)
+            : base($"Post-initialization for plugin {plugin.Name}", "Post-initialization")
         {
-            // Fire the mod's Lua PostInit hooks before its C# OnPostInitialized. Isolated per hook.
-            foreach (var hook in _plugin.PostInitHooks)
-            {
-                try
-                {
-                    hook();
-                }
-                catch (Exception hookError)
-                {
-                    _plugin.Logger.LogError(hookError.ToString());
-                }
-            }
-
-            if (_plugin.DoLoadingActions)
-            {
-                _plugin.Plugin?.OnPostInitialized();
-            }
-
-            resolve();
+            _plugin = plugin;
         }
-        catch (Exception e)
+
+        public override void DoAction(Action resolve, Action<string> reject)
         {
-            _plugin.Logger.LogError(e.ToString());
-            reject(e.ToString());
+            try
+            {
+                // Fire the mod's Lua PostInit hooks before its C# OnPostInitialized. Isolated per hook.
+                foreach (var hook in _plugin.PostInitHooks)
+                {
+                    try
+                    {
+                        hook();
+                    }
+                    catch (Exception hookError)
+                    {
+                        _plugin.Logger.LogError(hookError.ToString());
+                    }
+                }
+
+                if (_plugin.DoLoadingActions)
+                {
+                    _plugin.Plugin?.OnPostInitialized();
+                }
+
+                resolve();
+            }
+            catch (Exception e)
+            {
+                _plugin.Logger.LogError(e.ToString());
+                reject(e.ToString());
+            }
         }
     }
 }

@@ -8,56 +8,57 @@ using SpaceWarp2.API.Loading;
 using SpaceWarp2.API.Mods;
 using UnityEngine;
 
-namespace SpaceWarp2.Patching.LoadingActions;
-
-/// <summary>
-/// Runs a mod's Lua scripts as part of its load sequence.
-/// </summary>
-/// <remarks>
-/// Runs the declared script files plus the text assets of the addressable script label when one is present.
-/// Forks the mod's environment through the <see cref="ModScriptRuntime" />.
-/// </remarks>
-internal sealed class RunModScriptsAction : BaseFlowAction
+namespace SpaceWarp2.Patching.LoadingActions
 {
-    private readonly SpaceWarpPluginDescriptor _plugin;
-
-    public RunModScriptsAction(SpaceWarpPluginDescriptor plugin)
-        : base($"Running mod scripts for {plugin.Name}", $"Running scripts for {plugin.Name}")
+    /// <summary>
+    /// Runs a mod's Lua scripts as part of its load sequence.
+    /// </summary>
+    /// <remarks>
+    /// Runs the declared script files plus the text assets of the addressable script label when one is present.
+    /// Forks the mod's environment through the <see cref="ModScriptRuntime" />.
+    /// </remarks>
+    internal sealed class RunModScriptsAction : BaseFlowAction
     {
-        _plugin = plugin;
-    }
+        private readonly SpaceWarpPluginDescriptor _plugin;
 
-    public override void DoAction(Action resolve, Action<string> reject)
-    {
-        try
+        public RunModScriptsAction(SpaceWarpPluginDescriptor plugin)
+            : base($"Running mod scripts for {plugin.Name}", $"Running scripts for {plugin.Name}")
         {
-            ModScriptRuntime.RunMod(_plugin);
-
-            if (
-                string.IsNullOrEmpty(_plugin.AddressableScriptLabel)
-                || !ReduxAssetProvider.DoesLabelExist(
-                    _plugin.AddressableScriptLabel
-                )
-            )
-            {
-                resolve();
-                return;
-            }
-
-            var sources = new List<(string, string)>();
-            ReduxAssetProvider.LoadByLabel<TextAsset>(
-                _plugin.AddressableScriptLabel,
-                asset => sources.Add(($"{_plugin.Guid}/{asset.name}", asset.text)),
-                _ =>
-                {
-                    ModScriptRuntime.RunModSources(_plugin, sources);
-                    resolve();
-                });
+            _plugin = plugin;
         }
-        catch (Exception e)
+
+        public override void DoAction(Action resolve, Action<string> reject)
         {
-            _plugin.Logger.LogError(e.ToString());
-            reject(e.ToString());
+            try
+            {
+                ModScriptRuntime.RunMod(_plugin);
+
+                if (
+                    string.IsNullOrEmpty(_plugin.AddressableScriptLabel)
+                    || !ReduxAssetProvider.DoesLabelExist(
+                        _plugin.AddressableScriptLabel
+                    )
+                )
+                {
+                    resolve();
+                    return;
+                }
+
+                var sources = new List<(string, string)>();
+                ReduxAssetProvider.LoadByLabel<TextAsset>(
+                    _plugin.AddressableScriptLabel,
+                    asset => sources.Add(($"{_plugin.Guid}/{asset.name}", asset.text)),
+                    _ =>
+                    {
+                        ModScriptRuntime.RunModSources(_plugin, sources);
+                        resolve();
+                    });
+            }
+            catch (Exception e)
+            {
+                _plugin.Logger.LogError(e.ToString());
+                reject(e.ToString());
+            }
         }
     }
 }

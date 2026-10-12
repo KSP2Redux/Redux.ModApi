@@ -4,49 +4,50 @@ using System;
 using SpaceWarp2.API.Loading;
 using SpaceWarp2.API.Mods;
 
-namespace SpaceWarp2.Patching.LoadingActions;
-
-/// <summary>
-/// Initializes a mod by firing its Lua init hooks and its C# OnInitialized callback.
-/// </summary>
-internal sealed class InitializeModAction : BaseFlowAction
+namespace SpaceWarp2.Patching.LoadingActions
 {
-    private readonly SpaceWarpPluginDescriptor _plugin;
-
-    public InitializeModAction(SpaceWarpPluginDescriptor plugin) : base($"Initialization for plugin {plugin.Name}", $"Initializing {plugin.Name}")
+    /// <summary>
+    /// Initializes a mod by firing its Lua init hooks and its C# OnInitialized callback.
+    /// </summary>
+    internal sealed class InitializeModAction : BaseFlowAction
     {
-        _plugin = plugin;
-    }
+        private readonly SpaceWarpPluginDescriptor _plugin;
 
-    public override void DoAction(Action resolve, Action<string> reject)
-    {
-        try
+        public InitializeModAction(SpaceWarpPluginDescriptor plugin) : base($"Initialization for plugin {plugin.Name}", $"Initializing {plugin.Name}")
         {
-            // Fire the mod's Lua lifecycle hooks before its C# OnInitialized so script contributions run first.
-            // Each hook is isolated so one mod's error does not abort the phase for the rest.
-            foreach (var hook in _plugin.InitHooks)
-            {
-                try
-                {
-                    hook();
-                }
-                catch (Exception hookError)
-                {
-                    _plugin.Logger.LogError(hookError.ToString());
-                }
-            }
-
-            if (_plugin.DoLoadingActions)
-            {
-                _plugin.Plugin?.OnInitialized();
-            }
-
-            resolve();
+            _plugin = plugin;
         }
-        catch (Exception e)
+
+        public override void DoAction(Action resolve, Action<string> reject)
         {
-            _plugin.Logger.LogError(e.ToString());
-            reject(e.ToString());
+            try
+            {
+                // Fire the mod's Lua lifecycle hooks before its C# OnInitialized so script contributions run first.
+                // Each hook is isolated so one mod's error does not abort the phase for the rest.
+                foreach (var hook in _plugin.InitHooks)
+                {
+                    try
+                    {
+                        hook();
+                    }
+                    catch (Exception hookError)
+                    {
+                        _plugin.Logger.LogError(hookError.ToString());
+                    }
+                }
+
+                if (_plugin.DoLoadingActions)
+                {
+                    _plugin.Plugin?.OnInitialized();
+                }
+
+                resolve();
+            }
+            catch (Exception e)
+            {
+                _plugin.Logger.LogError(e.ToString());
+                reject(e.ToString());
+            }
         }
     }
 }
