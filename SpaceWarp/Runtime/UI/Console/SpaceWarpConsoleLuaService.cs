@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
+using Redux.Lua.Scripting;
 using SpaceWarp2.API;
 using SpaceWarp2.API.Lifecycle;
 
@@ -31,15 +31,13 @@ namespace SpaceWarp2.UI.Console
         public static SpaceWarpConsoleCSharpResult RunLua(string code)
         {
             if (IsLuaRunActive())
-            {
                 return SpaceWarpConsoleCSharpResult.Failure("A Lua script is already running.");
-            }
 
             string runId = string.Empty;
             try
             {
-                runId = BeginLuaScriptRun();
-                SetCurrentLuaScriptRun(runId);
+                runId = ScriptRunRegistry.BeginScriptRun(ModScriptRuntime.ConsoleModId, "SpaceWarp Console", "UI");
+                ScriptRunRegistry.SetCurrentScriptRun(runId);
                 _activeLuaRunId = runId;
                 _activeRun = ModScriptRuntime.RunConsole(code);
                 _activeRun.Resume();
@@ -47,34 +45,32 @@ namespace SpaceWarp2.UI.Console
             }
             catch (Exception ex)
             {
-                CancelLuaScriptRun(_activeLuaRunId);
+                ScriptRunRegistry.CancelScriptRun(_activeLuaRunId);
                 ClearActiveLuaRun();
                 return SpaceWarpConsoleCSharpResult.Failure(ex.GetBaseException().Message);
             }
             finally
             {
-                ClearCurrentLuaScriptRun(runId);
+                ScriptRunRegistry.ClearCurrentScriptRun(runId);
             }
         }
 
         public static SpaceWarpConsoleCSharpResult TickLua()
         {
             if (!IsLuaRunActive())
-            {
                 return SpaceWarpConsoleCSharpResult.FromSuccess(string.Empty);
-            }
 
             if (_activeRun != null && !_activeRun.IsFinished)
             {
                 string runId = _activeLuaRunId;
                 try
                 {
-                    SetCurrentLuaScriptRun(runId);
+                    ScriptRunRegistry.SetCurrentScriptRun(runId);
                     _activeRun.Resume();
                 }
                 finally
                 {
-                    ClearCurrentLuaScriptRun(runId);
+                    ScriptRunRegistry.ClearCurrentScriptRun(runId);
                 }
             }
 
@@ -84,11 +80,9 @@ namespace SpaceWarp2.UI.Console
         public static SpaceWarpConsoleCSharpResult StopLua()
         {
             if (!IsLuaRunActive())
-            {
                 return SpaceWarpConsoleCSharpResult.Failure("No Lua script is running.");
-            }
 
-            CancelLuaScriptRun(_activeLuaRunId);
+            ScriptRunRegistry.CancelScriptRun(_activeLuaRunId);
             ClearActiveLuaRun();
             return SpaceWarpConsoleCSharpResult.FromSuccess("Stopped.");
         }
@@ -156,9 +150,7 @@ namespace SpaceWarp2.UI.Console
                     string relativePath = index == 0 ? "new_script.lua" : $"new_script_{index}.lua";
                     string path = ResolveLuaScriptPath(relativePath, mustBeLuaFile: true);
                     if (File.Exists(path))
-                    {
                         continue;
-                    }
 
                     File.WriteAllText(path, "-- New Lua script\n");
                     return SpaceWarpConsoleCSharpResult.FromSuccess(relativePath);
@@ -197,13 +189,11 @@ namespace SpaceWarp2.UI.Console
                 _activeLuaErrored = _activeRun.IsErrored;
                 _activeLuaCompletionText = FormatLuaResult(_activeRun.Result);
                 _activeRun = null;
-                CompleteLuaScriptRun(_activeLuaRunId);
+                ScriptRunRegistry.CompleteScriptRun(_activeLuaRunId);
             }
 
             if (IsLuaRunActive())
-            {
                 return SpaceWarpConsoleCSharpResult.FromSuccess(runningMessage);
-            }
 
             string resultText = string.IsNullOrWhiteSpace(_activeLuaCompletionText)
                 ? "Completed."
@@ -220,15 +210,8 @@ namespace SpaceWarp2.UI.Console
             return string.Equals(result, "nil", StringComparison.OrdinalIgnoreCase) ? string.Empty : result;
         }
 
-        private static bool IsLuaRunActive()
-        {
-            if (_activeRun != null)
-            {
-                return true;
-            }
-
-            return !string.IsNullOrEmpty(_activeLuaRunId) && IsLuaScriptRunActive(_activeLuaRunId);
-        }
+        private static bool IsLuaRunActive() =>
+            _activeRun != null || ScriptRunRegistry.IsScriptRunActive(_activeLuaRunId);
 
         private static void ClearActiveLuaRun()
         {
@@ -236,52 +219,6 @@ namespace SpaceWarp2.UI.Console
             _activeLuaRunId = string.Empty;
             _activeLuaCompletionText = string.Empty;
             _activeLuaErrored = false;
-        }
-
-        private static string BeginLuaScriptRun()
-        {
-            Type? utilityType = FindType("KSP.ScriptInterop.LuaScriptUtilityMgr");
-            MethodInfo? method = utilityType?.GetMethod("BeginScriptRun", BindingFlags.Public | BindingFlags.Static);
-            return method?.Invoke(null, new object[] { ModScriptRuntime.ConsoleModId, "SpaceWarp Console", "UI" })?.ToString() ?? string.Empty;
-        }
-
-        private static void SetCurrentLuaScriptRun(string runId)
-        {
-            InvokeLuaUtility("SetCurrentScriptRun", runId);
-        }
-
-        private static void ClearCurrentLuaScriptRun(string runId)
-        {
-            InvokeLuaUtility("ClearCurrentScriptRun", runId);
-        }
-
-        private static void CompleteLuaScriptRun(string runId)
-        {
-            InvokeLuaUtility("CompleteScriptRun", runId);
-        }
-
-        private static void CancelLuaScriptRun(string runId)
-        {
-            InvokeLuaUtility("CancelScriptRun", runId);
-        }
-
-        private static bool IsLuaScriptRunActive(string runId)
-        {
-            Type? utilityType = FindType("KSP.ScriptInterop.LuaScriptUtilityMgr");
-            MethodInfo? method = utilityType?.GetMethod("IsScriptRunActive", BindingFlags.Public | BindingFlags.Static);
-            return method?.Invoke(null, new object[] { runId }) is bool active && active;
-        }
-
-        private static void InvokeLuaUtility(string methodName, string runId)
-        {
-            if (string.IsNullOrEmpty(runId))
-            {
-                return;
-            }
-
-            Type? utilityType = FindType("KSP.ScriptInterop.LuaScriptUtilityMgr");
-            MethodInfo? method = utilityType?.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
-            method?.Invoke(null, new object[] { runId });
         }
 
         private static string GetLuaScriptRoot()
@@ -293,19 +230,13 @@ namespace SpaceWarp2.UI.Console
         {
             relativePath = NormalizeLuaRelativePath(relativePath);
             if (string.IsNullOrWhiteSpace(relativePath))
-            {
                 throw new ArgumentException("Lua script path is required.");
-            }
 
             if (Path.IsPathRooted(relativePath))
-            {
                 throw new InvalidOperationException("Lua script path must be relative to Lua.");
-            }
 
             if (mustBeLuaFile && !relativePath.EndsWith(".lua", StringComparison.OrdinalIgnoreCase))
-            {
                 throw new InvalidOperationException("Lua script path must end with .lua.");
-            }
 
             string root = GetLuaScriptRoot();
             string fullPath = Path.GetFullPath(Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar)));
@@ -322,20 +253,6 @@ namespace SpaceWarp2.UI.Console
         private static string NormalizeLuaRelativePath(string relativePath)
         {
             return (relativePath ?? string.Empty).Trim().Replace('\\', '/');
-        }
-
-        private static Type? FindType(string fullName)
-        {
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                Type? type = assembly.GetType(fullName, false);
-                if (type != null)
-                {
-                    return type;
-                }
-            }
-
-            return null;
         }
     }
 }

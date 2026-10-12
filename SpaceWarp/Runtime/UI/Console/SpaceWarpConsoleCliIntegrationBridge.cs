@@ -1,97 +1,56 @@
 #nullable enable
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Reflection;
+using Redux.CliIntegration;
 
 namespace SpaceWarp2.UI.Console
 {
+    /// <summary>
+    /// The console's side of the CLI integration: the shared C# evaluator, and the activity log, which only builds
+    /// where the integration does.
+    /// </summary>
     internal static class SpaceWarpConsoleCliIntegrationBridge
     {
-        private const string NotLoadedMessage = "CLI integration runtime is not loaded.";
+        private const int DISPLAY_LENGTH = 260;
 
         public static IReadOnlyList<SpaceWarpConsoleCliActivityEntryViewModel> GetActivityEntries()
         {
-            Type? activityLogType = FindType("Redux.CliIntegration.CliIntegrationActivityLog");
-            MethodInfo? snapshotMethod = activityLogType?.GetMethod(
-                "Snapshot",
-                BindingFlags.Public | BindingFlags.Static
-            );
-            if (snapshotMethod == null)
-            {
-                return Array.Empty<SpaceWarpConsoleCliActivityEntryViewModel>();
-            }
-
-            object? snapshot = snapshotMethod.Invoke(null, null);
-            if (snapshot is not IEnumerable entries)
-            {
-                return Array.Empty<SpaceWarpConsoleCliActivityEntryViewModel>();
-            }
-
-            return entries
-                .Cast<object>()
+#if UNITY_EDITOR || REDUX_CLI_INTEGRATION
+            return CliIntegrationActivityLog.Snapshot()
                 .Reverse()
                 .Select(ToActivityViewModel)
                 .ToList();
+#else
+            return Array.Empty<SpaceWarpConsoleCliActivityEntryViewModel>();
+#endif
         }
 
         public static object? AddActivity(string source, string kind, string command, string payload)
         {
-            Type? activityLogType = FindType("Redux.CliIntegration.CliIntegrationActivityLog");
-            MethodInfo? addMethod = activityLogType?.GetMethod(
-                "AddStarted",
-                BindingFlags.Public | BindingFlags.Static
-            );
-            return addMethod?.Invoke(null, new object[] { source, kind, command, payload });
+#if UNITY_EDITOR || REDUX_CLI_INTEGRATION
+            return CliIntegrationActivityLog.AddStarted(source, kind, command, payload);
+#else
+            return null;
+#endif
         }
 
         public static void CompleteActivity(object? activity, bool success, string result)
         {
-            if (activity == null)
-            {
-                return;
-            }
-
-            Type? activityLogType = FindType("Redux.CliIntegration.CliIntegrationActivityLog");
-            MethodInfo? completeMethod = activityLogType?.GetMethod(
-                "Complete",
-                BindingFlags.Public | BindingFlags.Static
-            );
-            completeMethod?.Invoke(null, new[] { activity, success, result });
+#if UNITY_EDITOR || REDUX_CLI_INTEGRATION
+            if (activity is CliIntegrationActivityEntry entry)
+                CliIntegrationActivityLog.Complete(entry, success, result);
+#endif
         }
 
         public static SpaceWarpConsoleCSharpResult EvaluateCSharp(string code, int depth)
         {
-            Type? replType = FindType("Redux.CliIntegration.CliIntegrationCSharpRepl");
-            if (replType == null)
-            {
-                return SpaceWarpConsoleCSharpResult.Failure(NotLoadedMessage);
-            }
-
-            object? shared = replType.GetProperty("Shared", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
-            MethodInfo? evaluateMethod = replType.GetMethod(
-                "Evaluate",
-                BindingFlags.Public | BindingFlags.Instance,
-                null,
-                new[] { typeof(string), typeof(int) },
-                null
-            );
-            if (shared == null || evaluateMethod == null)
-            {
-                return SpaceWarpConsoleCSharpResult.Failure("C# evaluator is not available.");
-            }
-
             try
             {
-                object? result = evaluateMethod.Invoke(shared, new object[] { code, depth });
+                CliIntegrationCSharpReplResult result = CliIntegrationCSharpRepl.Shared.Evaluate(code, depth);
                 return SpaceWarpConsoleCSharpResult.FromSuccess(FormatCSharpResult(result));
-            }
-            catch (TargetInvocationException ex) when (ex.InnerException != null)
-            {
-                return SpaceWarpConsoleCSharpResult.Failure(ex.InnerException.GetBaseException().Message);
             }
             catch (Exception ex)
             {
@@ -99,102 +58,38 @@ namespace SpaceWarp2.UI.Console
             }
         }
 
-        public static void ResetCSharp()
+        public static void ResetCSharp() => CliIntegrationCSharpRepl.ResetShared();
+
+        private static string FormatCSharpResult(CliIntegrationCSharpReplResult result)
         {
-            Type? replType = FindType("Redux.CliIntegration.CliIntegrationCSharpRepl");
-            MethodInfo? resetMethod = replType?.GetMethod("ResetShared", BindingFlags.Public | BindingFlags.Static);
-            resetMethod?.Invoke(null, null);
+            string valueText = result.Value?.ToString() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(valueText) && valueText != "null")
+                return valueText;
+
+            if (!string.IsNullOrWhiteSpace(result.Output))
+                return result.Output;
+
+            return result.Kind == "compile" ? "Compiled." : "Completed.";
         }
 
-        private static SpaceWarpConsoleCliActivityEntryViewModel ToActivityViewModel(object entry)
+#if UNITY_EDITOR || REDUX_CLI_INTEGRATION
+        private static SpaceWarpConsoleCliActivityEntryViewModel ToActivityViewModel(CliIntegrationActivityEntry entry)
         {
             return new SpaceWarpConsoleCliActivityEntryViewModel(
-                GetString(entry, "Id"),
-                FormatTimestamp(GetValue(entry, "StartedUtc")),
-                GetString(entry, "Source"),
-                GetString(entry, "Kind"),
-                GetString(entry, "Command"),
-                Trim(GetString(entry, "Payload"), 260),
-                GetString(entry, "Status"),
-                Trim(GetString(entry, "Result"), 260)
+                entry.Id,
+                entry.StartedUtc.ToLocalTime().ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture),
+                entry.Source,
+                entry.Kind,
+                entry.Command,
+                Trim(entry.Payload ?? string.Empty),
+                entry.Status,
+                Trim(entry.Result ?? string.Empty)
             );
         }
 
-        private static string FormatCSharpResult(object? result)
-        {
-            if (result == null)
-            {
-                return "Completed.";
-            }
-
-            string text = GetString(result, "Text");
-            if (!string.IsNullOrWhiteSpace(text))
-            {
-                return text;
-            }
-
-            object? value = GetValue(result, "Value");
-            string valueText = value?.ToString() ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(valueText) && valueText != "null")
-            {
-                return valueText;
-            }
-
-            string output = GetString(result, "Output");
-            if (!string.IsNullOrWhiteSpace(output))
-            {
-                return output;
-            }
-
-            string kind = GetString(result, "Kind");
-            return kind == "compile" ? "Compiled." : "Completed.";
-        }
-
-        private static object? GetValue(object target, string propertyName)
-        {
-            return target.GetType()
-                .GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance)
-                ?.GetValue(target);
-        }
-
-        private static string GetString(object target, string propertyName)
-        {
-            return GetValue(target, propertyName)?.ToString() ?? string.Empty;
-        }
-
-        private static string FormatTimestamp(object? value)
-        {
-            return value switch
-            {
-                DateTimeOffset dateTimeOffset => dateTimeOffset.ToLocalTime().ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture),
-                DateTime dateTime => dateTime.ToLocalTime().ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture),
-                _ => string.Empty
-            };
-        }
-
-        private static string Trim(string value, int maxLength)
-        {
-            if (string.IsNullOrEmpty(value) || value.Length <= maxLength)
-            {
-                return value;
-            }
-
-            return value[..maxLength] + "...";
-        }
-
-        private static Type? FindType(string fullName)
-        {
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                Type? type = assembly.GetType(fullName, false);
-                if (type != null)
-                {
-                    return type;
-                }
-            }
-
-            return null;
-        }
+        private static string Trim(string value) =>
+            value.Length <= DISPLAY_LENGTH ? value : value[..DISPLAY_LENGTH] + "...";
+#endif
     }
 
     internal readonly struct SpaceWarpConsoleCSharpResult
