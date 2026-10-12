@@ -22,7 +22,8 @@ namespace PatchManager.Core.Utility
         }
 
         /// <summary>
-        /// Currently running PatchManager version.
+        /// The version of the game assembly PatchManager compiles into. It changes with every build of that assembly,
+        /// so a patch cache never outlives the code that made it.
         /// </summary>
         public static string PatchManagerVersion => Assembly.GetExecutingAssembly().GetName().Version.ToString();
     }
