@@ -1,11 +1,11 @@
 ﻿#nullable enable
 
+using KSP.Game;
 using KSP.Game.Flow;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using Redux.ApiImpls;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityObject = UnityEngine.Object;
@@ -52,7 +52,7 @@ namespace SpaceWarp2.API.Loading.LoadingActions
             _keepAssets = keepAssets;
         }
 
-        private bool DoesLabelExist(string label) => ReduxAssetProvider.DoesLabelExist(label);
+        private static bool DoesLabelExist(string label) => GameManager.Instance.Assets.HasLocations(label, typeof(T));
 
         /// <summary>
         /// Performs the loading action.
@@ -70,7 +70,7 @@ namespace SpaceWarp2.API.Loading.LoadingActions
 
             try
             {
-                ReduxAssetProvider.LoadByLabel(_label,_action,delegate(IList<T> assetLocations)
+                GameManager.Instance.Assets.LoadByLabel(_label, _action, delegate(IList<T> assetLocations)
                 {
                     if (assetLocations != null && !_keepAssets)
                     {

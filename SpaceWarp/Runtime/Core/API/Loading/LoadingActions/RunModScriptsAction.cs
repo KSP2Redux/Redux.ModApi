@@ -1,9 +1,9 @@
 #nullable enable
 
+using KSP.Game;
 using KSP.Game.Flow;
 using System;
 using System.Collections.Generic;
-using Redux.ApiImpls;
 using SpaceWarp2.API.Lifecycle;
 using SpaceWarp2.API.Loading;
 using SpaceWarp2.API.Mods;
@@ -36,9 +36,7 @@ namespace SpaceWarp2.Patching.LoadingActions
 
                 if (
                     string.IsNullOrEmpty(_plugin.AddressableScriptLabel)
-                    || !ReduxAssetProvider.DoesLabelExist(
-                        _plugin.AddressableScriptLabel
-                    )
+                    || !GameManager.Instance.Assets.HasLocations(_plugin.AddressableScriptLabel, typeof(TextAsset))
                 )
                 {
                     resolve();
@@ -46,7 +44,7 @@ namespace SpaceWarp2.Patching.LoadingActions
                 }
 
                 var sources = new List<(string, string)>();
-                ReduxAssetProvider.LoadByLabel<TextAsset>(
+                GameManager.Instance.Assets.LoadByLabel<TextAsset>(
                     _plugin.AddressableScriptLabel,
                     asset => sources.Add(($"{_plugin.Guid}/{asset.name}", asset.text)),
                     _ =>

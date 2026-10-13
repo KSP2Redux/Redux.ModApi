@@ -3,8 +3,8 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using KSP.Game;
 using KSP.Game.Flow;
-using Redux.ApiImpls;
 using SpaceWarp2.API.Features;
 using SpaceWarp2.InternalUtilities;
 using SpaceWarp2.API.Loading.LoadingActions;
@@ -123,13 +123,13 @@ namespace SpaceWarp2.API.Loading
                 done =>
                 {
                     // No catalog may ship the label at all, which is not an error for data that is optional
-                    if (!ReduxAssetProvider.DoesLabelExist(label))
+                    if (!GameManager.Instance.Assets.HasLocations(label, typeof(T)))
                     {
                         done();
                         return;
                     }
 
-                    ReduxAssetProvider.LoadByLabel<T>(
+                    GameManager.Instance.Assets.LoadByLabel<T>(
                     label,
                     onAsset,
                     assets =>
