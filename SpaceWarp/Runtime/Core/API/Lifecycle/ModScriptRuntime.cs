@@ -209,6 +209,9 @@ namespace SpaceWarp2.API.Lifecycle
             IConfigFile campaignConfigFile
         )
         {
+            // Every library the env gets is userdata, so their types register before the first fork uses them
+            LuaRegistration.RegisterLoadedAssemblies();
+
             // Read on each fork, since the game creates its root environment after the mod runtime first loads
             var root = ((ScriptEnvironment)GameManager.Instance.Game.ScriptEnvironment).globals;
             var script = root.OwnerScript;

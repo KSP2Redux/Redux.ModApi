@@ -22,7 +22,8 @@ namespace PatchManager.LuaPatching
         /// </summary>
         public override void Init()
         {
-            UserData.RegistrationPolicy = new FallbackRegistrationPolicy();
+            // Mod assemblies have loaded by now, so this registers their Lua types beside the game's
+            LuaRegistration.RegisterLoadedAssemblies();
 
             // PatchManager contributes PM/J into each mod env the SpaceWarp runtime forks.
             if (!ModRuntime.Contributors.OfType<Builtin.PatchManagerEnvContributor>().Any())
@@ -36,19 +37,9 @@ namespace PatchManager.LuaPatching
                 DataType.Number, typeof(LuaIndex),
                 dv => new LuaIndex((int)dv.Number - 1));
 
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                UserData.RegisterAssembly(assembly, false);
-            }
-
             foreach (var type in AppDomain.CurrentDomain.GetLoadableTypes())
             {
                 var attributes = type.GetCustomAttributes(true);
-                if (attributes.OfType<MoonSharpUserDataAttribute>().Any())
-                {
-                    DelegateRegistry.RegisterDelegatesFromMethodsOf(type);
-                }
-
                 if (attributes.OfType<PatchManagerModuleAttribute>().FirstOrDefault() is { } pmma)
                 {
                     if (!attributes.OfType<MoonSharpUserDataAttribute>().Any())

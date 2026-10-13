@@ -20,14 +20,6 @@ namespace SpaceWarp2.API.Config
         private readonly IConfigFile _file;
         private readonly Func<SpaceWarpPluginDescriptor, IConfigFile?> _configOf;
 
-        static ModConfig()
-        {
-            UserData.RegisterType<ModConfig>();
-            UserData.RegisterType<ConfigBuilder>();
-            UserData.RegisterType<ConfigHandle>();
-            UserData.RegisterType<ConfigView>();
-        }
-
         /// <summary>
         /// Creates a config namespace wrapping the given config file.
         /// </summary>
@@ -58,9 +50,7 @@ namespace SpaceWarp2.API.Config
         public ConfigBuilder Define(string section, string name)
         {
             if (_file == null)
-            {
                 throw new ScriptRuntimeException("This mod has no config file, so Config:Define is unavailable.");
-            }
 
             return new ConfigBuilder(_file, section, name);
         }
@@ -86,9 +76,7 @@ namespace SpaceWarp2.API.Config
             var descriptor = PluginList.TryGetDescriptor(modId);
             IConfigFile? config = descriptor == null ? null : _configOf(descriptor);
             if (config == null)
-            {
                 throw new ScriptRuntimeException($"No config found for mod '{modId}'.");
-            }
 
             return new ConfigView(config);
         }

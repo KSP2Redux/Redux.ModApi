@@ -36,12 +36,6 @@ namespace SpaceWarp2.API.Config
         /// </summary>
         public double a;
 
-        static LuaColor()
-        {
-            UserData.RegisterType<LuaColor>();
-            RegisterConversions();
-        }
-
         /// <summary>
         /// Lets a <see cref="LuaColor" /> stand wherever C# takes a <see cref="Color" />, as the game's table colours
         /// already do, so a config colour can be handed straight to a game call.

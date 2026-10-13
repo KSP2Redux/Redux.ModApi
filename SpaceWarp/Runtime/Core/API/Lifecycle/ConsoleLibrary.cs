@@ -15,11 +15,6 @@ namespace SpaceWarp2.API.Lifecycle
     [MoonSharpUserData]
     public sealed class ConsoleLibrary
     {
-        static ConsoleLibrary()
-        {
-            UserData.RegisterType<ConsoleLibrary>();
-        }
-
         /// <summary>
         /// Registers a value or function under <paramref name="name" /> as a global on the console environment.
         /// </summary>
@@ -28,9 +23,7 @@ namespace SpaceWarp2.API.Lifecycle
         public void Register(string name, DynValue value)
         {
             if (string.IsNullOrEmpty(name))
-            {
                 throw new ScriptRuntimeException("Console.Register expects a non-empty name.");
-            }
 
             ModScriptRuntime.RegisterConsoleGlobal(name, value);
         }

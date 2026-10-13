@@ -10,8 +10,9 @@ using PatchManager.LuaPatching.Attributes;
 using PatchManager.LuaPatching.Builtin;
 using PatchManager.LuaPatching.Utility;
 using PatchManager.Shared;
-using SpaceWarp2.API.Logging;
 using SpaceWarp2.API.Features;
+using SpaceWarp2.API.Lifecycle;
+using SpaceWarp2.API.Logging;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -124,7 +125,7 @@ namespace PatchManager.LuaPatching
 
         static Universe()
         {
-            UserData.RegistrationPolicy = new FallbackRegistrationPolicy();
+            LuaRegistration.RegisterLoadedAssemblies();
         }
 
         #region Patch/Stage Registering

@@ -18,11 +18,6 @@ namespace SpaceWarp2.API.Lifecycle
     {
         private readonly ILogger _logger;
 
-        static ModLogger()
-        {
-            UserData.RegisterType<ModLogger>();
-        }
-
         /// <summary>
         /// Creates a logger wrapping the given <see cref="ILogger" />.
         /// </summary>

@@ -19,11 +19,6 @@ namespace SpaceWarp2.API.Features
     {
         private readonly Action<Action, Action<string>> _work;
 
-        static FeatureGatedAction()
-        {
-            UserData.RegisterType<FeatureGatedAction>();
-        }
-
         /// <summary>
         /// Creates an action without registering it.
         /// </summary>

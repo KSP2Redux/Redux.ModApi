@@ -18,11 +18,6 @@ namespace SpaceWarp2.API.Lifecycle
     {
         private static readonly ILogger Logger = LogManager.GetLogger("SpaceWarp.Lifecycle");
 
-        static SwLibrary()
-        {
-            UserData.RegisterType<SwLibrary>();
-        }
-
         /// <summary>
         /// Registers a closure to fire during the Init phase, before the mod's C# OnInitialized.
         /// </summary>

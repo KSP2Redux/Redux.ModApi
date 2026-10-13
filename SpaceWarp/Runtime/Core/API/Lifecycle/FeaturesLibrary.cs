@@ -19,11 +19,6 @@ namespace SpaceWarp2.API.Lifecycle
         [MoonSharpHidden]
         public static readonly FeaturesLibrary Instance = new();
 
-        static FeaturesLibrary()
-        {
-            UserData.RegisterType<FeaturesLibrary>();
-        }
-
         /// <summary>
         /// Checks whether a feature is on.
         /// </summary>
