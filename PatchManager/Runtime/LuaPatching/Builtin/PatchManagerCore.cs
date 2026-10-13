@@ -12,7 +12,7 @@ namespace PatchManager.LuaPatching.Builtin
     /// The PatchManager Lua library, exposed to scripts as the global <c>PM</c>.
     /// </summary>
     [MoonSharpUserData]
-    public sealed class PatchManagerCore
+    public class PatchManagerCore
     {
         private readonly Universe _universe;
 
@@ -112,6 +112,7 @@ namespace PatchManager.LuaPatching.Builtin
         /// <param name="context">The Lua execution context. Its env's <c>ModId</c> global namespaces <paramref name="name" />.</param>
         /// <param name="name">The pass name, namespaced to the host mod when it is not built-in and does not already carry a namespace.</param>
         /// <returns>The pass, for chaining its ordering.</returns>
+        /// <exception cref="ScriptRuntimeException">Thrown when called after patch registration has closed.</exception>
         public PassDefinition Pass(ScriptExecutionContext context, string name)
         {
             if (!_universe.RegistrationOpen)
@@ -123,6 +124,13 @@ namespace PatchManager.LuaPatching.Builtin
         /// <summary>
         /// Begins a declarative prefab patch for one stock Addressables key.
         /// </summary>
+        /// <param name="context">The Lua execution context. Its env's <c>ModId</c> global names the patching mod.</param>
+        /// <param name="name">The prefab patch's name, namespaced to the patching mod.</param>
+        /// <param name="target">The stock prefab's Addressables key, as a string.</param>
+        /// <returns>The builder for the prefab patch's operations.</returns>
+        /// <exception cref="ScriptRuntimeException">
+        /// Thrown when called after patch registration has closed, or when <paramref name="target" /> is not a string.
+        /// </exception>
         public PrefabPatchLuaBuilder Prefab(
             ScriptExecutionContext context,
             string name,
@@ -229,6 +237,7 @@ namespace PatchManager.LuaPatching.Builtin
         /// <param name="context">The Lua execution context. Its env's <c>ModId</c> global names the registering mod.</param>
         /// <param name="callback">The callback, handed the set being built as a table of each id mapped to true.</param>
         /// <returns>The registered callback, for gating it with features.</returns>
+        /// <exception cref="ScriptRuntimeException">Thrown when called after patch registration has closed.</exception>
         public FeatureGatedAction OnBeginRun(ScriptExecutionContext context, Closure callback) =>
             AddRunCallback(_universe.BeginRunCallbacks, context, callback);
 
@@ -238,6 +247,7 @@ namespace PatchManager.LuaPatching.Builtin
         /// <param name="context">The Lua execution context. Its env's <c>ModId</c> global names the registering mod.</param>
         /// <param name="callback">The callback, handed the set that was built as a table of each id mapped to true.</param>
         /// <returns>The registered callback, for gating it with features.</returns>
+        /// <exception cref="ScriptRuntimeException">Thrown when called after patch registration has closed.</exception>
         public FeatureGatedAction OnEndRun(ScriptExecutionContext context, Closure callback) =>
             AddRunCallback(_universe.EndRunCallbacks, context, callback);
 

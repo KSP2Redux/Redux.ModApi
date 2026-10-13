@@ -26,7 +26,7 @@ namespace PatchManager.PrefabPatching
     /// </remarks>
     public static class PrefabPatchComposer
     {
-        private sealed class PendingReference
+        private class PendingReference
         {
             public Object Target;
             public string PropertyPath;
@@ -34,14 +34,14 @@ namespace PatchManager.PrefabPatching
             public string OperationId;
         }
 
-        private sealed class AnimationCurvePayload
+        private class AnimationCurvePayload
         {
             public Keyframe[] Keys;
             public int PreWrapMode;
             public int PostWrapMode;
         }
 
-        private sealed class GradientPayload
+        private class GradientPayload
         {
             public GradientColorKey[] ColorKeys;
             public GradientAlphaKey[] AlphaKeys;
@@ -49,7 +49,7 @@ namespace PatchManager.PrefabPatching
         }
 
         /// <summary>Describes the outcome and objects created by one composition.</summary>
-        public sealed class Result
+        public class Result
         {
             /// <summary>Whether every operation completed successfully.</summary>
             public bool Success;

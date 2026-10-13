@@ -8,7 +8,7 @@ namespace PatchManager.Science
 {
     /// <summary>Patches science-region discoverables, mirroring PM.Science.</summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class PatchDiscoverablesAttribute : PatchAttribute
+    public class PatchDiscoverablesAttribute : PatchAttribute
     {
         /// <inheritdoc />
         public override string Converter => "Discoverables";
@@ -19,7 +19,7 @@ namespace PatchManager.Science
 
     /// <summary>Patches science experiments.</summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class PatchExperimentAttribute : PatchAttribute
+    public class PatchExperimentAttribute : PatchAttribute
     {
         /// <inheritdoc />
         public override string Converter => "Experiment";
@@ -30,7 +30,7 @@ namespace PatchManager.Science
 
     /// <summary>Patches science regions.</summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class PatchScienceRegionAttribute : PatchAttribute
+    public class PatchScienceRegionAttribute : PatchAttribute
     {
         /// <inheritdoc />
         public override string Converter => "ScienceRegions";
@@ -41,7 +41,7 @@ namespace PatchManager.Science
 
     /// <summary>Patches tech-tree nodes through the generic JSON converter.</summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class PatchTechNodeAttribute : PatchAttribute
+    public class PatchTechNodeAttribute : PatchAttribute
     {
         /// <inheritdoc />
         public override string Converter => "JSON";

@@ -7,7 +7,7 @@ namespace PatchManager.Parts
 {
     /// <summary>Patches part definitions (Part converter, parts_data label), mirroring PM.Parts.</summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class PatchPartAttribute : PatchAttribute
+    public class PatchPartAttribute : PatchAttribute
     {
         /// <inheritdoc />
         public override string Converter => "Part";

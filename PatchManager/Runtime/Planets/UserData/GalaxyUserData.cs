@@ -6,102 +6,99 @@ using Newtonsoft.Json.Linq;
 using PatchManager.LuaPatching;
 using PatchManager.LuaPatching.Utility;
 
-namespace PatchManager.Planets.UserData;
-
-/// <summary>
-/// Galaxy definition wrapper that exposes each celestial body in the galaxy's <c>CelestialBodies</c> array as a
-/// virtual property keyed by GUID.
-/// </summary>
-[MoonSharpUserData]
-public class GalaxyUserData : ExtensibleJsonUserData
+namespace PatchManager.Planets.UserData
 {
     /// <summary>
-    /// Creates the wrapper around the galaxy JSON.
+    /// Galaxy definition wrapper that exposes each celestial body in the galaxy's <c>CelestialBodies</c> array as a
+    /// virtual property keyed by GUID.
     /// </summary>
-    /// <param name="token">The galaxy definition JSON.</param>
-    public GalaxyUserData(JToken token) : base(token)
+    [MoonSharpUserData]
+    public class GalaxyUserData : ExtensibleJsonUserData
     {
-    }
-
-    private JArray Bodies => RequireArray(Token["CelestialBodies"], "CelestialBodies");
-
-    /// <inheritdoc />
-    public override IEnumerable<string> GetExtraAndOverriddenKeys()
-    {
-        foreach (var body in Bodies)
+        /// <summary>
+        /// Creates the wrapper around the galaxy JSON.
+        /// </summary>
+        /// <param name="token">The galaxy definition JSON.</param>
+        public GalaxyUserData(JToken token) : base(token)
         {
-            yield return RequireString(body["GUID"], "CelestialBodies[].GUID");
         }
-    }
 
-    /// <inheritdoc />
-    public override DynValue TryToGet(string property)
-    {
-        foreach (var body in Bodies)
+        private JArray Bodies => RequireArray(Token["CelestialBodies"], "CelestialBodies");
+
+        /// <inheritdoc />
+        public override IEnumerable<string> GetExtraAndOverriddenKeys()
         {
-            if (RequireString(body["GUID"], "CelestialBodies[].GUID") == property)
+            foreach (var body in Bodies)
             {
-                return GetFromJToken(body);
+                yield return RequireString(body["GUID"], "CelestialBodies[].GUID");
             }
         }
 
-        return null;
-    }
-
-    /// <inheritdoc />
-    public override bool TryToSet(string property, DynValue value)
-    {
-        foreach (var body in Bodies)
+        /// <inheritdoc />
+        public override DynValue TryToGet(string property)
         {
-            if (RequireString(body["GUID"], "CelestialBodies[].GUID") == property)
+            foreach (var body in Bodies)
             {
-                throw new ScriptRuntimeException("Cannot set this property, use the methods for patching/removing");
+                if (RequireString(body["GUID"], "CelestialBodies[].GUID") == property)
+                    return GetFromJToken(body);
             }
-        }
-        return false;
-    }
 
-    /// <inheritdoc />
-    public override bool TryToRemove(string property)
-    {
-        var bodies = Bodies;
-        var index = 0;
-        var found = false;
-        foreach (var body in bodies)
+            return null;
+        }
+
+        /// <inheritdoc />
+        public override bool TryToSet(string property, DynValue value)
         {
-            if (RequireString(body["GUID"], "CelestialBodies[].GUID") == property)
+            foreach (var body in Bodies)
             {
-                found = true;
-                break;
+                if (RequireString(body["GUID"], "CelestialBodies[].GUID") == property)
+                    throw new ScriptRuntimeException("Cannot set this property, use the methods for patching/removing");
             }
-            index++;
+            return false;
         }
 
-        if (found)
+        /// <inheritdoc />
+        public override bool TryToRemove(string property)
         {
-            bodies.RemoveAt(index);
-            return true;
-        }
-        throw new ScriptRuntimeException("Cannot remove this property.");
-    }
+            var bodies = Bodies;
+            var index = 0;
+            var found = false;
+            foreach (var body in bodies)
+            {
+                if (RequireString(body["GUID"], "CelestialBodies[].GUID") == property)
+                {
+                    found = true;
+                    break;
+                }
+                index++;
+            }
 
-    /// <summary>
-    /// Adds a new celestial body with the given GUID to the galaxy and runs <paramref name="callback" /> against
-    /// it for further configuration.
-    /// </summary>
-    /// <param name="planetName">The new body's GUID.</param>
-    /// <param name="callback">Callback that receives the new body for further configuration.</param>
-    public void Add(string planetName, Action<JsonUserData> callback)
-    {
-        var obj = new SerializedCelestialBody
+            if (found)
+            {
+                bodies.RemoveAt(index);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Adds a new celestial body with the given GUID to the galaxy and runs <paramref name="callback" /> against
+        /// it for further configuration.
+        /// </summary>
+        /// <param name="planetName">The new body's GUID.</param>
+        /// <param name="callback">Callback that receives the new body for further configuration.</param>
+        public void Add(string planetName, Action<JsonUserData> callback)
         {
-            GUID = planetName,
-            OrbitProperties = new SerializedOrbitProperties(),
-            OrbiterProperties = new SerializedOribiterDefinition()
-        };
-        var jToken = JObject.FromObject(obj);
-        var ud = GetFromJToken(jToken);
-        Bodies.Add(jToken);
-        callback((JsonUserData)ud.UserData.Object);
+            var obj = new SerializedCelestialBody
+            {
+                GUID = planetName,
+                OrbitProperties = new SerializedOrbitProperties(),
+                OrbiterProperties = new SerializedOribiterDefinition()
+            };
+            var jToken = JObject.FromObject(obj);
+            var ud = GetFromJToken(jToken);
+            Bodies.Add(jToken);
+            callback((JsonUserData)ud.UserData.Object);
+        }
     }
 }

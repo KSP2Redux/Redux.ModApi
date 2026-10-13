@@ -12,7 +12,7 @@ namespace PatchManager.Generic
     /// Use this for asset kinds that have no dedicated domain attribute.
     /// </remarks>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class PatchJsonAttribute : PatchAttribute
+    public class PatchJsonAttribute : PatchAttribute
     {
         private readonly string _label;
 

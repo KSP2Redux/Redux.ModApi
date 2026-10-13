@@ -111,7 +111,8 @@ function MissionsLuaModule:Not(condition) end
 ---@param type string The action's short name as registered in `MissionsTypes.Actions`.
 ---@param callback fun(action: JsonUserData) Callback that receives the action's JSON for further configuration.
 ---@return JsonUserData action A wrapper around the configured action JSON.
----@error Thrown when type resolves to a class without a parameterless constructor.
+---@error Thrown when type is not a registered action, or resolves to a class without a parameterless
+---constructor, or its constructor throws.
 function MissionsLuaModule:Action(type, callback) end
 
 ---Represents a mission definition, including its identity, type, state, stages, and branching structure.

@@ -612,7 +612,7 @@ namespace PatchManager.PrefabPatching
             fatal |= state.Fatal;
         }
 
-        private sealed class OperationValidationState
+        private class OperationValidationState
         {
             public readonly IReadOnlyDictionary<string, int> PatchOrder;
             public readonly Dictionary<string, string> IntroducedObjects = new(

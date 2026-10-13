@@ -13,7 +13,7 @@ namespace PatchManager.Resources
     /// surface uses the shared JsonUserData base.
     /// </remarks>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class PatchResourceAttribute : PatchAttribute
+    public class PatchResourceAttribute : PatchAttribute
     {
         /// <inheritdoc />
         public override string Converter => "Resource";

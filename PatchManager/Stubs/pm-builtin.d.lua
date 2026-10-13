@@ -54,12 +54,14 @@ function PatchManagerCore:Duplicate(converter, label, source, newName, patchMeth
 ---Returns the pass with the given name, declaring it when it does not exist yet.
 ---@param name string The pass name, namespaced to the host mod when it is not built-in and does not already carry a namespace.
 ---@return PassDefinition pass The pass, for chaining its ordering.
+---@error Thrown when called after patch registration has closed.
 function PatchManagerCore:Pass(name) end
 
 ---Begins a declarative prefab patch for one stock Addressables key.
----@param name string
----@param target string
----@return PrefabPatchLuaBuilder
+---@param name string The prefab patch's name, namespaced to the patching mod.
+---@param target string The stock prefab's Addressables key, as a string.
+---@return PrefabPatchLuaBuilder builder The builder for the prefab patch's operations.
+---@error Thrown when called after patch registration has closed, or when target is not a string.
 function PatchManagerCore:Prefab(name, target) end
 
 ---Queues a brand-new asset for creation under the given label and address.
@@ -86,11 +88,13 @@ function PatchManagerCore:WithFeature(id, body) end
 ---Registers a callback that runs before each feature set's patch run.
 ---@param callback fun(features: table<string, true>) The callback, handed the set being built as a table of each id mapped to true.
 ---@return FeatureGatedAction registered The registered callback, for gating it with features.
+---@error Thrown when called after patch registration has closed.
 function PatchManagerCore:OnBeginRun(callback) end
 
 ---Registers a callback that runs after each feature set's patch run.
 ---@param callback fun(features: table<string, true>) The callback, handed the set that was built as a table of each id mapped to true.
 ---@return FeatureGatedAction registered The registered callback, for gating it with features.
+---@error Thrown when called after patch registration has closed.
 function PatchManagerCore:OnEndRun(callback) end
 
 ---Returns whether the mod with the given ID is loaded.

@@ -196,7 +196,7 @@ namespace PatchManager.Science
         }
 
         /// <summary>
-        /// Adds the given part IDs to the tech node named <paramref name="nodeName" />'s <c>UnlockedPartIds</c> list.
+        /// Adds the given part IDs to the tech node named <paramref name="nodeName" />'s <c>UnlockedPartsIDs</c> list.
         /// </summary>
         /// <param name="context">The Lua execution context.</param>
         /// <param name="nodeName">The tech node name.</param>

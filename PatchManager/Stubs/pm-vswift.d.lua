@@ -38,6 +38,7 @@
 local VSwiftLuaModule = {}
 
 ---Adds a PAM module-visuals override on the given part so Module_PartSwitch displays under a localized header in the parts manager.
+---A part that already has the override is left alone.
 ---@param part PartUserData The part to add the PAM override to.
 function VSwiftLuaModule:AddPAMOverride(part) end
 

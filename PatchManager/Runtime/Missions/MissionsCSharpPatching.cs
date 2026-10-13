@@ -7,7 +7,7 @@ namespace PatchManager.Missions
 {
     /// <summary>Patches mission definitions, mirroring PM.Missions.</summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class PatchMissionAttribute : PatchAttribute
+    public class PatchMissionAttribute : PatchAttribute
     {
         /// <inheritdoc />
         public override string Converter => "Mission";

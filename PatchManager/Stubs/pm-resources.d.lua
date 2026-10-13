@@ -33,6 +33,7 @@ function ResourcesLuaModule:Duplicate(source, newName, patchMethod) end
 ---@param name string The recipe's resource name.
 ---@param callback fun(recipe: RecipeUserData) Callback that receives the new recipe for further configuration.
 ---@return LuaAsset asset The queued asset, for gating it with features.
+---@error Thrown when name holds a quote or backslash.
 function ResourcesLuaModule:NewRecipe(name, callback) end
 
 ---Creates a new plain resource definition with the given name and runs callback against
@@ -40,6 +41,7 @@ function ResourcesLuaModule:NewRecipe(name, callback) end
 ---@param name string The resource name.
 ---@param callback fun(resource: ResourceUserData) Callback that receives the new resource for further configuration.
 ---@return LuaAsset asset The queued asset, for gating it with features.
+---@error Thrown when name holds a quote or backslash.
 function ResourcesLuaModule:NewResource(name, callback) end
 
 ---Registers a JSON resource-units definition, queueing it under the `resource_units` addressables label

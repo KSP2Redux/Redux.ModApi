@@ -7,7 +7,7 @@ namespace PatchManager.CSharpPatching.Attributes
     /// registered with the universe at load time.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class)]
-    public sealed class PMPatchAttribute : Attribute
+    public class PMPatchAttribute : Attribute
     {
         /// <summary>
         /// The explicit mod ID patches in this class are namespaced under, or null to derive it from the

@@ -170,7 +170,7 @@ namespace PatchManager.PrefabPatching
     public static class PrefabPatchRuntime
     {
         /// <summary>Measurements and counts for the current discovery/composition session.</summary>
-        public sealed class Metrics
+        public class Metrics
         {
             /// <summary>Total registered and Addressables-discovered manifests.</summary>
             public int DiscoveredManifestCount;
@@ -202,7 +202,7 @@ namespace PatchManager.PrefabPatching
             public int RetainedAddressablesHandles;
         }
 
-        internal sealed class Entry
+        internal class Entry
         {
             public PrefabPatchResolvedPlan Plan;
             public GameObject EffectivePrefab;
@@ -216,7 +216,7 @@ namespace PatchManager.PrefabPatching
             public int RequestCount;
         }
 
-        private sealed class ManifestLocation
+        private class ManifestLocation
         {
             public IResourceLocation Location;
             public string OwnerModId;
@@ -583,7 +583,7 @@ namespace PatchManager.PrefabPatching
                 .ToList();
         }
 
-        private sealed class PrefabPatchManifestSourceComparer :
+        private class PrefabPatchManifestSourceComparer :
             IEqualityComparer<PrefabPatchManifestSource>
         {
             public static readonly PrefabPatchManifestSourceComparer Instance =
@@ -1051,7 +1051,7 @@ namespace PatchManager.PrefabPatching
         }
     }
 
-    internal sealed class PrefabPatchResourceLocator :
+    internal class PrefabPatchResourceLocator :
         UnityEngine.AddressableAssets.ResourceLocators.IResourceLocator
     {
         private readonly IReadOnlyDictionary<string, PrefabPatchRuntime.Entry> _entries;
@@ -1184,7 +1184,7 @@ namespace PatchManager.PrefabPatching
         }
     }
 
-    internal sealed class PrefabPatchResourceProvider : ResourceProviderBase
+    internal class PrefabPatchResourceProvider : ResourceProviderBase
     {
         public override void Provide(ProvideHandle provideHandle)
         {

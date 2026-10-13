@@ -32,7 +32,7 @@
 
 ---@class ScienceRegionUserData : _ScienceRegionDefinition, JsonUserData
 
----Indexed-list wrapper for a body's science regions, keyed by each region's `id`, while preserving the full
+---Indexed-list wrapper for a body's science regions, keyed by each region's `Id`, while preserving the full
 ---envelope for round-tripping and exposing the body name and situation data as typed properties.
 ---@class ScienceRegionsUserData : IndexedListUserData<ScienceRegionUserData>
 ---@field BodyName string Gets the celestial body's name from the envelope's `BodyName` field.
@@ -104,7 +104,7 @@ function ScienceLuaModule:PatchTechNodes(name) end
 ---@return PatchDefinition<TechNodeUserData, any> patch The registered patch.
 function ScienceLuaModule:DuplicateTechNodes(source, newName, patchMethod) end
 
----Adds the given part IDs to the tech node named nodeName's `UnlockedPartIds` list.
+---Adds the given part IDs to the tech node named nodeName's `UnlockedPartsIDs` list.
 ---@param nodeName string The tech node name.
 ---@param ... string The part IDs to append.
 function ScienceLuaModule:AddPartsToTechNode(nodeName, ...) end

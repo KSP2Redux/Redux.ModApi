@@ -8,7 +8,7 @@ namespace PatchManager.Core.Cache.Json
     /// Contains hashes of the cache.
     /// </summary>
     [JsonObject(MemberSerialization.OptIn)]
-    public sealed class PatchHashes
+    public class PatchHashes
     {
         /// <summary>
         /// KSP 2 version for which the cache was generated.

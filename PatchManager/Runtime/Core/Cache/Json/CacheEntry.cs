@@ -7,7 +7,7 @@ namespace PatchManager.Core.Cache.Json
     /// Represents an entry in the cache for a specific asset label.
     /// </summary>
     [JsonObject(MemberSerialization.OptIn)]
-    public sealed class CacheEntry
+    public class CacheEntry
     {
         /// <summary>
         /// Label of the asset(s).

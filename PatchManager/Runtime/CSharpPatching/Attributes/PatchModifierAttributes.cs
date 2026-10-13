@@ -21,7 +21,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Runs the patch in the Early pass.</summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class EarlyAttribute : Attribute, IPatchModifier
+    public class EarlyAttribute : Attribute, IPatchModifier
     {
         /// <inheritdoc />
         public void Apply(PatchDefinition patch, object owner) => patch.Early();
@@ -29,7 +29,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Runs the patch in the Late pass.</summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class LateAttribute : Attribute, IPatchModifier
+    public class LateAttribute : Attribute, IPatchModifier
     {
         /// <inheritdoc />
         public void Apply(PatchDefinition patch, object owner) => patch.Late();
@@ -53,7 +53,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Runs the patch before Default and Last patches in its pass.</summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class FirstAttribute : Attribute, IPatchModifier
+    public class FirstAttribute : Attribute, IPatchModifier
     {
         /// <inheritdoc />
         public void Apply(PatchDefinition patch, object owner) => patch.First();
@@ -61,7 +61,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Runs the patch after First and Default patches in its pass.</summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class LastAttribute : Attribute, IPatchModifier
+    public class LastAttribute : Attribute, IPatchModifier
     {
         /// <inheritdoc />
         public void Apply(PatchDefinition patch, object owner) => patch.Last();
@@ -69,7 +69,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Targets only the assets with these names. Supports * and ? wildcards.</summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public sealed class NamedAttribute : Attribute, IPatchModifier
+    public class NamedAttribute : Attribute, IPatchModifier
     {
         private readonly string[] _names;
 
@@ -85,7 +85,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Rejects the assets with these names. Supports * and ? wildcards.</summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public sealed class NotNamedAttribute : Attribute, IPatchModifier
+    public class NotNamedAttribute : Attribute, IPatchModifier
     {
         private readonly string[] _names;
 
@@ -101,7 +101,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Requires these mod IDs to be loaded.</summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public sealed class NeedsAttribute : Attribute, IPatchModifier
+    public class NeedsAttribute : Attribute, IPatchModifier
     {
         private readonly string[] _ids;
 
@@ -117,7 +117,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Refuses to run alongside these mod IDs.</summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public sealed class ConflictsAttribute : Attribute, IPatchModifier
+    public class ConflictsAttribute : Attribute, IPatchModifier
     {
         private readonly string[] _ids;
 
@@ -165,7 +165,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Requires these other patches to run.</summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public sealed class NeedsPatchAttribute : Attribute, IPatchModifier
+    public class NeedsPatchAttribute : Attribute, IPatchModifier
     {
         private readonly string[] _ids;
 
@@ -181,7 +181,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Refuses to run alongside these patches.</summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public sealed class ConflictsPatchAttribute : Attribute, IPatchModifier
+    public class ConflictsPatchAttribute : Attribute, IPatchModifier
     {
         private readonly string[] _ids;
 
@@ -197,7 +197,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Runs after every patch from these mods.</summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public sealed class AfterAttribute : Attribute, IPatchModifier
+    public class AfterAttribute : Attribute, IPatchModifier
     {
         private readonly string[] _ids;
 
@@ -213,7 +213,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Runs after these patches when present.</summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public sealed class AfterPatchAttribute : Attribute, IPatchModifier
+    public class AfterPatchAttribute : Attribute, IPatchModifier
     {
         private readonly string[] _ids;
 
@@ -229,7 +229,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Runs before every patch from these mods.</summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public sealed class BeforeAttribute : Attribute, IPatchModifier
+    public class BeforeAttribute : Attribute, IPatchModifier
     {
         private readonly string[] _ids;
 
@@ -245,7 +245,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Runs before these patches when present.</summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public sealed class BeforePatchAttribute : Attribute, IPatchModifier
+    public class BeforePatchAttribute : Attribute, IPatchModifier
     {
         private readonly string[] _ids;
 
@@ -264,7 +264,7 @@ namespace PatchManager.CSharpPatching.Attributes
     /// returns a bool.
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public sealed class RequiresAttribute : Attribute, IPatchModifier
+    public class RequiresAttribute : Attribute, IPatchModifier
     {
         private readonly string _predicateMethod;
         private readonly string _message;
@@ -296,7 +296,7 @@ namespace PatchManager.CSharpPatching.Attributes
     /// Requires the asset to expose a key, optionally with a sibling predicate method run against the value at that key.
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public sealed class HasAttribute : Attribute, IPatchModifier
+    public class HasAttribute : Attribute, IPatchModifier
     {
         private readonly string _key;
         private readonly string _predicateMethod;
@@ -341,7 +341,7 @@ namespace PatchManager.CSharpPatching.Attributes
 
     /// <summary>Requires the asset to not expose a key.</summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public sealed class HasNoAttribute : Attribute, IPatchModifier
+    public class HasNoAttribute : Attribute, IPatchModifier
     {
         private readonly string _key;
         private readonly string _message;

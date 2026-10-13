@@ -70,6 +70,7 @@ namespace PatchManager.Resources
         /// <param name="name">The recipe's resource name.</param>
         /// <param name="callback">Callback that receives the new recipe for further configuration.</param>
         /// <returns>The queued asset, for gating it with features.</returns>
+        /// <exception cref="ScriptRuntimeException">Thrown when <paramref name="name" /> holds a quote or backslash.</exception>
         public LuaAsset NewRecipe(ScriptExecutionContext context, string name, Action<RecipeUserData> callback)
         {
             var value =
@@ -97,6 +98,7 @@ namespace PatchManager.Resources
         /// <param name="name">The resource name.</param>
         /// <param name="callback">Callback that receives the new resource for further configuration.</param>
         /// <returns>The queued asset, for gating it with features.</returns>
+        /// <exception cref="ScriptRuntimeException">Thrown when <paramref name="name" /> holds a quote or backslash.</exception>
         public LuaAsset NewResource(ScriptExecutionContext context, string name, Action<ResourceUserData> callback)
         {
             var value =

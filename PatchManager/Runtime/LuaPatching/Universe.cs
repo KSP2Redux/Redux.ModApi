@@ -977,7 +977,7 @@ namespace PatchManager.LuaPatching
         /// <summary>
         /// The patches for a single label in a single pass, grouped by how they match an asset name.
         /// </summary>
-        public sealed class LabelPatchBuckets
+        public class LabelPatchBuckets
         {
             /// <summary>
             /// Patches keyed by the exact asset name they match.

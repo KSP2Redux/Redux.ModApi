@@ -7,7 +7,7 @@ namespace PatchManager.PrefabPatching
     /// Later patches address it as owning patch ID plus this patch-local ID.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class PrefabPatchObjectId : MonoBehaviour
+    public class PrefabPatchObjectId : MonoBehaviour
     {
         [SerializeField] private string _id;
 

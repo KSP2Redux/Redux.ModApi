@@ -4,13 +4,17 @@
 -- Source: Assets/Code/Redux/Modules/Data_PartAudioPreset.cs
 -- Source: Assets/Code/KSP/Sim/Definitions/ModuleData.cs
 
+---Lua module exposed under the global `PM.Audio`, for binding registered audio presets to parts.
 ---@class AudioLuaModule
 local AudioLuaModule = {}
 
----@param part PartUserData
----@param presetId string
----@param targetTransformPath? string
----@param overrideExistingAudio? boolean
+---Binds a registered audio preset to a transform of a part, adding `Module_PartAudioPreset` when the part
+---has none. A binding for the same preset and transform is updated rather than duplicated.
+---@param part PartUserData The part to bind the preset to.
+---@param presetId string The registered preset ID, matching the PresetId of a PartAudioPresetDefinition.
+---@param targetTransformPath? string The transform path within the part, or nil for the part root.
+---@param overrideExistingAudio? boolean Whether the preset replaces existing audio components at the transform rather than adding alongside them.
+---@error Thrown when part is nil or presetId is blank.
 function AudioLuaModule:EnsurePreset(part, presetId, targetTransformPath, overrideExistingAudio) end
 
 ---@class _Data_PartAudioPreset : _JsonUserDataBase

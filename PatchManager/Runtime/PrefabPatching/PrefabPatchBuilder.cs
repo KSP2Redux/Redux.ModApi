@@ -16,7 +16,7 @@ namespace PatchManager.PrefabPatching
     /// window. Dependency and ordering methods share the
     /// <see cref="IPatchRelationships" /> model used by ordinary JSON patches.
     /// </remarks>
-    public sealed class PrefabPatchBuilder
+    public class PrefabPatchBuilder
     {
         private readonly string _modId;
         private readonly PrefabPatchManifest _manifest;

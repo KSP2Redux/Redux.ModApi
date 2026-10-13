@@ -9,7 +9,7 @@ namespace PatchManager.Planets
 {
     /// <summary>Patches celestial bodies, mirroring PM.Planets.</summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class PatchPlanetAttribute : PatchAttribute
+    public class PatchPlanetAttribute : PatchAttribute
     {
         /// <inheritdoc />
         public override string Converter => "Planet";
@@ -20,7 +20,7 @@ namespace PatchManager.Planets
 
     /// <summary>Patches the default galaxy definition.</summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class PatchDefaultGalaxyAttribute : PatchAttribute
+    public class PatchDefaultGalaxyAttribute : PatchAttribute
     {
         /// <inheritdoc />
         public override string Converter => "Galaxy";
@@ -45,7 +45,7 @@ namespace PatchManager.Planets
 
     /// <summary>Patches atmosphere overrides.</summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class PatchAtmosphereOverrideAttribute : PatchAttribute
+    public class PatchAtmosphereOverrideAttribute : PatchAttribute
     {
         /// <inheritdoc />
         public override string Converter => "JSON";
@@ -56,7 +56,7 @@ namespace PatchManager.Planets
 
     /// <summary>Patches volume-cloud overrides.</summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class PatchCloudOverrideAttribute : PatchAttribute
+    public class PatchCloudOverrideAttribute : PatchAttribute
     {
         /// <inheritdoc />
         public override string Converter => "Cloud";

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MoonSharp.Interpreter;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -59,7 +60,7 @@ namespace PatchManager.PrefabPatching
     /// patches. The mod descriptor supplies ownership. The manifest asset address
     /// is deliberately not part of patch identity.
     /// </summary>
-    public sealed class PrefabPatchManifestSource
+    public class PrefabPatchManifestSource
     {
         /// <summary>The SpaceWarp mod ID that owns manifests discovered from this source.</summary>
         public string OwnerModId;
@@ -178,7 +179,7 @@ namespace PatchManager.PrefabPatching
     /// prefab.
     /// </summary>
     [Serializable]
-    public sealed class PrefabPatchPrefabIdentity
+    public class PrefabPatchPrefabIdentity
     {
         /// <summary>The stock prefab Addressables key.</summary>
         public string Address;
@@ -214,7 +215,7 @@ namespace PatchManager.PrefabPatching
     /// canonical source identity. Key-first C#/Lua authoring uses a hierarchy path.
     /// </summary>
     [Serializable]
-    public sealed class PrefabPatchRuntimeLocator
+    public class PrefabPatchRuntimeLocator
     {
         /// <summary>Sibling indices from the prefab root to the target.</summary>
         public int[] SiblingIndices = Array.Empty<int>();
@@ -234,7 +235,8 @@ namespace PatchManager.PrefabPatching
     /// An inherited source object or an object introduced by a named patch.
     /// </summary>
     [Serializable]
-    public sealed class PrefabPatchObjectTarget
+    [MoonSharpUserData]
+    public class PrefabPatchObjectTarget
     {
         /// <summary>The source domain of the target.</summary>
         public PrefabPatchTargetKind Kind;
@@ -283,7 +285,7 @@ namespace PatchManager.PrefabPatching
     /// component order.
     /// </summary>
     [Serializable]
-    public sealed class PrefabPatchValue
+    public class PrefabPatchValue
     {
         /// <summary>The active payload representation.</summary>
         public PrefabPatchValueKind Kind;
@@ -328,7 +330,7 @@ namespace PatchManager.PrefabPatching
     /// SetObjectReference or a component fragment.
     /// </summary>
     [Serializable]
-    public sealed class PrefabPatchObjectReference
+    public class PrefabPatchObjectReference
     {
         /// <summary>The resolution strategy.</summary>
         public PrefabPatchObjectReferenceKind Kind;
@@ -369,7 +371,7 @@ namespace PatchManager.PrefabPatching
     /// Visual, C#, and Lua authoring all emit this property-stream representation.
     /// </summary>
     [Serializable]
-    public sealed class PrefabPatchSerializedValue
+    public class PrefabPatchSerializedValue
     {
         /// <summary>The Unity SerializedProperty path.</summary>
         public string PropertyPath;
@@ -382,7 +384,7 @@ namespace PatchManager.PrefabPatching
     /// restored after every patch-owned object and component has been created.
     /// </summary>
     [Serializable]
-    public sealed class PrefabPatchSerializedReference
+    public class PrefabPatchSerializedReference
     {
         /// <summary>The Unity SerializedProperty path.</summary>
         public string PropertyPath;
@@ -395,7 +397,7 @@ namespace PatchManager.PrefabPatching
     /// operations.
     /// </summary>
     [Serializable]
-    public sealed class PrefabPatchComponentFragment
+    public class PrefabPatchComponentFragment
     {
         /// <summary>The stable patch-local component ID.</summary>
         public string ComponentId;
@@ -412,7 +414,7 @@ namespace PatchManager.PrefabPatching
     /// allowing later required patches to target it without hierarchy-name lookup.
     /// </summary>
     [Serializable]
-    public sealed class PrefabPatchObjectFragment
+    public class PrefabPatchObjectFragment
     {
         /// <summary>The stable patch-local GameObject ID.</summary>
         public string ObjectId;
@@ -454,7 +456,7 @@ namespace PatchManager.PrefabPatching
     /// One normalized declarative operation.
     /// </summary>
     [Serializable]
-    public sealed class PrefabPatchOperation
+    public class PrefabPatchOperation
     {
         /// <summary>The stable patch-local operation ID.</summary>
         public string OperationId;
@@ -515,7 +517,7 @@ namespace PatchManager.PrefabPatching
     /// One independently distributable prefab patch manifest.
     /// </summary>
     [Serializable]
-    public sealed class PrefabPatchManifest : IPatchRelationships
+    public class PrefabPatchManifest : IPatchRelationships
     {
         /// <summary>The serialized schema version.</summary>
         public int SchemaVersion = PrefabPatchSchema.Version;
@@ -601,7 +603,7 @@ namespace PatchManager.PrefabPatching
     /// diagnostic.
     /// </summary>
     [Serializable]
-    public sealed class PrefabPatchDiagnostic
+    public class PrefabPatchDiagnostic
     {
         /// <summary>The diagnostic impact level.</summary>
         public PrefabPatchDiagnosticSeverity Severity;
@@ -622,7 +624,7 @@ namespace PatchManager.PrefabPatching
     /// analysis, and normalized operation validation for one stock prefab.
     /// </summary>
     [Serializable]
-    public sealed class PrefabPatchResolvedPlan
+    public class PrefabPatchResolvedPlan
     {
         /// <summary>The manifest schema version used to build the plan.</summary>
         public int SchemaVersion = PrefabPatchSchema.Version;

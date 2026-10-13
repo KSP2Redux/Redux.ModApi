@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine.UIElements;
 using VSwift.Modules.Behaviours;
@@ -10,27 +11,26 @@ namespace VSwift.Modules.Transformers
     /// Interface for V-SwiFT transformers, the per-variant operations that mutate a part when a variant is active.
     /// </summary>
     /// <remarks>
-    /// Concrete implementations decorate themselves with <see cref="Transformer" /> to register a short name in the <see cref="VSwift.Utilities.Transformers" /> registry. <see cref="Reverter" /> describes how to undo this transformer's effect when the variant changes; transformers that don't need explicit reversal (e.g. pure visualizers, additive scalar mass) return <c>null</c>.
+    /// Concrete implementations decorate themselves with <see cref="Transformer" /> to register a short name in the <see cref="VSwift.Utilities.Transformers" /> registry. <see cref="Reverter" /> describes how to undo this transformer's effect when the variant changes. Transformers that don't need explicit reversal (e.g. pure visualizers, additive scalar mass) return <c>null</c>.
     /// </remarks>
     public interface ITransformer
     {
-        // public object StoreOriginalState(Module_PartSwitch partSwitchModule);
-        //
-        // public void ResetToOriginalState(Module_PartSwitch partSwitchModule, object originalState);
-
         /// <summary>
         /// Gets the reverter that undoes this transformer's effect when the active variant changes, or <c>null</c> when the transformer's effect is additive or stateless.
         /// </summary>
+        [JsonIgnore]
         public IReverter? Reverter { get; }
 
         /// <summary>
         /// Gets whether this transformer persists per-variant state into the saved part data via <see cref="SaveInformation" />.
         /// </summary>
+        [JsonIgnore]
         public bool SavesInformation { get; }
 
         /// <summary>
         /// Gets whether this transformer contributes a visual element to the variant-info popout via <see cref="VisualizeInformation" />.
         /// </summary>
+        [JsonIgnore]
         public bool VisualizesInformation { get; }
 
         /// <summary>

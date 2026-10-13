@@ -14,7 +14,7 @@ namespace PatchManager.LuaPatching.Builtin
     /// converted directly into the same model used by C# and visual authoring.
     /// </summary>
     [MoonSharpUserData]
-    public sealed class PrefabPatchLuaBuilder
+    public class PrefabPatchLuaBuilder
     {
         private readonly PrefabPatchBuilder _builder;
 
