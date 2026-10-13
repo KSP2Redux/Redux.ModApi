@@ -72,18 +72,9 @@ namespace SpaceWarp2
             Loading.AddAddressablesLoadingAction<TextAsset>("Loading addressables localizations (i2csv)", "loc_i2csv", OnI2CsvLoaded);
         }
 
-        private static void OnCsvLoaded(TextAsset csv)
-        {
-            var text = csv.text.Replace("\r\n", "\n");
-            ILocalizer.Instance.AddCsvSource(text);
-        }
+        private static void OnCsvLoaded(TextAsset csv) => ILocalizer.Instance.AddCsvSource(csv.text);
 
-        private static void OnI2CsvLoaded(TextAsset i2Csv)
-        {
-
-            var text = i2Csv.text.Replace("\r\n", "\n");
-            ILocalizer.Instance.AddI2CsvSource(text);
-        }
+        private static void OnI2CsvLoaded(TextAsset i2Csv) => ILocalizer.Instance.AddI2CsvSource(i2Csv.text);
 
         private static void CreateMonoBehaviours()
         {

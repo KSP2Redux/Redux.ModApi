@@ -42,15 +42,13 @@ namespace SpaceWarp2.InternalUtilities
             var info = new DirectoryInfo(folder);
             foreach (var csvFile in info.GetFiles("*.csv", SearchOption.AllDirectories))
             {
-                var csvData = File.ReadAllText(csvFile.FullName).Replace("\r\n", "\n");
-                ILocalizer.Instance.AddCsvSource(csvData);
+                ILocalizer.Instance.AddCsvSource(File.ReadAllText(csvFile.FullName));
                 loadedCount++;
             }
 
             foreach (var i2CsvFile in info.GetFiles("*.i2csv", SearchOption.AllDirectories))
             {
-                var i2CsvData = File.ReadAllText(i2CsvFile.FullName).Replace("\r\n", "\n");
-                ILocalizer.Instance.AddI2CsvSource(i2CsvData);
+                ILocalizer.Instance.AddI2CsvSource(File.ReadAllText(i2CsvFile.FullName));
                 loadedCount++;
             }
 
