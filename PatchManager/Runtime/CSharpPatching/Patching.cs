@@ -96,12 +96,14 @@ namespace PatchManager.CSharpPatching
         /// <param name="id">The feature ID, namespaced to the mod when it does not already carry a namespace.</param>
         /// <param name="requires">The required feature IDs, bare ones namespaced to the mod.</param>
         /// <param name="conflicts">The conflicting feature IDs, bare ones namespaced to the mod.</param>
+        /// <param name="provides">The provided feature IDs, bare ones namespaced to the mod.</param>
         /// <returns>The declared feature.</returns>
         public FeatureDefinition DefineFeature(
             string id,
             IEnumerable<string> requires = null,
-            IEnumerable<string> conflicts = null
-        ) => FeatureRegistry.Instance.Define(ModId, id, requires, conflicts);
+            IEnumerable<string> conflicts = null,
+            IEnumerable<string> provides = null
+        ) => FeatureRegistry.Instance.Define(ModId, id, requires, conflicts, provides);
 
         /// <summary>
         /// Registers a callback that runs before each feature set's patch run.

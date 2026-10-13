@@ -103,7 +103,7 @@ namespace SpaceWarp2.API.Features
 
             foreach (KeyValuePair<string, FeatureInfo> feature in info.Features)
             {
-                Define(modId, feature.Key, feature.Value.Requires, feature.Value.Conflicts);
+                Define(modId, feature.Key, feature.Value.Requires, feature.Value.Conflicts, feature.Value.Provides);
             }
         }
 
@@ -111,27 +111,33 @@ namespace SpaceWarp2.API.Features
         /// Declares one feature of a mod outside its mod info.
         /// </summary>
         /// <remarks>
-        /// Declaring an id that already exists adds its requirements and conflicts to the earlier declaration's, which
-        /// is how a mod states its default feature's relations beyond its swinfo dependencies and conflicts. A mod
-        /// declares only its own features.
+        /// Declaring an id that already exists adds its requirements, conflicts and provided features to the earlier
+        /// declaration's, which is how a mod states its default feature's relations beyond its swinfo dependencies and
+        /// conflicts. A mod declares only its own features, but may provide any mod's.
         /// </remarks>
         /// <param name="modId">The declaring mod.</param>
         /// <param name="featureId">The feature id, bare or qualified with the declaring mod.</param>
         /// <param name="requires">The required feature ids, bare ones relative to the declaring mod.</param>
         /// <param name="conflicts">The conflicting feature ids, bare ones relative to the declaring mod.</param>
+        /// <param name="provides">The provided feature ids, bare ones relative to the declaring mod.</param>
         /// <returns>The declared feature.</returns>
-        /// <exception cref="ArgumentException">Thrown when the id names another mod.</exception>
+        /// <exception cref="ArgumentException">Thrown when the id names another mod, or the feature provides itself.</exception>
         public FeatureDefinition Define(
             string modId,
             string featureId,
             IEnumerable<string>? requires = null,
-            IEnumerable<string>? conflicts = null
+            IEnumerable<string>? conflicts = null,
+            IEnumerable<string>? provides = null
         )
         {
             string id = FeatureRegistry.Qualify(modId, featureId);
             string owner = FeatureRegistry.NamespaceOf(id);
             if (!string.Equals(owner, modId, StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException($"{modId} cannot declare {id}, which belongs to {owner}.", nameof(featureId));
+
+            List<string> newProvides = QualifyAll(owner, provides ?? Array.Empty<string>());
+            if (newProvides.Contains(id, StringComparer.OrdinalIgnoreCase))
+                throw new ArgumentException($"{id} cannot provide itself.", nameof(provides));
 
             string defaultId = FeatureRegistry.DefaultFor(owner);
 
@@ -142,6 +148,7 @@ namespace SpaceWarp2.API.Features
 
             IEnumerable<string> allRequires = implicitRequires.Concat(requires ?? Array.Empty<string>());
             IEnumerable<string> allConflicts = conflicts ?? Array.Empty<string>();
+            IEnumerable<string> allProvides = newProvides;
 
             // A redeclaration adds to the feature, so a mod's default keeps the edges its swinfo relations gave it
             if (_features.TryGetValue(id, out FeatureDefinition existing))
@@ -149,12 +156,38 @@ namespace SpaceWarp2.API.Features
                 id = existing.Id;
                 allRequires = existing.Requires.Concat(allRequires);
                 allConflicts = existing.Conflicts.Concat(allConflicts);
+                allProvides = existing.Provides.Concat(allProvides);
             }
 
-            var definition = new FeatureDefinition(id, owner, QualifyAll(owner, allRequires), QualifyAll(owner, allConflicts));
+            var definition = new FeatureDefinition(
+                id,
+                owner,
+                QualifyAll(owner, allRequires),
+                QualifyAll(owner, allConflicts),
+                QualifyAll(owner, allProvides)
+            );
             _features[id] = definition;
             return definition;
         }
+
+        /// <summary>
+        /// Lists the features that can meet a requirement on a feature id: every feature that provides it, and the
+        /// feature itself when one is declared under that id.
+        /// </summary>
+        /// <remarks>
+        /// A virtual id, one nothing declares, has only its stand-ins. More than one provider means a set needs a
+        /// choice between them, since they all conflict with each other.
+        /// </remarks>
+        /// <param name="featureId">The qualified feature id, in any casing.</param>
+        /// <returns>The providers' ids, sorted.</returns>
+        public List<string> ProvidersOf(string featureId) =>
+            _features.Values
+                .Where(definition =>
+                    string.Equals(definition.Id, featureId, StringComparison.OrdinalIgnoreCase)
+                    || definition.Provides.Contains(featureId, StringComparer.OrdinalIgnoreCase))
+                .Select(definition => definition.Id)
+                .OrderBy(id => id, StringComparer.Ordinal)
+                .ToList();
 
         /// <summary>
         /// Looks a feature up by id.
