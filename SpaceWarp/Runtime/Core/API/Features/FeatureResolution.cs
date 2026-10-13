@@ -29,20 +29,30 @@ namespace SpaceWarp2.API.Features
         public IReadOnlyList<(string First, string Second)> Conflicts { get; }
 
         /// <summary>
+        /// Gets the providers the resolution chose on its own, as the sole installed provider of an id nothing in the
+        /// request provided, in ordinal order. A campaign adds them to its request so the choice holds when another
+        /// provider is installed later.
+        /// </summary>
+        public IReadOnlyList<string> Chosen { get; }
+
+        /// <summary>
         /// Creates a resolution.
         /// </summary>
         /// <param name="enabled">The enabled feature ids, in ordinal order.</param>
         /// <param name="missing">The unmet feature ids, in ordinal order.</param>
         /// <param name="conflicts">The conflicting pairs.</param>
+        /// <param name="chosen">The providers chosen on the request's behalf, in ordinal order.</param>
         public FeatureResolution(
             IReadOnlyList<string> enabled,
             IReadOnlyList<string> missing,
-            IReadOnlyList<(string First, string Second)> conflicts
+            IReadOnlyList<(string First, string Second)> conflicts,
+            IReadOnlyList<string> chosen
         )
         {
             Enabled = enabled;
             Missing = missing;
             Conflicts = conflicts;
+            Chosen = chosen;
         }
     }
 }

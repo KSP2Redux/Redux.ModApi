@@ -249,6 +249,7 @@ namespace SpaceWarp2.API.Features
             // Held back until the rest of the set is in, since a provider anywhere in it meets them
             var deferred = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
             var pending = new Stack<(string Id, bool IsRequirement)>(requested.Select(id => (id, false)));
+            var chosen = new List<string>();
             while (true)
             {
                 while (pending.Count > 0)
@@ -283,6 +284,7 @@ namespace SpaceWarp2.API.Features
                 if (choice == null)
                     break;
 
+                chosen.Add(choice);
                 pending.Push((choice, false));
             }
 
@@ -302,7 +304,8 @@ namespace SpaceWarp2.API.Features
             return new FeatureResolution(
                 enabled.OrderBy(id => id, StringComparer.Ordinal).ToList(),
                 missing.OrderBy(id => id, StringComparer.Ordinal).ToList(),
-                FindConflicts(enabled)
+                FindConflicts(enabled),
+                chosen.OrderBy(id => id, StringComparer.Ordinal).ToList()
             );
         }
 
