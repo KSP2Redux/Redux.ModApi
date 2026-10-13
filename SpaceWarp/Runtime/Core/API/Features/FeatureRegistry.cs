@@ -111,7 +111,9 @@ namespace SpaceWarp2.API.Features
         /// Declares one feature of a mod outside its mod info.
         /// </summary>
         /// <remarks>
-        /// Declaring an id that already exists replaces the earlier declaration. A mod declares only its own features.
+        /// Declaring an id that already exists adds its requirements and conflicts to the earlier declaration's, which
+        /// is how a mod states its default feature's relations beyond its swinfo dependencies and conflicts. A mod
+        /// declares only its own features.
         /// </remarks>
         /// <param name="modId">The declaring mod.</param>
         /// <param name="featureId">The feature id, bare or qualified with the declaring mod.</param>
@@ -138,12 +140,18 @@ namespace SpaceWarp2.API.Features
                 ? Array.Empty<string>()
                 : new[] { defaultId };
 
-            var definition = new FeatureDefinition(
-                id,
-                owner,
-                QualifyAll(owner, implicitRequires.Concat(requires ?? Array.Empty<string>())),
-                QualifyAll(owner, conflicts ?? Array.Empty<string>())
-            );
+            IEnumerable<string> allRequires = implicitRequires.Concat(requires ?? Array.Empty<string>());
+            IEnumerable<string> allConflicts = conflicts ?? Array.Empty<string>();
+
+            // A redeclaration adds to the feature, so a mod's default keeps the edges its swinfo relations gave it
+            if (_features.TryGetValue(id, out FeatureDefinition existing))
+            {
+                id = existing.Id;
+                allRequires = existing.Requires.Concat(allRequires);
+                allConflicts = existing.Conflicts.Concat(allConflicts);
+            }
+
+            var definition = new FeatureDefinition(id, owner, QualifyAll(owner, allRequires), QualifyAll(owner, allConflicts));
             _features[id] = definition;
             return definition;
         }
