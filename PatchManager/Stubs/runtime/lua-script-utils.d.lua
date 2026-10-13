@@ -1,55 +1,63 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
--- Source: ksp2redux/Assets/Code/Redux/Lua/InputLibrary.cs
--- Source: ksp2redux/Assets/Code/Redux/Lua/FilesLibrary.cs
--- Source: ksp2redux/Assets/Code/Redux/Lua/WaitLibrary.cs
--- Source: ksp2redux/Assets/Code/Redux/Lua/Scripting/ScriptContextLibrary.cs
+-- Source: Assets/Code/Redux/Lua/ReduxContributors.cs
+-- Source: Assets/Code/Redux/Lua/InputLibrary.cs
+-- Source: Assets/Code/Redux/Lua/FilesLibrary.cs
+-- Source: Assets/Code/Redux/Lua/WaitLibrary.cs
+-- Source: Assets/Code/Redux/Lua/Scripting/ScriptContextLibrary.cs
 
----@class Input
-Input = {}
+---The Lua `Input` global for querying keyboard state by key name (for example `Input.GetKeyDown("Space")`).
+---@class InputLibrary
+local InputLibrary = {}
 
----@param key string
----@return boolean
-function Input.GetKey(key) end
+---Whether the named key is currently held down.
+---@param key string The key name to query.
+---@return boolean held True while the key is held, false if held nothing or the name does not resolve.
+function InputLibrary:GetKey(key) end
 
----@param key string
----@return boolean
-function Input.GetKeyDown(key) end
+---Whether the named key went down this frame.
+---@param key string The key name to query.
+---@return boolean down True on the frame the key is pressed, false otherwise or if the name does not resolve.
+function InputLibrary:GetKeyDown(key) end
 
----@param key string
----@return boolean
-function Input.GetKeyUp(key) end
+---Whether the named key came up this frame.
+---@param key string The key name to query.
+---@return boolean up True on the frame the key is released, false otherwise or if the name does not resolve.
+function InputLibrary:GetKeyUp(key) end
 
--- The Wait surface. Each call has two forms:
---   blocking - omit the callback and the call yields the running coroutine until satisfied (only valid
---     inside a coroutine context: a console body or a Game.StartCoroutine body).
---   callback - pass a callback and the wait runs on a coroutine, invoking the callback when satisfied. This
---     form works from a synchronous body too and returns the coroutine handle. Callbacks are deprecated in
---     favour of the blocking form.
+---The Lua `Files` global for reading and writing files under the calling environment's own folder.
+---@class FilesLibrary
+local FilesLibrary = {}
+
+---Lists the files directly in a folder under the root.
+---@param relativePath? string The folder relative to the root, or nil/blank for the root itself.
+---@return string[] files Root-relative paths with forward slashes, sorted case-insensitively, empty when the folder is missing.
+function FilesLibrary:List(relativePath) end
+
+---Reads a file under the root.
+---@param relativePath string The file relative to the root.
+---@return string? text The file text, or nil when the path is invalid or the file is missing.
+function FilesLibrary:Read(relativePath) end
+
+---Writes a file under the root, creating parent folders as needed.
+---@param relativePath string The file relative to the root.
+---@param text string? The text to write. Nil is written as empty.
+---@return boolean ok True on success, false when the path is invalid.
+function FilesLibrary:Write(relativePath, text) end
+
 ---@class Wait
-Wait = {}
+local Wait = {}
 
 ---@param seconds number
 ---@param callback? fun()
----@return LuaCoroutineHandle? handle The coroutine handle when a callback is given.
+---@return LuaCoroutineHandle? handle
 function Wait.Seconds(seconds, callback) end
 
 ---@param predicate fun(): boolean
----@param timeoutSeconds number
+---@param timeoutSeconds? number
 ---@param callback? fun(satisfied: boolean)
----@return boolean|LuaCoroutineHandle result True/false in the blocking form, the coroutine handle with a callback.
+---@return boolean|LuaCoroutineHandle result
 function Wait.Until(predicate, timeoutSeconds, callback) end
-
----@param eventName string
----@param timeoutSeconds number
----@param callback? fun()
----@return boolean|LuaCoroutineHandle result Not implemented - warns and falls back to a timed wait.
-function Wait.Event(eventName, timeoutSeconds, callback) end
-
----@param key string
----@param callback? fun()
----@return LuaCoroutineHandle? handle
-function Wait.Input(key, callback) end
 
 ---@param key string
 ---@param callback? fun()
@@ -59,45 +67,41 @@ function Wait.InputDown(key, callback) end
 ---@param key string
 ---@param callback? fun()
 ---@return LuaCoroutineHandle? handle
+function Wait.Input(key, callback) end
+
+---@param key string
+---@param callback? fun()
+---@return LuaCoroutineHandle? handle
 function Wait.InputUp(key, callback) end
 
 ---@param key string
----@param holdSeconds number
+---@param holdSeconds? number
 ---@param callback? fun()
 ---@return LuaCoroutineHandle? handle
 function Wait.InputHeld(key, holdSeconds, callback) end
 
--- Files are sandboxed to the calling environment's own folder (a mod's folder, or the Lua folder for the
--- console). Paths are relative to that folder and may not escape it.
----@class Files
-Files = {}
+---@param eventName string
+---@param timeoutSeconds? number
+---@param callback? fun()
+---@return (LuaCoroutineHandle|boolean)? result
+function Wait.Event(eventName, timeoutSeconds, callback) end
 
----@param relativePath string
----@return string[]
-function Files.List(relativePath) end
+---The Lua `Script` global, exposing the running console/CLI script's own identity and stop state.
+---@class ScriptContextLibrary
+local ScriptContextLibrary = {}
 
----@param relativePath string
----@return string
-function Files.Read(relativePath) end
+---The current run's id.
+---@return string id The run id.
+function ScriptContextLibrary:Id() end
 
----@param relativePath string
----@param text string
----@return boolean
-function Files.Write(relativePath, text) end
+---The current run's display name.
+---@return string name The run name.
+function ScriptContextLibrary:Name() end
 
--- The running console/CLI script's own identity and stop state. Present only in the console/script
--- environment, not in mod environments (a mod identifies itself through ModId/Location).
----@class Script
-Script = {}
+---The current run's kind.
+---@return string kind The run kind.
+function ScriptContextLibrary:Kind() end
 
----@return string
-function Script.Id() end
-
----@return string
-function Script.Name() end
-
----@return string
-function Script.Kind() end
-
----@return boolean
-function Script.Stop() end
+---Whether the host asked this run to stop, for a long-running script to poll and exit cooperatively.
+---@return boolean stop True when a stop has been requested.
+function ScriptContextLibrary:Stop() end

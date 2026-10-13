@@ -1,298 +1,295 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceContainerStateConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceContainerDefinitionConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceConsumerDefinitionConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceGeneratorDefinitionConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceCostConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceOwnerDefinitionConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ContainedResourceDefinitionConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartResourceDefinitionConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/CrewStateConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/CrewMemberStateConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/CrewMemberDefinitionConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/CelestialBodyDefinitionLua.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/CelestialBodyDefinition_ScienceParamsLua.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/CelestialBodyPropertiesConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/CelestialBodyPropertiesIncrementalConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ColonyDefinitionConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ColonyStateConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/SettingsPropertiesConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/KerbalVarietyAttributeRuleConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/KerbalVarietyCategoryParsingRuleConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/KerbalVarietyRangeRuleConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/FloatCurveConverter.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceStateConverter.cs
+-- Source: Assets/Code/KSP/Sim/State/ContainedResourceState.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceContainerStateConverter.cs
+-- Source: Assets/Code/KSP/Sim/State/ResourceContainerComponentState.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceContainerDefinitionConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/ResourceContainerComponentDefinition.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceConsumerDefinitionConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/ResourceConsumerComponentDefinition.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceGeneratorDefinitionConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/ResourceGeneratorComponentDefinition.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceOwnerDefinitionConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/ResourceOwnerComponentDefinition.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/NullableConverter.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceCostConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/PartResourceCostDefinition.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ContainedResourceDefinitionConverter.cs
+-- Source: Assets/Code/KSP/Sim/ResourceSystem/ContainedResourceDefinition.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartResourceDefinitionConverter.cs
+-- Source: Assets/Code/KSP/Sim/PartResourceDefinition.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ColorConverter.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/CrewStateConverter.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/EnumConverter.cs
+-- Source: Assets/Code/KSP/Sim/CrewState.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/CelestialBodyDefinitionLua.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/CelestialBodyDefinition.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/CelestialBodyPropertiesConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/CelestialBodyProperties.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/CelestialBodyPropertiesIncrementalConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/CelestialBodyPropertiesIncremental.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/CelestialBodyDefinition_ScienceParamsLua.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ColonyDefinitionConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/ColonyDefinition.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ColonyStateConverter.cs
+-- Source: Assets/Code/KSP/Sim/State/ColonyState.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/SettingsPropertiesConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/SettingsProperties.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/SettingsProperty.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/SettingTypeEnum.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/MenuLocationEnum.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/KerbalVarietyAttributeRuleConverter.cs
+-- Source: Assets/Code/KSP/Modding/Variety/KerbalVarietyAttributeRule.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/KerbalVarietyCategoryParsingRuleConverter.cs
+-- Source: Assets/Code/KSP/Modding/Variety/KerbalVarietyCategoryParsingRule.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/KerbalVarietyRangeRuleConverter.cs
+-- Source: Assets/Code/KSP/Modding/Variety/VarietyRangeRule.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/FloatCurveConverter.cs
+-- Source: Assets/Code/Root/FloatCurve.cs
 
---#region Resources
-
----A by-value resource amount: a resource name with its current and maximum stored units.
+---Represents the serializable state of a single contained resource, including its name, stored quantity, and capacity.
 ---@class ResourceState
 -- alt: KSP.Sim.State.ResourceState
----@field name string
----@field amount integer
----@field maxAmount integer
+---@field name string The display name of the resource.
+---@field amount number The current amount of the resource stored, in units.
+---@field maxAmount number The maximum amount of the resource that can be stored, in units.
 
----A by-value snapshot of a resource container's contents.
+---Represents the serialized state of a resource container component, holding a map of resource names to their contained state.
 ---@class ResourceContainerState
 -- alt: KSP.Sim.State.ResourceContainerState
----@field resources table<string, ResourceState>
+---@field resources table<string, ResourceState> Map of resource names to the contained state for each resource in this container.
 
----A resource container component definition.
--- alt: ResourceContainerDefinition, KSP.Sim.Definitions.ResourceContainerDefinition
+---Represents a resource container component definition.
+---No fields are exposed to Lua.
 ---@class ResourceContainer
+-- alt: ResourceContainerDefinition, KSP.Sim.Definitions.ResourceContainerDefinition
 
----A resource consumer component definition.
--- alt: ResourceConsumerDefinition, KSP.Sim.Definitions.ResourceConsumerDefinition
+---Represents a component definition marking a simulation entity as a resource consumer.
+---No fields are exposed to Lua.
 ---@class ResourceConsumer
+-- alt: ResourceConsumerDefinition, KSP.Sim.Definitions.ResourceConsumerDefinition
 
----A resource generator component definition.
--- alt: ResourceGeneratorDefinition, KSP.Sim.Definitions.ResourceGeneratorDefinition
+---Represents the definition data for a resource generator simulation component.
+---No fields are exposed to Lua.
 ---@class ResourceGenerator
+-- alt: ResourceGeneratorDefinition, KSP.Sim.Definitions.ResourceGeneratorDefinition
 
----A resource owner component definition.
--- alt: ResourceOwnerDefinition, KSP.Sim.Definitions.ResourceOwnerDefinition
+---Definition component marking an entity as a resource owner.
+---No fields are exposed to Lua.
 ---@class ResourceOwner
+-- alt: ResourceOwnerDefinition, KSP.Sim.Definitions.ResourceOwnerDefinition
 
----A part resource cost entry (resource name plus the unit count it costs).
+---Represents the resource cost of a part as a named resource and unit quantity.
 ---@class PartResourceCost
 -- alt: KSP.Sim.Definitions.PartResourceCostDefinition
----@field name string
----@field resourceUnits number
+---@field name string The name of the resource associated with this cost entry.
+---@field resourceUnits number The number of resource units required as the cost.
 
----A single resource entry contained within a part (name plus initial and capacity units).
+---Represents the definition of a resource contained within a part, including capacity, initial amount, and staging configuration.
 ---@class ContainedResourceDefinitionInterop
--- alt: KSP.Sim.Definitions.ContainedResourceDefinition
----@field name string
----@field initialUnits integer
----@field capacityUnits integer
+-- alt: ContainedResourceDefinition, KSP.Sim.Definitions.ContainedResourceDefinition
+---@field name string The name of the resource type contained in this definition.
+---@field initialUnits number The amount of this resource present when the container is first loaded.
+---@field capacityUnits number The maximum capacity of the resource container in units.
 
----A resource definition - density, cost, flow behaviour, and display info for a resource type.
+---Represents the definition of a part resource type, including its physical properties, flow behavior, and display metadata.
 ---@class PartResource
 -- alt: PartResourceDefinition, KSP.Sim.PartResourceDefinition
----@field name string
----@field displayName? string
----@field abbreviation? string
----@field density number
----@field volume number
----@field unitCost number
----@field hsp number Specific heat capacity.
----@field isTweakable boolean
----@field isVisible boolean
----@field flowMode ResourceFlowModeInterop
----@field transfer ResourceTransferModeInterop
----@field type ResourceType
----@field r number Color red channel (the definition table also carries the color shape).
----@field g number Color green channel.
----@field b number Color blue channel.
----@field a number Color alpha channel.
+---@field [integer] number The color used to represent the resource in UI visualizations.
+---@field name string The internal resource name identifier.
+---@field displayName? string The human-readable display name of the resource.
+---@field abbreviation? string The short abbreviation used to represent the resource in UI labels.
+---@field density number The mass density of the resource in tonnes per unit.
+---@field volume number The volume occupied by one unit of the resource in liters.
+---@field unitCost number The cost in funds per unit of the resource.
+---@field hsp number The specific heat capacity of the resource in joules per kilogram per kelvin.
+---@field isTweakable boolean A value indicating whether the resource quantity can be adjusted by the player in the editor.
+---@field isVisible boolean A value indicating whether the resource is shown in part resource displays.
+---@field flowMode ResourceFlowModeInterop The flow mode governing how the resource is distributed between parts.
+---@field transfer ResourceTransferModeInterop The transfer mode controlling how the resource moves between parts.
+---@field type ResourceType The physical phase type of the resource.
 
---#endregion
-
---#region Crew
-
+---The state of a crew member.
 ---@alias CrewState
----| "Available" # values come from the KSP.Sim.CrewState enum, marshalled as its name
+---| "BAILED_OUT" # State indicating the crew member has bailed out of the vessel.
+---| "DEAD" # State indicating the crew member is dead.
+---| "NO_SIGNAL" # State indicating the crew member's status cannot be confirmed due to signal loss.
+---| "ALIVE" # State indicating the crew member is alive.
 -- alt: KSP.Sim.CrewState
 
----A by-value snapshot of one crew member's seating state.
----@class CrewMemberState
--- alt: KSP.Sim.State.CrewMemberState
----@field inPartGuid string
----@field seatIndex integer
----@field state CrewState
-
----A crew member definition.
--- alt: CrewMemberDefinition, KSP.Sim.Definitions.CrewMemberDefinition
----@class Crew
-
---#endregion
-
---#region Celestial
-
----A celestial body definition - a body key paired with its properties.
+---Represents a celestial body definition, pairing a string key with optional CelestialBodyProperties.
 ---@class CelestialBody
 -- alt: CelestialBodyDefinition, KSP.Sim.Definitions.CelestialBodyDefinition
----@field key string
----@field properties CelestialBodyPropertiesInterop
+---@field key string The string key that uniquely identifies this celestial body definition.
+---@field properties? CelestialBodyProperties The optional CelestialBodyProperties associated with this celestial body.
 
----The full physical, atmospheric, ocean, and rotation property set of a celestial body.
----@class CelestialBodyPropertiesInterop
+---Represents the definition data for a celestial body, including physical, atmospheric, ocean, rotation, and science parameters.
+---@class CelestialBodyProperties
 -- alt: KSP.Sim.Definitions.CelestialBodyProperties
----@field bodyName string
----@field bodyDisplayName string
----@field bodyDescription string
----@field gravityASL number
----@field radius number
----@field assetKeySimulation? string
----@field assetKeyScaled? string
----@field isHomeWorld? boolean
----@field hasOcean? boolean
----@field oceanUseFog? boolean
----@field oceanFogPQSDepth? number
----@field oceanFogPQSDepthRecip? number
----@field oceanFogDensityStart? number
----@field oceanFogDensityEnd? number
----@field oceanFogDensityPQSMult? number
----@field oceanFogDensityAltScalar? number
----@field oceanFogDensityExponent? number
----@field oceanFogColorStart? Color
----@field oceanFogColorEnd? Color
----@field oceanFogDawnFactor? number
----@field oceanSkyColorMult? number
----@field oceanSkyColorOpacityBase? number
----@field oceanSkyColorOpacityAltMult? number
----@field oceanDensity? number
----@field oceanAFGBase? number
----@field oceanAFGAltMult? number
----@field oceanAFGMin? number
----@field oceanSunBase? number
----@field oceanSunAltMult? number
----@field oceanAFGLerp? boolean
----@field oceanMinAlphaFogDistance? number
----@field oceanMaxAlbedoFog? number
----@field oceanMaxAlphaFog? number
----@field oceanAlbedoDistanceScalar? number
----@field oceanAlphaDistanceScalar? number
----@field minOrbitalDistance? number
----@field hasAtmosphere? boolean
----@field atmosphereContainsOxygen? boolean
----@field atmosphereDepth? number
----@field atmosphereTemperatureSeaLevel? number
----@field atmospherePressureSeaLevel? number
----@field atmosphereMolarMass? number
----@field atmosphereAdiabaticIndex? number
----@field atmosphericReentryVFXGradient? string
----@field useAtmosphereTemperatureCurve? boolean
----@field isAtmosphereTemperatureCurveNormalized? boolean
----@field atmosphereTemperatureCurve? FloatCurveInterop
----@field latitudeTemperatureBiasCurve? FloatCurveInterop
----@field latitudeTemperatureSunMultCurve? FloatCurveInterop
----@field StarLuminosity? number
----@field albedo? number
----@field emissivity? number
----@field coreTemperatureOffset? number
----@field convectionMultiplier? number
----@field shockTemperatureMultiplier? number
----@field useAtmospherePressureCurve? boolean
----@field isAtmospherePressureCurveNormalized? boolean
----@field atmospherePressureCurve? FloatCurveInterop
----@field hasSolidSurface? boolean
----@field scaledElipRadMult? Vec3d
----@field scaledRadiusHorizMultiplier? number
----@field rotates? boolean
----@field rotationPeriod? number
----@field hasSolarRotationPeriod? boolean
----@field initialRotation? number
----@field isTidallyLocked? boolean
----@field clampInverseRotThreshold? boolean
----@field hasInverseRotation? boolean
----@field inverseRotThresholdAltitude? number
----@field isStar? boolean
----@field sunlightPrefab? string
----@field axialTilt? Vec3d Euler angles, in degrees, of the body's axial tilt.
----@field scaledShaderFadeFar? number
----@field scaledShaderFadeNear? number
+---@field bodyName string The internal name of the celestial body.
+---@field bodyDisplayName string The localized display name shown to the player for this celestial body.
+---@field bodyDescription string A descriptive text summary of the celestial body shown in the UI.
+---@field gravityASL number Surface gravitational acceleration at sea level, in meters per second squared.
+---@field radius number Mean radius of the celestial body in meters.
+---@field assetKeySimulation? string The asset key used to identify the simulation-space representation of the body.
+---@field assetKeyScaled? string The asset key used to identify the scaled-space representation of the body.
+---@field isHomeWorld? boolean A value indicating whether this body is the home world for the player's space program.
+---@field hasOcean? boolean A value indicating whether this celestial body has an ocean.
+---@field oceanUseFog? boolean A value indicating whether volumetric fog is rendered over the ocean surface.
+---@field oceanFogPQSDepth? number Depth of the ocean PQS fog layer used for density calculations, in meters.
+---@field oceanFogPQSDepthRecip? number Reciprocal of oceanFogPQSDepth, precomputed to avoid division at runtime.
+---@field oceanFogDensityStart? number Fog density at the ocean surface, used as the starting value for the density gradient.
+---@field oceanFogDensityEnd? number Fog density at the top of the fog layer, used as the ending value for the density gradient.
+---@field oceanFogDensityPQSMult? number Multiplier applied to fog density based on PQS terrain depth beneath the ocean surface.
+---@field oceanFogDensityAltScalar? number Per-meter scalar applied to fog density as altitude increases above the ocean surface.
+---@field oceanFogDensityExponent? number Exponent controlling the falloff curve of ocean fog density with depth.
+---@field oceanFogColorStart? ColorInterop Fog color at the ocean surface, used as the start color for the fog color gradient.
+---@field oceanFogColorEnd? ColorInterop Fog color at depth, used as the end color for the fog color gradient.
+---@field oceanFogDawnFactor? number Brightness boost factor applied to ocean fog during dawn and dusk transitions.
+---@field oceanSkyColorMult? number Multiplier applied to the sky color contribution reflected by the ocean surface.
+---@field oceanSkyColorOpacityBase? number Base opacity of the sky color overlay applied to the ocean surface at sea level.
+---@field oceanSkyColorOpacityAltMult? number Per-meter multiplier applied to the sky color overlay opacity as altitude increases.
+---@field oceanDensity? number Density of the ocean fluid in kilograms per cubic meter.
+---@field oceanAFGBase? number Base contribution of the atmospheric fade gradient (AFG) to ocean coloring at sea level.
+---@field oceanAFGAltMult? number Per-meter multiplier applied to the AFG contribution as altitude increases above the ocean.
+---@field oceanAFGMin? number Minimum clamped value for the AFG ocean color contribution.
+---@field oceanSunBase? number Base sun-glint contribution to the ocean surface color at sea level.
+---@field oceanSunAltMult? number Per-meter multiplier applied to the sun-glint contribution as altitude increases.
+---@field oceanAFGLerp? boolean A value indicating whether the AFG color is blended with the base ocean color using linear interpolation.
+---@field oceanMinAlphaFogDistance? number Minimum camera distance in meters below which ocean alpha fog begins to appear.
+---@field oceanMaxAlbedoFog? number Maximum albedo fog opacity applied to the ocean surface, clamped between 0 and 1.
+---@field oceanMaxAlphaFog? number Maximum alpha fog opacity applied to the ocean surface, clamped between 0 and 1.
+---@field oceanAlbedoDistanceScalar? number Distance scalar controlling how quickly albedo fog fades with camera distance from the ocean.
+---@field oceanAlphaDistanceScalar? number Distance scalar controlling how quickly alpha fog fades with camera distance from the ocean.
+---@field minOrbitalDistance? number Minimum orbital distance from the body's center at which a stable orbit is possible, in meters.
+---@field hasAtmosphere? boolean A value indicating whether this celestial body has an atmosphere.
+---@field atmosphereContainsOxygen? boolean A value indicating whether the body's atmosphere contains free oxygen usable for air-breathing engines.
+---@field atmosphereDepth? number Total depth of the atmosphere from sea level to the edge of space, in meters.
+---@field atmosphereTemperatureSeaLevel? number Atmospheric temperature at sea level, in Kelvin.
+---@field atmospherePressureSeaLevel? number Atmospheric pressure at sea level, in kilopascals.
+---@field atmosphereMolarMass? number Mean molar mass of the atmospheric gas mixture, in kilograms per mole.
+---@field atmosphereAdiabaticIndex? number Adiabatic index (ratio of specific heats) of the atmospheric gas mixture.
+---@field atmosphericReentryVFXGradient? string Asset path to the gradient texture used for atmospheric reentry visual effects.
+---@field useAtmosphereTemperatureCurve? boolean A value indicating whether a custom altitude-temperature curve overrides the lapse rate model.
+---@field isAtmosphereTemperatureCurveNormalized? boolean A value indicating whether BodyAltitudeTemperatureCurve is normalized to the atmosphere depth.
+---@field atmosphereTemperatureCurve? FloatCurveInterop Curve mapping altitude to atmospheric temperature for this body.
+---@field latitudeTemperatureBiasCurve? FloatCurveInterop Curve mapping altitude to total atmospheric thermal flux received by a vessel.
+---@field latitudeTemperatureSunMultCurve? FloatCurveInterop Curve mapping altitude to surface thermal flux for this body.
+---@field StarLuminosity? number Total luminosity of the body if it is a star, in watts.
+---@field albedo? number Bond albedo of the body, representing the fraction of incoming solar radiation that is reflected.
+---@field emissivity? number Emissivity of the body surface, representing the fraction of thermal radiation emitted relative to a black body.
+---@field coreTemperatureOffset? number Constant temperature offset added to the body's core temperature for thermal calculations.
+---@field convectionMultiplier? number Multiplier applied to convective heat transfer rates for vessels in this body's atmosphere.
+---@field shockTemperatureMultiplier? number Multiplier applied to shock wave heating temperatures during atmospheric reentry.
+---@field reentryHarshness? number Multiplier on reentry heating in this body's atmosphere, 1 for Kerbin.
+---@field useAtmospherePressureCurve? boolean A value indicating whether a custom altitude-pressure curve overrides the barometric pressure model.
+---@field isAtmospherePressureCurveNormalized? boolean A value indicating whether atmospherePressureCurve is normalized to the atmosphere depth.
+---@field atmospherePressureCurve? FloatCurveInterop Curve mapping altitude to atmospheric pressure for this body.
+---@field hasSolidSurface? boolean A value indicating whether the body has a solid surface that vessels can land on.
+---@field scaledElipRadMult? Vec3d Per-axis ellipsoid radius multipliers used to scale the body in scaled space.
+---@field scaledRadiusHorizMultiplier? number Horizontal radius multiplier applied to the body's mesh in scaled space to account for oblateness.
+---@field rotates? boolean A value indicating whether this body rotates about its own axis.
+---@field rotationPeriod? number Sidereal rotation period of the body, in seconds.
+---@field hasSolarRotationPeriod? boolean A value indicating whether the body's rotation period is synchronized with its orbital period around its parent star.
+---@field initialRotation? number Initial rotation angle of the body at epoch, in degrees.
+---@field isTidallyLocked? boolean A value indicating whether the body is tidally locked so the same face always points toward its parent.
+---@field clampInverseRotThreshold? boolean A value indicating whether the inverse rotation threshold altitude is clamped to the body's atmosphere depth.
+---@field hasInverseRotation? boolean A value indicating whether the body exhibits inverse rotation above the inverse rotation threshold altitude.
+---@field inverseRotThresholdAltitude? number Altitude above which inverse rotation is applied to vessels in flight, in meters.
+---@field isStar? boolean A value indicating whether this celestial body is a star.
+---@field sunlightPrefab? string Asset path or name of the sunlight prefab attached to this body when it is a star.
+---@field axialTilt? Vec3d Quaternion representing the axial tilt of the body relative to its orbital plane.
+---@field scaledShaderFadeFar? number Far fade distance for the scaled-space body shader, controlling where the body transitions to distant rendering.
+---@field scaledShaderFadeNear? number Near fade distance for the scaled-space body shader, controlling where the body begins the transition from distant rendering.
+---@field surfaceTemperatureFluxCurve? FloatCurveInterop Curve mapping altitude to surface thermal flux for this body.
+---@field altitudeTemperatureFluxCurve? FloatCurveInterop Curve mapping altitude to total atmospheric thermal flux received by a vessel.
+---@field BodySurfaceFluxScale? number Global scale factor applied to surface thermal flux values read from BodySurfaceFluxMapPath.
+---@field BodySurfaceFluxMapPath? string Asset path to the texture map that stores per-location surface thermal flux values.
 
----An incremental (sparse) overlay of celestial body rotation properties - any field may be absent.
+---Represents a partial override of celestial body simulation properties, applying only the non-nil field values.
 ---@class CelestialBodyPropertiesIncremental
 -- alt: KSP.Sim.Definitions.CelestialBodyPropertiesIncremental
----@field rotationPeriod? number
----@field initialRotation? number
----@field isTidallyLocked? boolean
+---@field rotationPeriod? number Optional override for the sidereal rotation period, in seconds.
+---@field initialRotation? number Optional override for the initial rotation angle, in degrees.
+---@field isTidallyLocked? boolean Optional override flag indicating whether the celestial body is tidally locked to its parent.
 
----Per-situation science data values for a celestial body.
+---Represents the science data multipliers and altitude thresholds for a celestial body.
 ---@class ScienceParams
 -- alt: KSP.Sim.Definitions.CelestialBodyProperty.ScienceParams
----@field landedDataValue number
----@field splashedDataValue number
----@field flyingLowDataValue number
----@field flyingHighDataValue number
----@field inSpaceLowDataValue number
----@field inSpaceHighDataValue number
----@field recoveryValue number
----@field flyingAltitudeThreshold number
----@field spaceAltitudeThreshold number
+---@field landedDataValue number Science data multiplier applied when the vessel is landed on the body.
+---@field splashedDataValue number Science data multiplier applied when the vessel is splashed down on the body.
+---@field flyingLowDataValue number Science data multiplier applied when flying low in the body's atmosphere.
+---@field flyingHighDataValue number Science data multiplier applied when flying high in the body's atmosphere.
+---@field inSpaceLowDataValue number Science data multiplier applied when in low orbit around the body.
+---@field inSpaceHighDataValue number Science data multiplier applied when in high orbit around the body.
+---@field recoveryValue number Science data multiplier applied when recovering a vessel from the body.
+---@field flyingAltitudeThreshold number Altitude threshold in meters below which a vessel is considered to be flying low.
+---@field spaceAltitudeThreshold number Altitude threshold in meters below which a vessel is considered to be in low space orbit.
 
---#endregion
-
---#region Colony
-
----A colony definition.
+---Represents a colony definition.
 ---@class Colony
 -- alt: ColonyDefinition, KSP.Sim.Definitions.ColonyDefinition
----@field colonyName string
+---@field colonyName string The name of the colony.
 
----A by-value snapshot of a colony's state.
+---Represents the simulation state of a colony.
 ---@class ColonyState
 -- alt: KSP.Sim.State.ColonyState
----@field radius number
+---@field radius? number The radius of the colony.
 
---#endregion
-
---#region Settings
-
----A settings configuration: a named group of setting definitions.
+---Represents a named collection of SettingsProperty entries with a validity state.
 ---@class SettingsProperties
 -- alt: KSP.Sim.Definitions.SettingsProperties
----@field name string
----@field settings SettingsProperty[]
+---@field name string The name identifier for this settings collection.
+---@field settings SettingsProperty[] The dictionary of SettingsProperty entries keyed by setting name.
 
----A single setting definition within a SettingsProperties group.
+---Represents the definition of a single game settings property.
 ---@class SettingsProperty
----@field settingName string
----@field descText? string
----@field settingType "CHECKBOX" | "DROPDOWN" | "SLIDER" | "RADIO"
----@field menuLocation string Parsed from a SettingsMenuLocation enum name.
----@field defaultValue string
+---@field settingName string The name key used to identify this setting.
+---@field descText? string The description text displayed for this setting in the UI.
+---@field settingType "CHECKBOX"|"DROPDOWN"|"SLIDER"|"RADIO" The UI control type used to display this setting.
+---@field menuLocation "MAINMENU"|"INGAME"|"BOTH" The menu location context in which this setting is displayed.
+---@field defaultValue string The default value of this setting as a string.
 
---#endregion
-
---#region Kerbal variety
-
----A rule mapping a kerbal attribute to a named range rule, with optional dependencies.
+---Represents a rule that defines how a single Kerbal variety attribute is generated and applied.
 ---@class KerbalVarietyAttributeRule
 -- alt: KSP.Contexts.Kerbal.KerbalVarietyAttributeRule
----@field attributeName string
----@field dependsOn string[]
----@field attributeRangeRuleKey string
----@field applyFunction? string
+---@field attributeName string The name of the attribute governed by this rule.
+---@field dependsOn string[] The list of attribute names that this attribute depends on before generation.
+---@field attributeRangeRuleKey string The key that identifies the range rule used to generate values for this attribute.
+---@field applyFunction? string The name of the function that applies the generated attribute value to the Kerbal.
 
----A rule that classifies kerbal names into a category by key matching.
+---Represents a parsing rule that assigns a category name to a Kerbal variety entry based on prefix, substring, and suffix key matches.
 ---@class KerbalVarietyCategoryParsingRule
 -- alt: KSP.Contexts.Kerbal.KerbalVarietyCategoryParsingRule
----@field CategoryName string
----@field StartsWithKeys string[]
----@field ContainsKeys string[]
----@field EndsWithKeys string[]
+---@field CategoryName string The name of the category assigned when this parsing rule matches.
+---@field StartsWithKeys string[] The list of key strings that a Kerbal variety entry must start with for this rule to match.
+---@field ContainsKeys string[] The list of key strings that a Kerbal variety entry must contain for this rule to match.
+---@field EndsWithKeys string[] The list of key strings that a Kerbal variety entry must end with for this rule to match.
 
----A rule defining how a variety value is sampled (min/max, a set, a manifest, or a static value).
+---Represents the range and selection criteria for a single named variety property.
 ---@class VarietyRangeRule
 -- alt: KSP.Contexts.Kerbal.VarietyRangeRule
----@field name string
----@field varietyRangeType any KSP.Modding.Variety.VarietyRangeType - "UNDEFINED" | "MINMAX" | "SET" | "MANIFEST" | "STATIC" | "WEIGHTEDMANIFEST". No registered TypeInterop converter.
----@field valueType Type The CLR Type the range produces.
----@field probabilityOfEmpty number
----@field min any Typed as valueType at runtime.
----@field max any Typed as valueType at runtime.
----@field specificOptions any[] Present when varietyRangeType is "SET".
----@field subcategoryKey? string Present for "MANIFEST" / "WEIGHTEDMANIFEST".
----@field attachToName? string
----@field overrideValue any Present when varietyRangeType is "STATIC".
+---@field name string The name of the variety property this rule governs.
+---@field varietyRangeType any The range kind that determines how a value is selected for this rule.
+---@field valueType Type The runtime System.Type of values produced by this rule.
+---@field probabilityOfEmpty number The probability, in the range 0 to 1, that no value is selected for this rule.
+---@field min any The minimum bound of the value range used when varietyRangeType is VarietyRangeType.MINMAX.
+---@field max any The maximum bound of the value range used when varietyRangeType is VarietyRangeType.MINMAX.
+---@field specificOptions? any[] An explicit list of candidate values from which one is chosen when varietyRangeType is VarietyRangeType.SET.
+---@field subcategoryKey? string The subcategory key used to group or scope this rule within a variety definition.
+---@field attachToName? string The name of an existing variety property to which this rule's output value is attached.
+---@field overrideValue any A fixed value that, when non-nil, overrides range-based selection entirely.
+---@field subCategoryKey? string The subcategory key used to group or scope this rule within a variety definition.
 
---#endregion
-
---#region Curves
-
----A FloatCurve marshalled by value as an array of keyframe tables.
+---Serializable wrapper around a Unity AnimationCurve for evaluating float values over a time range.
 ---@class FloatCurveInterop
 -- alt: FloatCurve
 ---@field [integer] FloatCurveKeyframe
+---@field key? FloatCurveKeyframe[]
 
----A single FloatCurve keyframe. inTangent / outTangent are omitted when zero.
 ---@class FloatCurveKeyframe
 ---@field time number
 ---@field value number
 ---@field inTangent? number
 ---@field outTangent? number
-
---#endregion

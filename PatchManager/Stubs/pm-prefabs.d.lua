@@ -1,17 +1,47 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
--- Source: Assets/Modules/PatchManager/Runtime/PrefabPatching/PrefabPatchModel.cs
--- Source: Assets/Modules/PatchManager/Runtime/PrefabPatching/PrefabPatchJson.cs
--- Source: Assets/Modules/PatchManager/Runtime/LuaPatching/Builtin/PrefabPatchLuaBuilder.cs
--- Source: Assets/Modules/PatchManager/Runtime/PrefabPatching/PrefabPatchBuilder.cs
--- Source: Assets/Modules/PatchManager/Runtime/LuaPatching/Builtin/PatchManagerCore.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/PrefabPatching/PrefabPatchModel.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/PrefabPatching/PrefabPatchJson.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/LuaPatching/Builtin/PrefabPatchLuaBuilder.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/PrefabPatching/PrefabPatchBuilder.cs
+
+---Identifies the source domain of an operation target.
+---@alias PrefabPatchTargetKind
+---| "Stock" # An object or component inherited from the stock prefab.
+---| "PatchOwned" # A GameObject introduced by a patch operation.
+---| "PatchComponent" # A component introduced by a patch operation.
+
+---Identifies the Unity object kind returned by a runtime locator.
+---@alias PrefabPatchRuntimeTargetKind
+---| "GameObject" # The locator resolves a GameObject.
+---| "Component" # The locator resolves a Component.
+
+---Identifies the payload stored in a PrefabPatchValue.
+---@alias PrefabPatchValueKind
+---| "Boolean" # A Boolean value.
+---| "Integer" # A signed integer value.
+---| "Float" # A floating-point value.
+---| "String" # A string value.
+---| "Vector2" # A two-component vector.
+---| "Vector3" # A three-component vector.
+---| "Vector4" # A four-component vector.
+---| "Quaternion" # A quaternion.
+---| "Color" # An RGBA color.
+---| "ArraySize" # A serialized array or list size.
+---| "ManagedReference" # A managed-reference payload with an explicit CLR type.
+---| "Json" # An arbitrary JSON payload interpreted by the target property.
+
+---Identifies how a Unity object reference is resolved.
+---@alias PrefabPatchObjectReferenceKind
+---| "Addressable" # Resolve the object from an Addressables key.
+---| "Target" # Resolve the object from the effective prefab hierarchy.
 
 ---Runtime traversal data. Visual compilation uses sibling indices backed by
----canonical source identity; key-first C#/Lua authoring uses a hierarchy path.
+---canonical source identity. Key-first C#/Lua authoring uses a hierarchy path.
 ---@class PrefabPatchRuntimeLocator
 ---@field siblingIndices? integer[] Sibling indices from the prefab root to the target.
 ---@field hierarchyPath? string An optional slash-delimited hierarchy path for imperative patches.
----@field targetKind "GameObject" | "Component" The Unity object kind produced by the locator.
+---@field targetKind PrefabPatchRuntimeTargetKind The Unity object kind produced by the locator.
 ---@field componentType? string The assembly-qualified component type when targeting a component.
 ---@field componentOrdinal? integer The zero-based component occurrence on the located GameObject.
 ---@field displayPath? string A diagnostic-only human-readable authoring path.
@@ -39,7 +69,7 @@
 ---@field runtimeLocator? PrefabPatchRuntimeLocator The traversal information for stock targets.
 
 ---An inherited source object or an object introduced by a named patch.
----@alias PrefabPatchTarget
+---@alias PrefabPatchObjectTarget
 ---| PrefabPatchStockTarget
 ---| PrefabPatchOwnedTarget
 ---| PrefabPatchOwnedComponentTarget
@@ -53,29 +83,14 @@
 ---Resolve the object from the effective prefab hierarchy.
 ---@class PrefabPatchTargetReference
 ---@field kind "Target" The resolution strategy.
----@field target PrefabPatchTarget The effective-prefab target for a local reference.
+---@field target PrefabPatchObjectTarget The effective-prefab target for a local reference.
 ---@field expectedType? string The optional assembly-qualified type expected after resolution.
 
 ---Addressable or target-local Unity object reference used by
 ---SetObjectReference or a component fragment.
----@alias PrefabPatchReference
+---@alias PrefabPatchObjectReference
 ---| PrefabPatchAddressableReference
 ---| PrefabPatchTargetReference
-
----Identifies the payload stored in a PrefabPatchValue.
----@alias PrefabPatchValueKind
----| "Boolean" # A Boolean value.
----| "Integer" # A signed integer value.
----| "Float" # A floating-point value.
----| "String" # A string value.
----| "Vector2" # A two-component vector.
----| "Vector3" # A three-component vector.
----| "Vector4" # A four-component vector.
----| "Quaternion" # A quaternion.
----| "Color" # An RGBA color.
----| "ArraySize" # A serialized array or list size.
----| "ManagedReference" # A managed-reference payload with an explicit CLR type.
----| "Json" # An arbitrary JSON payload interpreted by the target property.
 
 ---JSON-safe typed value. Numeric vectors use X/Y/Z/W in their normal Unity
 ---component order.
@@ -101,7 +116,7 @@
 ---restored after every patch-owned object and component has been created.
 ---@class PrefabPatchSerializedReference
 ---@field propertyPath string The Unity SerializedProperty path.
----@field reference PrefabPatchReference The reference restored after object creation.
+---@field reference PrefabPatchObjectReference The reference restored after object creation.
 
 ---Serialized payload used for added patch-owned objects and AddComponent
 ---operations.
@@ -163,6 +178,16 @@ function PrefabPatchLuaBuilder:Needs(...) end
 ---@return PrefabPatchLuaBuilder
 function PrefabPatchLuaBuilder:Conflicts(...) end
 
+---Applies the patch only when these features are on.
+---@param ... string The feature IDs, namespaced to the owning mod when they do not already carry a namespace.
+---@return PrefabPatchLuaBuilder self The builder for chaining.
+function PrefabPatchLuaBuilder:Feature(...) end
+
+---Applies the patch only when these features are off.
+---@param ... string The feature IDs, namespaced to the owning mod when they do not already carry a namespace.
+---@return PrefabPatchLuaBuilder self The builder for chaining.
+function PrefabPatchLuaBuilder:NoFeature(...) end
+
 ---Requires the supplied patch IDs to be enabled.
 ---@param ... string
 ---@return PrefabPatchLuaBuilder
@@ -200,7 +225,7 @@ function PrefabPatchLuaBuilder:Configuration(...) end
 
 ---Writes a serialized value on the target object or component.
 ---@param operationId string
----@param target PrefabPatchTarget
+---@param target PrefabPatchObjectTarget
 ---@param propertyPath string
 ---@param value boolean | number | string | PrefabPatchValue
 ---@return PrefabPatchLuaBuilder
@@ -229,42 +254,42 @@ function PrefabPatchLuaBuilder:Component(hierarchyPath, componentType, component
 
 ---Writes an Addressable or target-local Unity object reference.
 ---@param operationId string
----@param target PrefabPatchTarget
+---@param target PrefabPatchObjectTarget
 ---@param propertyPath string
----@param reference PrefabPatchReference
+---@param reference PrefabPatchObjectReference
 ---@return PrefabPatchLuaBuilder
 function PrefabPatchLuaBuilder:Reference(operationId, target, propertyPath, reference) end
 
 ---Changes a target GameObject's active state.
 ---@param operationId string
----@param target PrefabPatchTarget
+---@param target PrefabPatchObjectTarget
 ---@param active boolean
 ---@return PrefabPatchLuaBuilder
 function PrefabPatchLuaBuilder:Active(operationId, target, active) end
 
 ---Suppresses a target GameObject in the effective prefab.
 ---@param operationId string
----@param target PrefabPatchTarget
+---@param target PrefabPatchObjectTarget
 ---@return PrefabPatchLuaBuilder
 function PrefabPatchLuaBuilder:Suppress(operationId, target) end
 
 ---Adds an inline patch-owned hierarchy beneath a target parent.
 ---@param operationId string
----@param parent PrefabPatchTarget?
+---@param parent PrefabPatchObjectTarget?
 ---@param fragment PrefabPatchObjectFragment
 ---@return PrefabPatchLuaBuilder
 function PrefabPatchLuaBuilder:AddObject(operationId, parent, fragment) end
 
 ---Adds a serialized component fragment to a target GameObject.
 ---@param operationId string
----@param target PrefabPatchTarget
+---@param target PrefabPatchObjectTarget
 ---@param component PrefabPatchComponentFragment
 ---@return PrefabPatchLuaBuilder
 function PrefabPatchLuaBuilder:AddComponent(operationId, target, component) end
 
 ---Removes the targeted component from the effective prefab.
 ---@param operationId string
----@param target PrefabPatchTarget
+---@param target PrefabPatchObjectTarget
 ---@return PrefabPatchLuaBuilder
 function PrefabPatchLuaBuilder:RemoveComponent(operationId, target) end
 
@@ -274,9 +299,3 @@ function PrefabPatchLuaBuilder:Build() end
 
 ---Builds and registers the manifest for the current play session.
 function PrefabPatchLuaBuilder:Register() end
-
----Begins a declarative prefab patch for one stock Addressables key.
----@param name string
----@param target string
----@return PrefabPatchLuaBuilder
-function PatchManagerCore:Prefab(name, target) end

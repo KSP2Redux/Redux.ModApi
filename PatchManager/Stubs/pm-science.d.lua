@@ -1,12 +1,13 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
--- Source: Assets/Modules/PatchManager/Runtime/Science/UserData/DiscoverablesUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Science/UserData/ExperimentUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Science/UserData/ScienceRegionsUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Science/Converters/DiscoverablesConverter.cs
--- Source: Assets/Modules/PatchManager/Runtime/Science/Converters/ExperimentConverter.cs
--- Source: Assets/Modules/PatchManager/Runtime/Science/Converters/ScienceRegionsConverter.cs
--- Source: Assets/Modules/PatchManager/Runtime/Science/ScienceLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Science/UserData/DiscoverablesUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Science/UserData/ExperimentUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Science/UserData/ScienceRegionsUserData.cs
+-- Source: Assets/Code/KSP/game/Science/TechNodeDataStore.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Science/ScienceLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Science/Converters/DiscoverablesConverter.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Science/Converters/ExperimentConverter.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Science/Converters/ScienceRegionsConverter.cs
 -- Source: Assets/Code/KSP/game/Science/ExperimentCore.cs
 -- Source: Assets/Code/KSP/game/Science/ExperimentDefinition.cs
 -- Source: Assets/Code/KSP/game/Science/FlavorDescription.cs
@@ -49,11 +50,11 @@ local ScienceLuaModule = {}
 ---@return PatchDefinition<DiscoverablesUserData, DiscoverablePositionUserData> patch The registered patch.
 function ScienceLuaModule:PatchDiscoverables(name) end
 
----Registers a patch that copies each discoverables set it matches under a new name, then runs the chained `:Do` callback on the copy.
----Restrict the pass and ordering like any other patch. Internal ID fields in the copy are left alone.
+---Registers a patch that copies each discoverables set it matches under a new name, then runs patchMethod
+---on the copy.
 ---@param source string The name of the discoverables set to copy. Supports `*` and `?` wildcards.
 ---@param newName string The name of the copy, with `{name}` standing in for the source's name.
----@param patchMethod? fun(copy: DiscoverablesUserData): string? Shorthand for chaining `:Do(callback)`, which is the canonical form. Leave both off to copy without changes.
+---@param patchMethod? fun(copy: DiscoverablesUserData): string? The callback to run on each copy, or `nil` to copy without changes.
 ---@return PatchDefinition<DiscoverablesUserData, DiscoverablePositionUserData> patch The registered patch.
 function ScienceLuaModule:DuplicateDiscoverables(source, newName, patchMethod) end
 
@@ -62,11 +63,11 @@ function ScienceLuaModule:DuplicateDiscoverables(source, newName, patchMethod) e
 ---@return PatchDefinition<ExperimentUserData, any> patch The registered patch.
 function ScienceLuaModule:PatchExperiments(name) end
 
----Registers a patch that copies each experiment it matches under a new name, then runs the chained `:Do` callback on the copy.
----Restrict the pass and ordering like any other patch. Internal ID fields in the copy are left alone.
+---Registers a patch that copies each experiment it matches under a new name, then runs patchMethod
+---on the copy.
 ---@param source string The name of the experiment to copy. Supports `*` and `?` wildcards.
 ---@param newName string The name of the copy, with `{name}` standing in for the source's name.
----@param patchMethod? fun(copy: ExperimentUserData): string? Shorthand for chaining `:Do(callback)`, which is the canonical form. Leave both off to copy without changes.
+---@param patchMethod? fun(copy: ExperimentUserData): string? The callback to run on each copy, or `nil` to copy without changes.
 ---@return PatchDefinition<ExperimentUserData, any> patch The registered patch.
 function ScienceLuaModule:DuplicateExperiments(source, newName, patchMethod) end
 
@@ -74,6 +75,7 @@ function ScienceLuaModule:DuplicateExperiments(source, newName, patchMethod) end
 ---further configuration.
 ---@param name string The experiment name.
 ---@param callback fun(data: ExperimentUserData) Callback that receives the new experiment for further configuration.
+---@return LuaAsset asset The queued asset, for gating it with features.
 function ScienceLuaModule:NewExperiment(name, callback) end
 
 ---Registers a science-region patch with the given namespaced patch name.
@@ -81,11 +83,11 @@ function ScienceLuaModule:NewExperiment(name, callback) end
 ---@return PatchDefinition<ScienceRegionsUserData, ScienceRegionUserData> patch The registered patch.
 function ScienceLuaModule:PatchRegions(name) end
 
----Registers a patch that copies each science region set it matches under a new name, then runs the chained `:Do` callback on the copy.
----Restrict the pass and ordering like any other patch. Internal ID fields in the copy are left alone.
+---Registers a patch that copies each science region set it matches under a new name, then runs patchMethod
+---on the copy.
 ---@param source string The name of the science region set to copy. Supports `*` and `?` wildcards.
 ---@param newName string The name of the copy, with `{name}` standing in for the source's name.
----@param patchMethod? fun(copy: ScienceRegionsUserData): string? Shorthand for chaining `:Do(callback)`, which is the canonical form. Leave both off to copy without changes.
+---@param patchMethod? fun(copy: ScienceRegionsUserData): string? The callback to run on each copy, or `nil` to copy without changes.
 ---@return PatchDefinition<ScienceRegionsUserData, ScienceRegionUserData> patch The registered patch.
 function ScienceLuaModule:DuplicateRegions(source, newName, patchMethod) end
 
@@ -94,11 +96,11 @@ function ScienceLuaModule:DuplicateRegions(source, newName, patchMethod) end
 ---@return PatchDefinition<TechNodeUserData, any> patch The registered patch.
 function ScienceLuaModule:PatchTechNodes(name) end
 
----Registers a patch that copies each tech node it matches under a new name, then runs the chained `:Do` callback on the copy.
----Restrict the pass and ordering like any other patch. Internal ID fields in the copy are left alone.
+---Registers a patch that copies each tech node it matches under a new name, then runs patchMethod
+---on the copy.
 ---@param source string The name of the tech node to copy. Supports `*` and `?` wildcards.
 ---@param newName string The name of the copy, with `{name}` standing in for the source's name.
----@param patchMethod? fun(copy: TechNodeUserData): string? Shorthand for chaining `:Do(callback)`, which is the canonical form. Leave both off to copy without changes.
+---@param patchMethod? fun(copy: TechNodeUserData): string? The callback to run on each copy, or `nil` to copy without changes.
 ---@return PatchDefinition<TechNodeUserData, any> patch The registered patch.
 function ScienceLuaModule:DuplicateTechNodes(source, newName, patchMethod) end
 
@@ -145,9 +147,9 @@ function ScienceLuaModule:AddPartsToTechNode(nodeName, ...) end
 ---@field BodyName string Gets the name of the celestial body for this research location.
 ---@field ScienceSituation ScienceSitutation Gets the science situation for this research location.
 ---@field ScienceRegion string Gets the science region for this research location.
----@field ResearchLocationId string Gets the composite identifier string for this research location, computed lazily from the body name, science situation, and optional region.
+---@field ResearchLocationId? string Gets the composite identifier string for this research location, computed lazily from the body name, science situation, and optional region.
 
----@alias ResearchLocation _ResearchLocation | { RequiresRegion: boolean, BodyName: string, ScienceSituation: ScienceSitutation, ScienceRegion: string, ResearchLocationId: string }
+---@alias ResearchLocation _ResearchLocation | { RequiresRegion: boolean, BodyName: string, ScienceSituation: ScienceSitutation, ScienceRegion: string, ResearchLocationId: string? }
 
 ---Represents the science regions data for a celestial body, including situation data and region definitions.
 ---@class _CelestialBodyScienceRegionsData : _JsonUserDataBase
@@ -225,5 +227,8 @@ function ScienceLuaModule:AddPartsToTechNode(nodeName, ...) end
 ---@field ResearchLocationID? string The identifier of the research location, or nil if no specific location is required.
 ---@field ResearchReportType? ScienceReportType The optional ScienceReportType filter for this research entry. Nil if any report type satisfies the requirement.
 ---@field Coordinates JsonList<number> The optional geographic position of the research location, in decimal degrees, as a two element array ordered latitude then longitude. Longitude is east positive, matching the rest of the project. Leave the array out or empty when the location needs no coordinates.
+---@field HasCoordinates? boolean Gets a value indicating whether Coordinates holds a usable latitude and longitude pair.
+---@field Latitude? number Gets the latitude of Coordinates in decimal degrees, or zero when no coordinates are set.
+---@field Longitude? number Gets the longitude of Coordinates in decimal degrees, east positive, or zero when no coordinates are set.
 
----@alias TechRequiredResearchData _TechRequiredResearchData | { ExperimentID: string, ResearchLocationID: string?, ResearchReportType: ScienceReportType?, Coordinates: JsonList<number> }
+---@alias TechRequiredResearchData _TechRequiredResearchData | { ExperimentID: string, ResearchLocationID: string?, ResearchReportType: ScienceReportType?, Coordinates: JsonList<number>, HasCoordinates: boolean?, Latitude: number?, Longitude: number? }

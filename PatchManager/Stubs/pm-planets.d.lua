@@ -1,16 +1,18 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
--- Source: Assets/Modules/PatchManager/Runtime/Planets/PlanetsLuaModule.cs
--- Source: Assets/Modules/PatchManager/Runtime/Planets/Converters/CelestialBodyConverter.cs
--- Source: Assets/Modules/PatchManager/Runtime/Planets/Converters/GalaxyConverter.cs
--- Source: Assets/Modules/PatchManager/Runtime/Planets/Converters/VolumeCloudConverter.cs
--- Source: Assets/Modules/PatchManager/Runtime/Planets/UserData/CelestialBodyUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Planets/UserData/GalaxyUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Planets/UserData/VolumeCloudUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Planets/UserData/CloudUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Planets/Overrides/AtmosphereOverride.cs
--- Source: Assets/Modules/PatchManager/Runtime/Planets/Overrides/VolumeCloudConfigurationOverride.cs
--- Source: Assets/Modules/PatchManager/Runtime/Planets/Overrides/CloudsDataOverride.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Planets/PlanetsLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Planets/PlanetsModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Planets/Converters/CelestialBodyConverter.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Planets/Converters/GalaxyConverter.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Planets/Converters/VolumeCloudConverter.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Generic/JsonConverter.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Planets/UserData/CelestialBodyUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Planets/UserData/GalaxyUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Planets/UserData/VolumeCloudUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Planets/UserData/CloudUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Planets/Overrides/AtmosphereOverride.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Planets/Overrides/VolumeCloudConfigurationOverride.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Planets/Overrides/CloudsDataOverride.cs
 -- Source: Assets/Code/KSP/game/Load/LoadCelestialBodyDataFilesFlowAction.cs
 -- Source: Assets/Code/KSP/Sim/Definitions/CelestialBodyCore.cs
 -- Source: Assets/Code/KSP/Sim/Definitions/CelestialBodyData.cs
@@ -34,11 +36,11 @@ local PlanetsLuaModule = {}
 ---@return PatchDefinition<CelestialBodyUserData, any> patch The registered patch.
 function PlanetsLuaModule:Patch(name) end
 
----Registers a patch that copies each celestial body it matches under a new name, then runs the chained `:Do` callback on the copy.
----Restrict the pass and ordering like any other patch. Internal ID fields in the copy are left alone.
+---Registers a patch that copies each celestial body it matches under a new name, then runs patchMethod
+---on the copy.
 ---@param source string The name of the celestial body to copy. Supports `*` and `?` wildcards.
 ---@param newName string The name of the copy, with `{name}` standing in for the source's name.
----@param patchMethod? fun(copy: CelestialBodyUserData): string? Shorthand for chaining `:Do(callback)`, which is the canonical form. Leave both off to copy without changes.
+---@param patchMethod? fun(copy: CelestialBodyUserData): string? The callback to run on each copy, or `nil` to copy without changes.
 ---@return PatchDefinition<CelestialBodyUserData, any> patch The registered patch.
 function PlanetsLuaModule:Duplicate(source, newName, patchMethod) end
 
@@ -53,13 +55,11 @@ function PlanetsLuaModule:PatchDefaultGalaxy(name) end
 ---@return PatchDefinition<GalaxyUserData, JsonUserData> patch The registered patch.
 function PlanetsLuaModule:PatchGalaxy(galaxyDefinitionKey, name) end
 
----Registers a patch that copies the galaxy definition with the given key under a new key, then runs the chained `:Do`
----callback on the copy.
----The copy joins every other galaxy in the galaxy definition label, so PatchGalaxy reaches it by its new key.
----Patches ordered after the duplicate that name the source do not reach the copy.
+---Registers a patch that copies the galaxy definition with the given key under a new key, then runs
+---patchMethod on the copy.
 ---@param galaxyDefinitionKey string The key of the galaxy definition to copy.
 ---@param newGalaxyDefinitionKey string The key of the copy.
----@param patchMethod? fun(copy: GalaxyUserData): string? Shorthand for chaining `:Do(callback)`, which is the canonical form. Leave both off to copy without changes.
+---@param patchMethod? fun(copy: GalaxyUserData): string? The callback to run on the copy, or `nil` to copy without changes.
 ---@return PatchDefinition<GalaxyUserData, JsonUserData> patch The registered patch.
 function PlanetsLuaModule:DuplicateGalaxy(galaxyDefinitionKey, newGalaxyDefinitionKey, patchMethod) end
 
@@ -67,6 +67,7 @@ function PlanetsLuaModule:DuplicateGalaxy(galaxyDefinitionKey, newGalaxyDefiniti
 ---against it for further configuration.
 ---@param galaxyDefinitionKey string The key that saves and campaign packs load the galaxy definition by.
 ---@param callback fun(galaxy: GalaxyUserData) Callback that receives the new galaxy definition for further configuration.
+---@return LuaAsset asset The queued asset, for gating it with features.
 function PlanetsLuaModule:CreateGalaxy(galaxyDefinitionKey, callback) end
 
 ---Registers a patch against the `atmosphere_overrides` label with the given namespaced patch name.
@@ -74,11 +75,11 @@ function PlanetsLuaModule:CreateGalaxy(galaxyDefinitionKey, callback) end
 ---@return PatchDefinition<AtmosphereOverrideUserData, any> patch The registered patch.
 function PlanetsLuaModule:PatchAtmosphereOverride(name) end
 
----Registers a patch that copies each atmosphere override it matches under a new name, then runs the chained `:Do` callback on the copy.
----Restrict the pass and ordering like any other patch. Internal ID fields in the copy are left alone.
+---Registers a patch that copies each atmosphere override it matches under a new name, then runs patchMethod
+---on the copy.
 ---@param source string The name of the atmosphere override to copy. Supports `*` and `?` wildcards.
 ---@param newName string The name of the copy, with `{name}` standing in for the source's name.
----@param patchMethod? fun(copy: AtmosphereOverrideUserData): string? Shorthand for chaining `:Do(callback)`, which is the canonical form. Leave both off to copy without changes.
+---@param patchMethod? fun(copy: AtmosphereOverrideUserData): string? The callback to run on each copy, or `nil` to copy without changes.
 ---@return PatchDefinition<AtmosphereOverrideUserData, any> patch The registered patch.
 function PlanetsLuaModule:DuplicateAtmosphereOverride(source, newName, patchMethod) end
 
@@ -86,6 +87,7 @@ function PlanetsLuaModule:DuplicateAtmosphereOverride(source, newName, patchMeth
 ---for further configuration.
 ---@param name string The body name the override applies to.
 ---@param callback fun(override: AtmosphereOverrideUserData) Callback that receives the new override for further configuration.
+---@return LuaAsset asset The queued asset, for gating it with features.
 function PlanetsLuaModule:CreateAtmosphereOverride(name, callback) end
 
 ---Registers a patch against the `volume_cloud_overrides` label with the given namespaced patch name.
@@ -93,11 +95,11 @@ function PlanetsLuaModule:CreateAtmosphereOverride(name, callback) end
 ---@return PatchDefinition<VolumeCloudUserData, any> patch The registered patch.
 function PlanetsLuaModule:PatchCloudOverride(name) end
 
----Registers a patch that copies each volume cloud override it matches under a new name, then runs the chained `:Do` callback on the copy.
----Restrict the pass and ordering like any other patch. Internal ID fields in the copy are left alone.
+---Registers a patch that copies each volume cloud override it matches under a new name, then runs patchMethod
+---on the copy.
 ---@param source string The name of the volume cloud override to copy. Supports `*` and `?` wildcards.
 ---@param newName string The name of the copy, with `{name}` standing in for the source's name.
----@param patchMethod? fun(copy: VolumeCloudUserData): string? Shorthand for chaining `:Do(callback)`, which is the canonical form. Leave both off to copy without changes.
+---@param patchMethod? fun(copy: VolumeCloudUserData): string? The callback to run on each copy, or `nil` to copy without changes.
 ---@return PatchDefinition<VolumeCloudUserData, any> patch The registered patch.
 function PlanetsLuaModule:DuplicateCloudOverride(source, newName, patchMethod) end
 
@@ -105,6 +107,7 @@ function PlanetsLuaModule:DuplicateCloudOverride(source, newName, patchMethod) e
 ---for further configuration.
 ---@param name string The body name the override applies to.
 ---@param callback fun(override: VolumeCloudUserData) Callback that receives the new override for further configuration.
+---@return LuaAsset asset The queued asset, for gating it with features.
 function PlanetsLuaModule:CreateCloudOverride(name, callback) end
 
 ---JSON UserData wrapping a celestial body's `data` subtree while preserving the full envelope for round-tripping.
@@ -294,7 +297,7 @@ function GalaxyUserData:Add(planetName, callback) end
 ---@field MinTerrainHeight number The minimum terrain height offset below the reference radius, in metres.
 ---@field MaxTerrainHeight number The maximum terrain height offset above the reference radius, in metres.
 ---@field TerrainHeightScale number The scale factor applied to raw terrain height values when constructing the surface mesh.
----@field TerrainHeightMultiplier? number The factor applied to every terrain height in the body's PQS data when its local space loads. Defaults to 1.
+---@field TerrainHeightMultiplier number The factor applied to every terrain height in the body's PQS data when its local space loads.
 ---@field TimeWarpAltitudeOffset number The additional altitude offset above the atmosphere or terrain height at which time warp rates above 4x become permitted.
 ---@field SphereOfInfluenceCalculationType integer The integer code identifying which sphere-of-influence calculation method applies to this body.
 ---@field ForcedSphereOfInfluence number The manually specified sphere-of-influence radius, in meters, that overrides the dynamically calculated value.
@@ -332,7 +335,7 @@ function GalaxyUserData:Add(planetName, callback) end
 ---@field LocalSimObjectsData JsonList<SerializedPredefinedSimObject> The serialized representations of predefined simulation objects located in the body's local space, used for JSON persistence.
 ---@field LocalColonyObjectsData JsonList<SerializedPredefinedColonyObject> The serialized representations of predefined colony objects located in the body's local space, used for JSON persistence.
 
----@alias CelestialBodyData _CelestialBodyData | { bodyName: string, assetKeyScaled: string, assetKeySimulation: string, bodyDisplayName: string, bodyDescription: string, isStar: boolean, isHomeWorld: boolean, navballSwitchAltitudeHigh: number, navballSwitchAltitudeLow: number, hasSolidSurface: boolean, hasOcean: boolean, HasLocalSpace: boolean, radius: number, gravityASL: number, oceanAltitude: number, oceanDensity: number, MinTerrainHeight: number, MaxTerrainHeight: number, TerrainHeightScale: number, TerrainHeightMultiplier?: number, TimeWarpAltitudeOffset: number, SphereOfInfluenceCalculationType: integer, ForcedSphereOfInfluence: number, hasSolarRotationPeriod: boolean, hasInverseRotationThresholdClamp: boolean, hasInverseRotation: boolean, isRotating: boolean, isTidallyLocked: boolean, inverseRotThresholdAltitude: number, initialRotation: number, rotationPeriod: number, axialTilt: Vector3d, hasAtmosphere: boolean, atmosphereContainsOxygen: boolean, atmosphereDepth: number, atmosphereTemperatureSeaLevel: number, atmospherePressureSeaLevel: number, atmosphereMolarMass: number, atmosphereAdiabaticIndex: number, reentryHarshness: number, atmosphericReentryVFXGradient: string, useAtmospherePressureCurve: boolean, useAtmosphereTemperatureCurve: boolean, useAtmosphereHumidityCurve: boolean, atmospherePressureCurve: FloatCurve, BodyAltitudeTemperatureCurve: FloatCurve, BodyAltitudeSurfaceFluxCurve: FloatCurve, BodyAltitudeFluxCurve: FloatCurve, BodyAltitudeRelativeHumidityCurve: FloatCurve, BodySurfaceFluxMapPath: string, BodySurfaceFluxScale: number, StarLuminosity: number, ringGroupData: JsonList<CelestialBodyRingData>, MineDustColor: Vector4, LocalSimObjectsData: JsonList<SerializedPredefinedSimObject>, LocalColonyObjectsData: JsonList<SerializedPredefinedColonyObject> }
+---@alias CelestialBodyData _CelestialBodyData | { bodyName: string, assetKeyScaled: string, assetKeySimulation: string, bodyDisplayName: string, bodyDescription: string, isStar: boolean, isHomeWorld: boolean, navballSwitchAltitudeHigh: number, navballSwitchAltitudeLow: number, hasSolidSurface: boolean, hasOcean: boolean, HasLocalSpace: boolean, radius: number, gravityASL: number, oceanAltitude: number, oceanDensity: number, MinTerrainHeight: number, MaxTerrainHeight: number, TerrainHeightScale: number, TerrainHeightMultiplier: number, TimeWarpAltitudeOffset: number, SphereOfInfluenceCalculationType: integer, ForcedSphereOfInfluence: number, hasSolarRotationPeriod: boolean, hasInverseRotationThresholdClamp: boolean, hasInverseRotation: boolean, isRotating: boolean, isTidallyLocked: boolean, inverseRotThresholdAltitude: number, initialRotation: number, rotationPeriod: number, axialTilt: Vector3d, hasAtmosphere: boolean, atmosphereContainsOxygen: boolean, atmosphereDepth: number, atmosphereTemperatureSeaLevel: number, atmospherePressureSeaLevel: number, atmosphereMolarMass: number, atmosphereAdiabaticIndex: number, reentryHarshness: number, atmosphericReentryVFXGradient: string, useAtmospherePressureCurve: boolean, useAtmosphereTemperatureCurve: boolean, useAtmosphereHumidityCurve: boolean, atmospherePressureCurve: FloatCurve, BodyAltitudeTemperatureCurve: FloatCurve, BodyAltitudeSurfaceFluxCurve: FloatCurve, BodyAltitudeFluxCurve: FloatCurve, BodyAltitudeRelativeHumidityCurve: FloatCurve, BodySurfaceFluxMapPath: string, BodySurfaceFluxScale: number, StarLuminosity: number, ringGroupData: JsonList<CelestialBodyRingData>, MineDustColor: Vector4, LocalSimObjectsData: JsonList<SerializedPredefinedSimObject>, LocalColonyObjectsData: JsonList<SerializedPredefinedColonyObject> }
 
 ---Represents the ring data for a celestial body, defining inner and outer radii and a density curve.
 ---@class _CelestialBodyRingData : _JsonUserDataBase

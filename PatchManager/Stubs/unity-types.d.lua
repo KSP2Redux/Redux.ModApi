@@ -1,5 +1,6 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
+-- Source: Assets/Code/KSP/IO/IOProvider.cs
 -- Source: Assets/Code/Root/Vector3d.cs
 
 ---@class _Color : _JsonUserDataBase

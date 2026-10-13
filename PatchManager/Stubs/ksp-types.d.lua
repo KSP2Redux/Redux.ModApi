@@ -7,7 +7,6 @@
 -- Source: Assets/Code/KSP/Sim/Definitions/ModuleProperty.cs
 -- Source: Assets/Code/KSP/Sim/Definitions/IModuleProperty.cs
 -- Source: Assets/Code/KSP/Api/CoreTypes/PropertyReadonly.cs
--- Source: Library/PackageCache/com.unity.addressables@42676f2a154e/Runtime/AssetReference.cs
 
 ---Serializable wrapper around a Unity AnimationCurve for evaluating float values over a time range.
 ---@class _FloatCurve : _JsonUserDataBase
@@ -51,8 +50,8 @@
 ---Reference to an addressable asset.  This can be used in script to provide fields that can be easily set in the editor and loaded dynamically at runtime.
 ---To determine if the reference is set, use RuntimeKeyIsValid().
 ---@class _AssetReference : _JsonUserDataBase
----@field m_AssetGUID string The GUID of an asset
----@field m_SubObjectName string?
+---@field m_AssetGUID string Stores the guid of the asset.
+---@field m_SubObjectName string? Stores the name of the sub object (commonly referred to as a sub-asset).
 ---@field m_SubObjectType string?
 
 ---@alias AssetReference _AssetReference | { m_AssetGUID: string, m_SubObjectName: string?, m_SubObjectType: string? }

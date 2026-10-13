@@ -1,15 +1,16 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
--- Source: Assets/Modules/PatchManager/Runtime/Parts/UserData/PartUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Parts/UserData/ModuleUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Parts/PartsUtilities.cs
--- Source: Assets/Modules/PatchManager/Runtime/Parts/Attributes/ModuleDataAdapterAttribute.cs
--- Source: Assets/Modules/PatchManager/Runtime/LuaPatching/Utility/IndexedListUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Parts/UserData/ModesUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Parts/UserData/EngineUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Parts/UserData/ResourceContainersUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Parts/PartsLuaModule.cs
--- Source: Assets/Modules/PatchManager/Runtime/Parts/Converters/PartConverter.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Parts/UserData/PartUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Parts/UserData/ModuleUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Parts/PartsUtilities.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Parts/Attributes/ModuleDataAdapterAttribute.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/LuaPatching/Utility/IndexedListUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/VSwift/UserData/PartSwitchUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Parts/UserData/ModesUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Parts/UserData/EngineUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Parts/UserData/ResourceContainersUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Parts/PartsLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Parts/Converters/PartConverter.cs
 -- Source: Assets/Code/KSP/Sim/Definitions/PartCore.cs
 -- Source: Assets/Code/KSP/Sim/Definitions/PartData.cs
 -- Source: Assets/Code/KSP/Sim/Definitions/PartResourceCostDefinition.cs
@@ -23,6 +24,7 @@
 -- Source: Assets/Code/KSP/game/PartsManagerCore.cs
 -- Source: Assets/Code/KSP/Modules/Data_Engine.cs
 -- Source: Assets/Code/Redux/Ecs/Modules/Engine.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/ModuleData.cs
 -- Source: Assets/Code/KSP/Sim/Definitions/ModuleProperty.cs
 -- Source: Assets/Code/KSP/Modules/PropellantDefinition.cs
 -- Source: Assets/Code/KSP/Sim/ResourceSystem/ResourceRecipeIngredientDefinitionOverride.cs
@@ -73,7 +75,7 @@ function PartUserData:HasModule(moduleType) end
 local ModuleUserData = {}
 
 ---Adds a new module-data entry of the given type and runs callback against it when supplied.
----@param type string The data module's short name as registered in `PartsUtilities.DataModules`.
+---@param type string The data module's short name as registered in `PartModuleTypes.DataModules`.
 ---@param callback? fun(entry: EngineUserData | PartSwitchUserData | JsonUserData) Optional callback that receives the new entry for further configuration.
 ---@error Thrown when type is not a registered data module.
 function ModuleUserData:AddData(type, callback) end
@@ -140,11 +142,11 @@ local PartsLuaModule = {}
 ---@return PatchDefinition<PartUserData, ModuleUserData> patch The registered patch.
 function PartsLuaModule:Patch(name) end
 
----Registers a patch that copies each part it matches under a new name, then runs the chained `:Do` callback on the copy.
----Restrict the pass and ordering like any other patch. Internal ID fields in the copy are left alone.
+---Registers a patch that copies each part it matches under a new name, then runs patchMethod
+---on the copy.
 ---@param source string The name of the part to copy. Supports `*` and `?` wildcards.
 ---@param newName string The name of the copy, with `{name}` standing in for the source's name.
----@param patchMethod? fun(copy: PartUserData): string? Shorthand for chaining `:Do(callback)`, which is the canonical form. Leave both off to copy without changes.
+---@param patchMethod? fun(copy: PartUserData): string? The callback to run on each copy, or `nil` to copy without changes.
 ---@return PatchDefinition<PartUserData, ModuleUserData> patch The registered patch.
 function PartsLuaModule:Duplicate(source, newName, patchMethod) end
 
@@ -227,8 +229,12 @@ function PartsLuaModule:Duplicate(source, newName, patchMethod) end
 ---@field CanSuggestOrientation boolean A value indicating whether the OAB may suggest a placement rotation for this part when no user rotation is provided.
 ---@field PickUpPointOffset Vector3 The local-space offset at which the player cursor grabs the part when placing it in the OAB.
 ---@field PickupRotationPointOffset Vector3 The local-space offset used as the rotation pivot when the player grabs and rotates the part in the OAB.
+---@field Title string Gets the localized display title of the part, falling back to partName if no localization is found.
+---@field Subtitle string Gets the localized subtitle of the part.
+---@field Manufacturer string Gets the localized manufacturer name of the part.
+---@field Description string Gets the localized description of the part.
 
----@alias PartData _PartData | { partName: string, author: string, category: PartCategories, family: string, childStageOffset: integer, cost: integer, crewCapacity: integer, stageOffset: integer, isCompound: boolean, sizeKey: string, sizeCategory: MetaAssemblySizeFilterType, stageType: AssemblyPartStageType, resourceCosts: JsonList<PartResourceCostDefinition>, tags: string, stagingIconAssetAddress: string, PartSizeDiameter: number, angularDrag: number, breakingForce: number, breakingTorque: number, buoyancy: number, buoyancyUseSine: boolean, coLiftOffset: Vector3, coMassOffset: Vector3, coPressureOffset: Vector3, coBuoyancy: Vector3, coDisplacement: Vector3, crashTolerance: number, explosionPotential: number, fuelCrossFeed: boolean, heatConductivity: number, mass: number, maxTemp: number, attachRules: AttachRules, attachNodes: JsonList<AttachNodeDefinition>, resourceContainers: JsonList<ContainedResourceDefinition>, AllowKinematicPhysicsIfIntersectTerrain: boolean, serializedPartModules: JsonList<SerializedPartModule>, resourceSummary: SerializedResourceInfo, PAMModuleSortOverride: JsonList<SerializedPartModuleDisplayOrder>, PAMModuleVisualsOverride: JsonList<SerializedPartModuleDisplayVisuals>, hideFromFlightPartsManager: boolean, hideFromOABPartsManager: boolean, collisionVolumeBoundsScale: Vector3, emissiveConstant: number, maximumDrag: number, minimumDrag: number, physicsMode: PartPhysicsModes, inverseStageCarryover: boolean, skinMassPerArea: number, bodyLiftOnlyUnattachedLift: boolean, bodyLiftOnlyAttachName: string, maxLength: integer, radiatorHeadroom: number, radiatorMax: number, skinMaxTemp: number, skinInternalConductionMult: number, thermalMassModifier: number, buoyancyUseCubeNamed: string, HasReportStorage: boolean, oabEditorCategory: OABEditorPartCategory, partType: AssemblyPartTypeFilter, partHideMode: OABPartHideMode, PreferredOrientation: OABOrientation, MirrorTechnique: MirrorTechnique, CanSuggestOrientation: boolean, PickUpPointOffset: Vector3, PickupRotationPointOffset: Vector3 }
+---@alias PartData _PartData | { partName: string, author: string, category: PartCategories, family: string, childStageOffset: integer, cost: integer, crewCapacity: integer, stageOffset: integer, isCompound: boolean, sizeKey: string, sizeCategory: MetaAssemblySizeFilterType, stageType: AssemblyPartStageType, resourceCosts: JsonList<PartResourceCostDefinition>, tags: string, stagingIconAssetAddress: string, PartSizeDiameter: number, angularDrag: number, breakingForce: number, breakingTorque: number, buoyancy: number, buoyancyUseSine: boolean, coLiftOffset: Vector3, coMassOffset: Vector3, coPressureOffset: Vector3, coBuoyancy: Vector3, coDisplacement: Vector3, crashTolerance: number, explosionPotential: number, fuelCrossFeed: boolean, heatConductivity: number, mass: number, maxTemp: number, attachRules: AttachRules, attachNodes: JsonList<AttachNodeDefinition>, resourceContainers: JsonList<ContainedResourceDefinition>, AllowKinematicPhysicsIfIntersectTerrain: boolean, serializedPartModules: JsonList<SerializedPartModule>, resourceSummary: SerializedResourceInfo, PAMModuleSortOverride: JsonList<SerializedPartModuleDisplayOrder>, PAMModuleVisualsOverride: JsonList<SerializedPartModuleDisplayVisuals>, hideFromFlightPartsManager: boolean, hideFromOABPartsManager: boolean, collisionVolumeBoundsScale: Vector3, emissiveConstant: number, maximumDrag: number, minimumDrag: number, physicsMode: PartPhysicsModes, inverseStageCarryover: boolean, skinMassPerArea: number, bodyLiftOnlyUnattachedLift: boolean, bodyLiftOnlyAttachName: string, maxLength: integer, radiatorHeadroom: number, radiatorMax: number, skinMaxTemp: number, skinInternalConductionMult: number, thermalMassModifier: number, buoyancyUseCubeNamed: string, HasReportStorage: boolean, oabEditorCategory: OABEditorPartCategory, partType: AssemblyPartTypeFilter, partHideMode: OABPartHideMode, PreferredOrientation: OABOrientation, MirrorTechnique: MirrorTechnique, CanSuggestOrientation: boolean, PickUpPointOffset: Vector3, PickupRotationPointOffset: Vector3, Title: string, Subtitle: string, Manufacturer: string, Description: string }
 
 ---Represents the resource cost of a part as a named resource and unit quantity.
 ---@class _PartResourceCostDefinition : _JsonUserDataBase
@@ -330,7 +336,7 @@ function PartsLuaModule:Duplicate(source, newName, patchMethod) end
 
 ---Serializable data definition for Module_Engine.
 ---@class _Data_Engine : _JsonUserDataBase
----@field ["$type"] "KSP.Modules.Data_Engine, Assembly-CSharp"
+---@field ["$type"] "KSP.Modules.Data_Engine, Assembly-CSharp" | "KSP.Modules.Data_Engine, Ksp2Redux"
 ---@field engineModes JsonList<Data_Engine_EngineMode> Engine mode definitions supported by this engine.
 ---@field UseEmissive boolean Flag indicating whether emissive visual effects are enabled for this engine.
 ---@field EmissiveMaterialNames JsonList<string> Names of the materials on the engine mesh that receive emissive coloring.
@@ -358,8 +364,13 @@ function PartsLuaModule:Duplicate(source, newName, patchMethod) end
 ---@field EngineSpool number The current turbine spool fraction, ranging from 0 (idle) to 1 (full spool).
 ---@field ThrustDirRelativePartWorldSpace Vector3 The net thrust direction vector in world space, expressed relative to the part origin.
 ---@field currentEngineModeIndex integer The zero-based index of the currently active engine mode within the engine modes list.
+---@field ModuleType string Gets the concrete Type of the behaviour module associated with this data module.
+---@field State EngineState Gets the current operational state of the engine.
+---@field IsOperational boolean Gets a value indicating whether the engine is producing thrust, ignited, and not in a mode-change transition.
+---@field DataType string Gets the runtime Type of this module data instance.
+---@field IsActiveInStagingProp ModuleProperty<boolean> Gets the module property that tracks whether this module is active for staging purposes.
 
----@alias Data_Engine _Data_Engine | { ["$type"]: "KSP.Modules.Data_Engine, Assembly-CSharp", engineModes: JsonList<Data_Engine_EngineMode>, UseEmissive: boolean, EmissiveMaterialNames: JsonList<string>, EmissiveTemperatureCurve: FloatCurve, EmissiveLerpRateUp: number, EmissiveLerpRateDown: number, DeployedModeAnimationStateShortName: string, IndependentThrottle: ModuleProperty<boolean>, IndependentThrottlePercentage: ModuleProperty<number>, EngineAutoSwitchMode: ModuleProperty<boolean>, thrustPercentage: ModuleProperty<number>, stagingOn: ModuleProperty<boolean>, activeEngineMode: ModuleProperty<string>, EngineStatePriorChangeMode: EngineState, EngineChangingToMode: integer, FinalThrustValue: number, RealISPValue: number, staged: boolean, Flameout: boolean, EngineIgnited: boolean, EngineShutdown: boolean, currentThrottle: number, thrustCurveDisplay: number, thrustCurveRatio: number, EngineSpool: number, ThrustDirRelativePartWorldSpace: Vector3, currentEngineModeIndex: integer }
+---@alias Data_Engine _Data_Engine | { ["$type"]: "KSP.Modules.Data_Engine, Assembly-CSharp" | "KSP.Modules.Data_Engine, Ksp2Redux", engineModes: JsonList<Data_Engine_EngineMode>, UseEmissive: boolean, EmissiveMaterialNames: JsonList<string>, EmissiveTemperatureCurve: FloatCurve, EmissiveLerpRateUp: number, EmissiveLerpRateDown: number, DeployedModeAnimationStateShortName: string, IndependentThrottle: ModuleProperty<boolean>, IndependentThrottlePercentage: ModuleProperty<number>, EngineAutoSwitchMode: ModuleProperty<boolean>, thrustPercentage: ModuleProperty<number>, stagingOn: ModuleProperty<boolean>, activeEngineMode: ModuleProperty<string>, EngineStatePriorChangeMode: EngineState, EngineChangingToMode: integer, FinalThrustValue: number, RealISPValue: number, staged: boolean, Flameout: boolean, EngineIgnited: boolean, EngineShutdown: boolean, currentThrottle: number, thrustCurveDisplay: number, thrustCurveRatio: number, EngineSpool: number, ThrustDirRelativePartWorldSpace: Vector3, currentEngineModeIndex: integer, ModuleType: string, State: EngineState, IsOperational: boolean, DataType: string, IsActiveInStagingProp: ModuleProperty<boolean> }
 
 ---Represents the configuration for a single engine mode, including thrust, propellant, atmosphere, exhaust damage, and throttle parameters.
 ---@class _Data_Engine_EngineMode : _JsonUserDataBase
@@ -474,4 +485,4 @@ function PartsLuaModule:Duplicate(source, newName, patchMethod) end
 
 ---@alias ThrustTransformGroup _ThrustTransformGroup | { ThrustTransformName: string, ThrustTransformMultiplier: number }
 
----@alias ModuleDataPayload table | Data_Engine | Data_PartSwitch
+---@alias ModuleDataPayload table | Data_Engine | Data_PartSwitch | Data_PartAudioPreset

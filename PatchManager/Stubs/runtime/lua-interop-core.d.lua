@@ -1,279 +1,333 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/KSPActionGroupConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/CameraModeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/AutopilotModeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/AutopilotStatusConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/EngineTypeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ForceTypeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/KerbalTypeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/PhysicsModeTypeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceFlowModeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceTypeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceTransferModeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/SpeedDisplayModeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/AltimeterDisplayModeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ExplosionTypeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartRelationshipTypeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/OABEditorCategoryConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/MetaAssemblySizeFilterTypeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/AssemblyPartStageTypeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/TransformFrameTypeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/RosterStatusConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ActionGroupStatesConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/AttachRulesConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResolutionConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/Vector2Converter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/Vector3Converter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/Vector3dConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/Vector4Converter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/Vector2dConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/Vector4dConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/QuaternionConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/QuaternionDConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/ColorConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/EnumConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/MoonSharpBinding.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/EnumConverter.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/TypeInterop.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/KSPActionGroupConverter.cs
+-- Source: Assets/Code/KSP/Sim/KSPActionGroup.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/CameraModeConverter.cs
+-- Source: Assets/Code/KSP/Sim/CameraMode.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/AutopilotModeConverter.cs
+-- Source: Assets/Code/KSP/Sim/AutopilotMode.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/EngineTypeConverter.cs
+-- Source: Assets/Code/KSP/Modules/EngineType.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ForceTypeConverter.cs
+-- Source: Assets/Code/KSP/Sim/ForceType.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/KerbalTypeConverter.cs
+-- Source: Assets/Code/KSP/Sim/KerbalType.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/PhysicsModeTypeConverter.cs
+-- Source: Assets/Code/KSP/Sim/PhysicsMode.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceFlowModeConverter.cs
+-- Source: Assets/Code/KSP/Sim/ResourceSystem/ResourceFlowMode.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceTypeConverter.cs
+-- Source: Assets/Code/KSP/Sim/ResourceType.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResourceTransferModeConverter.cs
+-- Source: Assets/Code/KSP/Sim/ResourceSystem/ResourceTransferMode.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/SpeedDisplayModeConverter.cs
+-- Source: Assets/Code/KSP/Sim/SpeedDisplayMode.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/AltimeterDisplayModeConverter.cs
+-- Source: Assets/Code/KSP/Sim/AltimeterDisplayMode.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ExplosionTypeConverter.cs
+-- Source: Assets/Code/KSP/Sim/ExplosionType.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartRelationshipTypeConverter.cs
+-- Source: Assets/Code/KSP/Sim/PartRelationshipType.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/OABEditorCategoryConverter.cs
+-- Source: Assets/Code/KSP/OAB/OABEditorPartCategory.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/MetaAssemblySizeFilterTypeConverter.cs
+-- Source: Assets/Code/KSP/OAB/MetaAssemblySizeFilterType.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/AssemblyPartStageTypeConverter.cs
+-- Source: Assets/Code/KSP/OAB/AssemblyPartStageType.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/TransformFrameTypeConverter.cs
+-- Source: Assets/Code/KSP/Sim/TransformFrameType.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/RosterStatusConverter.cs
+-- Source: Assets/Code/KSP/Sim/RosterStatus.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/AutopilotStatusConverter.cs
+-- Source: Assets/Code/KSP/Sim/AutopilotStatus.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ActionGroupStatesConverter.cs
+-- Source: Assets/Code/KSP/Sim/State/ActionGroupStates.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/AttachRulesConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/AttachRules.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ResolutionConverter.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/Vector2Converter.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/Vector2dConverter.cs
+-- Source: Assets/Code/UnityEngine/Vector2d.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/Vector3Converter.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/Vector3dConverter.cs
+-- Source: Assets/Code/Root/Vector3d.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/Vector4Converter.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/Vector4dConverter.cs
+-- Source: Assets/Code/UnityEngine/Vector4d.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/QuaternionConverter.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/QuaternionDConverter.cs
+-- Source: Assets/Code/Root/QuaternionD.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/ColorConverter.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/TypeConverter.cs
 
----A vessel action group. `KSPActionGroup` is a [Flags] enum, but interop
----marshals a single value as its member name string.
+-- alt: KSP.Sim.KSPActionGroup
+---Flags enum representing the available vessel action groups, including built-in actions and user-defined custom groups.
 ---@alias KSPActionGroup
----| "None"
----| "Stage"
----| "Gear"
----| "Lights"
----| "RCS"
----| "SAS"
----| "Brakes"
----| "Abort"
----| "SolarPanels"
----| "RadiatorPanels"
----| "Science"
----| "ResourceScan"
----| "Custom01"
----| "Custom02"
----| "Custom03"
----| "Custom04"
----| "Custom05"
----| "Custom06"
----| "Custom07"
----| "Custom08"
----| "Custom09"
----| "Custom10"
+---| "None" # No action group.
+---| "Stage" # Triggers the next staging event on the active vessel.
+---| "Gear" # Toggles landing gear deployment.
+---| "Lights" # Toggles vessel lights.
+---| "RCS" # Toggles the reaction control system.
+---| "SAS" # Toggles the stability assist system.
+---| "Brakes" # Toggles wheel brakes.
+---| "Abort" # Triggers the launch abort sequence.
+---| "SolarPanels" # Toggles deployable solar panels.
+---| "RadiatorPanels" # Toggles deployable radiator panels.
+---| "Science" # Runs available science experiments.
+---| "ResourceScan" # Toggles resource scanning instruments.
+---| "Custom01" # User-defined custom action group 1.
+---| "Custom02" # User-defined custom action group 2.
+---| "Custom03" # User-defined custom action group 3.
+---| "Custom04" # User-defined custom action group 4.
+---| "Custom05" # User-defined custom action group 5.
+---| "Custom06" # User-defined custom action group 6.
+---| "Custom07" # User-defined custom action group 7.
+---| "Custom08" # User-defined custom action group 8.
+---| "Custom09" # User-defined custom action group 9.
+---| "Custom10" # User-defined custom action group 10.
 
+-- alt: KSP.Sim.CameraMode
 ---The available camera modes for the simulation camera.
 ---@alias CameraMode
----| "None"
----| "Celestial"
----| "Body"
----| "Horizon"
----| "Capture"
----| "PhotoCapture"
----| "PhotoHorizon"
----| "Stationary"
----| "Chase"
----| "Auto"
----| "Orbital"
----| "Cinematic"
+---| "None" # No camera mode assigned. Indicates the camera mode is unset.
+---| "Celestial" # Camera mode that orients the view relative to the celestial sphere.
+---| "Body" # Camera mode that locks the view to the vessel body frame.
+---| "Horizon" # Camera mode aligned to the local planetary horizon.
+---| "Capture" # Camera mode used during orbital rendezvous or capture operations.
+---| "PhotoCapture" # Photo camera mode used during capture operations.
+---| "PhotoHorizon" # Photo camera mode aligned to the local planetary horizon.
+---| "Stationary" # Camera mode that holds a fixed position in the world frame.
+---| "Chase" # Camera mode that follows behind the vessel along its direction of travel.
+---| "Auto" # Camera mode selected automatically based on the current flight context.
+---| "Orbital" # Camera mode oriented to the orbital reference frame.
+---| "Cinematic" # Cinematic camera mode for scripted or dramatic camera presentation.
 
+-- alt: KSP.Sim.AutopilotMode
 ---Autopilot heading modes available to a vessel's stability assist system.
 ---@alias AutopilotMode
----| "StabilityAssist"
----| "Prograde"
----| "Retrograde"
----| "Normal"
----| "Antinormal"
----| "RadialIn"
----| "RadialOut"
----| "Target"
----| "AntiTarget"
----| "Maneuver"
----| "Navigation"
----| "Autopilot"
+---| "StabilityAssist" # Holds the vessel's current orientation using the stability assist system.
+---| "Prograde" # Points the vessel toward the prograde direction of its current orbit.
+---| "Retrograde" # Points the vessel toward the retrograde direction of its current orbit.
+---| "Normal" # Points the vessel toward the orbital normal direction.
+---| "Antinormal" # Points the vessel toward the orbital antinormal direction.
+---| "RadialIn" # Points the vessel toward the radial-in direction of its current orbit.
+---| "RadialOut" # Points the vessel toward the radial-out direction of its current orbit.
+---| "Target" # Points the vessel toward the active navigation target.
+---| "AntiTarget" # Points the vessel directly away from the active navigation target.
+---| "Maneuver" # Points the vessel toward the next planned maneuver node.
+---| "Navigation" # Steers the vessel along an active navigation path.
+---| "Autopilot" # Delegates heading control to a higher-level autopilot program.
 
+-- alt: EngineType, KSP.Modules.EngineType
 ---The category of propulsion technology for an engine module.
 ---@alias EngineTypeInterop
----| "Generic"
----| "SolidBooster"
----| "Methalox"
----| "Piston"
----| "Turbine"
----| "ScramJet"
----| "Electric"
----| "Nuclear"
----| "MonoProp"
----| "Helium3"
----| "MetallicHydrogen"
----| "NuclearSaltwater"
----| "Antimatter"
+---| "Generic" # A generic or unspecified engine type.
+---| "SolidBooster" # A solid-propellant rocket booster.
+---| "Methalox" # A methane-liquid oxygen (methalox) bipropellant engine.
+---| "Piston" # A piston-driven internal combustion engine.
+---| "Turbine" # A turbine-based air-breathing jet engine.
+---| "ScramJet" # A supersonic-combustion ramjet (scramjet) engine.
+---| "Electric" # An electrically powered propulsion engine.
+---| "Nuclear" # A nuclear thermal propulsion engine.
+---| "MonoProp" # A monopropellant thruster.
+---| "Helium3" # A helium-3 fusion propulsion engine.
+---| "MetallicHydrogen" # A metallic hydrogen propulsion engine.
+---| "NuclearSaltwater" # A nuclear saltwater rocket engine.
+---| "Antimatter" # An antimatter annihilation propulsion engine.
 
+-- alt: KSP.Sim.ForceType
 ---The type of force applied in a physics simulation, distinguishing mass-dependent force from mass-independent acceleration.
 ---@alias ForceType
----| "Force"
----| "Acceleration"
+---| "Force" # A mass-dependent force applied to a body, scaled by the body's mass.
+---| "Acceleration" # A mass-independent acceleration applied directly to a body regardless of its mass.
 
+-- alt: KSP.Sim.KerbalType
 ---The body type of a Kerbal.
 ---@alias KerbalType
----| "CIRCLE"
----| "SQUARE"
----| "BUILDER"
+---| "CIRCLE" # The circular body type.
+---| "SQUARE" # The square body type.
+---| "BUILDER" # The builder body type.
 
+-- alt: KSP.Sim.PhysicsMode
 ---The physics simulation mode applied to a simulated object.
 ---@alias PhysicsMode
----| "None"
----| "AtRest"
----| "Orbital"
----| "RigidBody"
+---| "None" # No physics mode assigned.
+---| "AtRest" # The object is stationary and excluded from active physics simulation.
+---| "Orbital" # The object is governed by orbital mechanics.
+---| "RigidBody" # The object is simulated as a rigid body with full physics integration.
 
+-- alt: ResourceFlowMode, KSP.Sim.ResourceFlowMode
 ---Flow mode governing how resources are distributed between parts in a vessel.
 ---@alias ResourceFlowModeInterop
----| "NULL"
----| "NO_FLOW"
----| "ALL_VESSEL"
----| "STAGE_PRIORITY_FLOW"
----| "STACK_PRIORITY_SEARCH"
----| "STAGE_STACK_FLOW_BALANCE"
+---| "NULL" # Uninitialized or unset flow mode sentinel.
+---| "NO_FLOW" # Resource does not flow. Consumption is limited to the part that contains it.
+---| "ALL_VESSEL" # Resource flows freely across all parts in the vessel.
+---| "STAGE_PRIORITY_FLOW" # Resource flows from parts in order of staging priority, draining lower-stage parts first.
+---| "STACK_PRIORITY_SEARCH" # Resource is consumed from the highest-priority stack found by a depth-first search.
+---| "STAGE_STACK_FLOW_BALANCE" # Resource is drawn in balanced amounts from all stacks within the current stage.
 
+-- alt: KSP.Sim.ResourceType
 ---The physical phase of a resource.
 ---@alias ResourceType
----| "solid"
----| "liquid"
----| "gas"
+---| "solid" # A solid-phase resource.
+---| "liquid" # A liquid-phase resource.
+---| "gas" # A gaseous-phase resource.
 
+-- alt: ResourceTransferMode, KSP.Sim.ResourceTransferMode
 ---The mode of resource transfer between parts.
 ---@alias ResourceTransferModeInterop
----| "NONE"
----| "PUMP"
+---| "NONE" # No resource transfer. Resources do not flow between parts.
+---| "PUMP" # Pump transfer mode. Resources are actively pumped between connected parts.
 
----The reference frame used when displaying vessel speed.
+-- alt: KSP.Sim.SpeedDisplayMode
+---Represents the reference frame used when displaying vessel speed.
 ---@alias SpeedDisplayMode
----| "Orbit"
----| "Surface"
----| "Target"
+---| "Orbit" # Speed relative to the current orbital reference frame.
+---| "Surface" # Speed relative to the planetary surface.
+---| "Target" # Speed relative to the currently selected target.
 
+-- alt: KSP.Sim.AltimeterDisplayMode
 ---Display mode for the altimeter, indicating whether altitude is measured from sea level or ground level.
 ---@alias AltimeterDisplayMode
----| "SeaLevel"
----| "GroundLevel"
+---| "SeaLevel" # Displays altitude measured from sea level.
+---| "GroundLevel" # Displays altitude measured from the terrain directly below the vessel.
 
+-- alt: KSP.Sim.ExplosionType
 ---The cause or context of a simulated vehicle explosion.
 ---@alias ExplosionType
----| "InAir"
----| "InSpace"
----| "OnOverheat"
----| "OnOverpressure"
----| "OnOverG"
----| "OnGround"
----| "OnWater"
----| "Default"
+---| "InAir" # Explosion triggered while the vehicle is airborne within an atmosphere.
+---| "InSpace" # Explosion triggered while the vehicle is in a vacuum or orbital environment.
+---| "OnOverheat" # Explosion caused by a part or vehicle exceeding its thermal tolerance.
+---| "OnOverpressure" # Explosion caused by aerodynamic pressure exceeding structural limits.
+---| "OnOverG" # Explosion caused by g-forces exceeding the vehicle's structural tolerance.
+---| "OnGround" # Explosion resulting from high-velocity impact with a ground surface.
+---| "OnWater" # Explosion resulting from high-velocity impact with a water surface.
+---| "Default" # Fallback explosion type used when no more specific cause applies.
 
+-- alt: KSP.Sim.PartRelationshipType
 ---The type of structural or fluid connection between two parts.
 ---@alias PartRelationshipType
----| "None"
----| "Strut"
----| "FuelLine"
+---| "None" # No relationship between parts.
+---| "Strut" # A rigid structural strut connecting two parts.
+---| "FuelLine" # A fuel line allowing resource transfer between parts.
 
 ---Part category classifications used in the Object Assembly Builder editor.
 ---@alias OABEditorCategory
----| "VAB"
----| "BAE"
----| "ALL"
----| "NONE"
----| "VAB_TERRESTRIAL"
----| "VAB_ORBITAL"
----| "BAE_TERRESTRIAL"
----| "BAE_ORBITAL"
+---| "VAB" # Vehicle Assembly Building part category.
+---| "BAE" # Base Assembly Editor part category.
+---| "ALL" # All part categories combined.
+---| "NONE" # No part category assigned.
+---| "VAB_TERRESTRIAL" # Vehicle Assembly Building terrestrial part subcategory.
+---| "VAB_ORBITAL" # Vehicle Assembly Building orbital part subcategory.
+---| "BAE_TERRESTRIAL" # Base Assembly Editor terrestrial part subcategory.
+---| "BAE_ORBITAL" # Base Assembly Editor orbital part subcategory.
 
+-- alt: MetaAssemblySizeFilterType, KSP.OAB.MetaAssemblySizeFilterType
 ---Size filter categories for a meta assembly in the object assembly building.
 ---@alias MetaAssemblySizeFilterTypeInterop
----| "Auto"
----| "XS"
----| "XSPLUS"
----| "S"
----| "SPLUS"
----| "M"
----| "MPLUS"
----| "L"
----| "LPLUS"
----| "XL"
----| "XLPLUS"
----| "XXL"
----| "XXXL"
----| "XXXXL"
----| "XXXXXL"
----| "XXXXXXL"
----| "XSMINUS"
+---| "Auto" # Size category selected automatically based on part or assembly properties.
+---| "XS" # Extra-small size category.
+---| "XSPLUS" # Size category between extra-small and small.
+---| "S" # Small size category.
+---| "SPLUS" # Size category between small and medium.
+---| "M" # Medium size category.
+---| "MPLUS" # Size category between medium and large.
+---| "L" # Large size category.
+---| "LPLUS" # Size category between large and extra-large.
+---| "XL" # Extra-large size category.
+---| "XLPLUS" # Size category between extra-large and double extra-large.
+---| "XXL" # Double extra-large size category.
+---| "XXXL" # Triple extra-large size category.
+---| "XXXXL" # Quadruple extra-large size category.
+---| "XXXXXL" # Quintuple extra-large size category.
+---| "XXXXXXL" # Sextuple extra-large size category.
+---| "XXS" # Size category smaller than extra-small.
 
+-- alt: AssemblyPartStageType, KSP.OAB.AssemblyPartStageType
 ---The staging role of a part in the Object Assembly Builder.
 ---@alias AssemblyPartStageTypeInterop
----| "None"
----| "LiquidEngine"
----| "SolidEngine"
----| "Parachute"
----| "Science"
----| "DecouplerHorizontal"
----| "DecouplerVertical"
----| "Fairing"
+---| "None" # No staging role assigned to the part.
+---| "LiquidEngine" # Part is a liquid-fueled engine that participates in staging for ignition or shutdown.
+---| "SolidEngine" # Part is a solid rocket motor that participates in staging for ignition.
+---| "Parachute" # Part is a parachute that can be deployed via staging.
+---| "Science" # Part is a science instrument that can be activated via staging.
+---| "DecouplerHorizontal" # Part is a horizontal decoupler that separates parts along a lateral axis when staged.
+---| "DecouplerVertical" # Part is a vertical decoupler that separates parts along the stack axis when staged.
+---| "Fairing" # Part is a fairing that can be jettisoned via staging.
 
+-- alt: TransformFrameType, KSP.Sim.TransformFrameType
 ---The type of reference frame for a transform in the simulation.
----@alias TransformFrameType
----| "None"
----| "Body"
----| "Celestial"
+---@alias TransformFrameTypeInterop
+---| "None" # No transform frame type assigned.
+---| "Body" # A reference frame attached to a physical simulation body.
+---| "Celestial" # A reference frame attached to a celestial body.
 
+-- alt: KSP.Sim.RosterStatus
 ---Roster status of a crew member.
 ---@alias RosterStatus
----| "Available"
----| "Assigned"
----| "Dead"
----| "Missing"
+---| "Available" # The crew member is available and not currently assigned to a mission or vessel.
+---| "Assigned" # The crew member is currently assigned to a vessel or mission.
+---| "Dead" # The crew member has died and is no longer available.
+---| "Missing" # The crew member is missing and their current status is unknown.
 
----The enabled state and heading mode of a vessel's autopilot.
+-- alt: KSP.Sim.AutopilotStatus
+---Represents the current status of an autopilot, including its enabled state and active mode.
 ---@class AutopilotStatus
----@field isEnabled boolean
----@field mode AutopilotMode
+---@field isEnabled boolean Gets a value indicating whether the autopilot is enabled.
+---@field mode AutopilotMode Gets the active autopilot heading mode.
 
----The on/off state of every action group on a vessel, keyed by action-group name.
+-- alt: KSP.Sim.State.ActionGroupStates
+---Represents the activation states of one or more action groups.
 ---@class ActionGroupStates
----@field states table<KSPActionGroup, boolean>
+---@field states? table<KSPActionGroup, boolean> Maps each action group to its current activation state.
 
----The attachment rules for a part: how it may attach and what may attach to it.
+-- alt: AttachRules, KSP.Sim.Definitions.AttachRules
+---Represents the attachment rules for a part, defining which attachment modes and behaviors are permitted.
 ---@class AttachRulesInterop
----@field stack boolean
----@field srfAttach boolean
----@field allowStack boolean
----@field allowSrfAttach boolean
----@field allowCollision boolean
+---@field stack boolean A flag indicating whether the part uses stack attachment.
+---@field srfAttach boolean A flag indicating whether the part uses surface attachment.
+---@field allowStack boolean A flag indicating whether other parts are permitted to attach to this part's stack nodes.
+---@field allowSrfAttach boolean A flag indicating whether other parts are permitted to surface-attach to this part.
+---@field allowCollision boolean A flag indicating whether collisions between this part and adjacent attached parts are permitted.
 
----A screen resolution: pixel dimensions and refresh rate.
+-- alt: UnityEngine.Resolution)
 ---@class Resolution
 ---@field width integer
 ---@field height integer
 ---@field refreshRate integer
 
----A 2-component single-precision vector, marshalled as a 2-element number array.
+-- alt: Vector2, UnityEngine.Vector2
 ---@alias Vec2 [number, number]
 
----A 3-component single-precision vector, marshalled as a 3-element number array.
----@alias Vec3 [number, number, number]
-
----A 3-component double-precision vector, marshalled as a 3-element number array.
----@alias Vec3d [number, number, number]
-
----A 4-component single-precision vector, marshalled as a 4-element number array.
----@alias Vec4 [number, number, number, number]
-
----A 2-component double-precision vector, marshalled as a 2-element number array.
+-- alt: Vector2d, UnityEngine.Vector2d
+---Represents a two-dimensional vector with double-precision floating-point components.
 ---@alias Vec2d [number, number]
 
----A 4-component double-precision vector, marshalled as a 4-element number array.
+-- alt: Vector3, UnityEngine.Vector3
+---@alias Vec3 [number, number, number]
+
+-- alt: Vector3d
+---Represents a 3D vector with double-precision floating-point components.
+---@alias Vec3d [number, number, number]
+
+-- alt: Vector4, UnityEngine.Vector4
+---@alias Vec4 [number, number, number, number]
+
+-- alt: Vector4d, UnityEngine.Vector4d
+---Represents a four-component double-precision floating-point vector.
 ---@alias Vec4d [number, number, number, number]
 
----A single-precision quaternion, marshalled as a 4-element number array (x, y, z, w).
+-- alt: Quaternion, Quaternion3, UnityEngine.Quaternion
 ---@alias Quat3 [number, number, number, number]
 
----A double-precision quaternion, marshalled as a 4-element number array (x, y, z, w).
+-- alt: QuaternionD
+---Represents a quaternion with double-precision floating-point components.
 ---@alias Quatd [number, number, number, number]
 
----A CLR type, marshalled as its registered interop type-nickname string.
+-- alt: Color, UnityEngine.Color
+---@alias ColorInterop [number, number, number, number?]
+
+-- alt: System.Type
 ---@alias Type string

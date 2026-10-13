@@ -1,10 +1,11 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
--- Source: Assets/Modules/PatchManager/Runtime/PatchManager.Resources/ResourcesLuaModule.cs
--- Source: Assets/Modules/PatchManager/Runtime/PatchManager.Resources/ResourceConverter.cs
--- Source: Assets/Modules/PatchManager/Runtime/PatchManager.Resources/UserData/ResourceUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/PatchManager.Resources/UserData/RecipeUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/PatchManager.Resources/UserData/IngredientsUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/PatchManager.Resources/ResourcesLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/PatchManager.Resources/ResourceConverter.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/PatchManager.Resources/ResourcesModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/PatchManager.Resources/UserData/ResourceUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/PatchManager.Resources/UserData/RecipeUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/PatchManager.Resources/UserData/IngredientsUserData.cs
 -- Source: Assets/Code/KSP/Sim/Definitions/ResourceCore.cs
 -- Source: Assets/Code/KSP/Sim/ResourceSystem/ResourceDefinition.cs
 -- Source: Assets/Code/KSP/Sim/ResourceSystem/ResourceRecipeDefinition.cs
@@ -19,11 +20,11 @@ local ResourcesLuaModule = {}
 ---@return PatchDefinition<ResourceUserData | RecipeUserData, any> patch The registered patch.
 function ResourcesLuaModule:Patch(name) end
 
----Registers a patch that copies each resource it matches under a new name, then runs the chained `:Do` callback on the copy.
----Restrict the pass and ordering like any other patch. Internal ID fields in the copy are left alone.
+---Registers a patch that copies each resource it matches under a new name, then runs patchMethod
+---on the copy.
 ---@param source string The name of the resource to copy. Supports `*` and `?` wildcards.
 ---@param newName string The name of the copy, with `{name}` standing in for the source's name.
----@param patchMethod? fun(copy: ResourceUserData | RecipeUserData): string? Shorthand for chaining `:Do(callback)`, which is the canonical form. Leave both off to copy without changes.
+---@param patchMethod? fun(copy: ResourceUserData | RecipeUserData): string? The callback to run on each copy, or `nil` to copy without changes.
 ---@return PatchDefinition<ResourceUserData | RecipeUserData, any> patch The registered patch.
 function ResourcesLuaModule:Duplicate(source, newName, patchMethod) end
 
@@ -31,17 +32,20 @@ function ResourcesLuaModule:Duplicate(source, newName, patchMethod) end
 ---against it for further configuration.
 ---@param name string The recipe's resource name.
 ---@param callback fun(recipe: RecipeUserData) Callback that receives the new recipe for further configuration.
+---@return LuaAsset asset The queued asset, for gating it with features.
 function ResourcesLuaModule:NewRecipe(name, callback) end
 
 ---Creates a new plain resource definition with the given name and runs callback against
 ---it for further configuration.
 ---@param name string The resource name.
 ---@param callback fun(resource: ResourceUserData) Callback that receives the new resource for further configuration.
+---@return LuaAsset asset The queued asset, for gating it with features.
 function ResourcesLuaModule:NewResource(name, callback) end
 
 ---Registers a JSON resource-units definition, queueing it under the `resource_units` addressables label
 ---with a sequential synthetic name.
----@param value any The JSON value describing the resource units, typically a JsonUserData wrapping a `JObject`.
+---@param value JsonTable<string> The JSON value describing the resource units, typically a JsonUserData wrapping a `JObject`.
+---@return LuaAsset asset The queued asset, for gating it with features.
 function ResourcesLuaModule:RegisterUnits(value) end
 
 ---Plain resource definition wrapper exposing the inner `data` subtree while preserving the full envelope for round-tripping.
@@ -50,7 +54,7 @@ function ResourcesLuaModule:RegisterUnits(value) end
 ---Recipe-style resource definition wrapper exposing the inner `recipeData` subtree while preserving the full
 ---envelope, and exposing the `ingredients` array as a typed IngredientsUserData.
 ---@class RecipeUserData : _ResourceRecipeDefinition, ExtensibleJsonUserData
----@field ingredients IngredientsUserData
+---@field ingredients IngredientsUserData The array of ResourceRecipeIngredientDefinition entries that make up this recipe, each specifying a resource name and quantity per recipe unit.
 
 ---@class IngredientUserData : _ResourceRecipeIngredientDefinition, JsonUserData
 

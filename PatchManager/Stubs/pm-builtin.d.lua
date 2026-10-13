@@ -1,19 +1,23 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
--- Source: Assets/Modules/PatchManager/Runtime/LuaPatching/Builtin/PatchManagerCore.cs
--- Source: Assets/Modules/PatchManager/Runtime/Parts/AudioLuaModule.cs
--- Source: Assets/Modules/PatchManager/Runtime/CampaignPacks/CampaignPacksLuaModule.cs
--- Source: Assets/Modules/PatchManager/Runtime/Generic/GenericLuaModule.cs
--- Source: Assets/Modules/PatchManager/Runtime/Missions/MissionsLuaModule.cs
--- Source: Assets/Modules/PatchManager/Runtime/Parts/PartsLuaModule.cs
--- Source: Assets/Modules/PatchManager/Runtime/Planets/PlanetsLuaModule.cs
--- Source: Assets/Modules/PatchManager/Runtime/PatchManager.Resources/ResourcesLuaModule.cs
--- Source: Assets/Modules/PatchManager/Runtime/Science/ScienceLuaModule.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/VSwift/VSwiftLuaModule.cs
--- Source: Assets/Modules/PatchManager/Runtime/LuaPatching/Builtin/JsonModule.cs
--- Source: Assets/Modules/PatchManager/Runtime/LuaPatching/PatchDefinition.cs
--- Source: Assets/Modules/PatchManager/Runtime/LuaPatching/LuaAsset.cs
--- Source: Assets/Modules/PatchManager/Runtime/LuaPatching/Builtin/PatchManagerEnvContributor.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/LuaPatching/Builtin/PatchManagerCore.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Parts/AudioLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/CampaignPacks/CampaignPacksLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Generic/GenericLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Missions/MissionsLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Parts/PartsLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Planets/PlanetsLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/PatchManager.Resources/ResourcesLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Science/ScienceLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/VSwift/VSwiftLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Features/FeatureRegistry.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Lifecycle/FeaturesLibrary.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/LuaPatching/Builtin/JsonModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/LuaPatching/PatchDefinition.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/LuaPatching/PassDefinition.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/LuaPatching/LuaAsset.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Features/FeatureGatedAction.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/LuaPatching/Builtin/PatchManagerEnvContributor.cs
 
 ---The PatchManager Lua library, exposed to scripts as the global `PM`.
 ---@class PatchManagerCore
@@ -26,37 +30,68 @@
 ---@field Resources ResourcesLuaModule
 ---@field Science ScienceLuaModule
 ---@field VSwift VSwiftLuaModule
-PatchManagerCore = {}
+local PatchManagerCore = {}
 
 ---Registers a patch keyed by the given addressables label and namespaced patch name.
 ---@param converter string The name of the converter to use, as registered via ConverterAttribute.
 ---@param label string The addressables label whose assets to patch.
 ---@param name string The patch's local name. The host mod's ID is prepended to form the full namespaced name.
 ---@return PatchDefinition<JsonUserData, any> patch The registered patch, suitable for chaining (for example PatchDefinition.Do).
----@error Thrown when `converter` is not registered.
+---@error Thrown when converter is not registered.
 function PatchManagerCore:Patch(converter, label, name) end
 
----Registers a patch that copies each asset it matches under a new name in the same label, then runs the chained `:Do`
----callback on the copy.
----The duplicate is a patch like any other: it takes a pass, ordering and requirements, and the copy is patched by
----everything ordered after it. Internal ID fields are left alone. The patch is named `Duplicate(source -> newName)`
----under the host mod.
+---Registers a patch that copies each asset it matches under a new name in the same label, then runs
+---patchMethod on the copy.
 ---@param converter string The name of the converter to use, as registered via ConverterAttribute.
 ---@param label string The addressables label whose assets to copy, which the copies keep.
 ---@param source string The name of the asset to copy. Supports `*` and `?` wildcards.
 ---@param newName string The name of the copy, with `{name}` standing in for the source asset's name.
----@param patchMethod? fun(copy: JsonUserData): string? Shorthand for chaining `:Do(callback)`, which is the canonical form. Leave both off to copy without changes.
+---@param patchMethod? fun(copy: JsonUserData): string? The callback to run on each copy, or `nil` to copy without changes.
 ---@return PatchDefinition<JsonUserData, any> patch The registered patch, suitable for chaining.
 ---@error Thrown when converter is not registered.
 function PatchManagerCore:Duplicate(converter, label, source, newName, patchMethod) end
 
+---Returns the pass with the given name, declaring it when it does not exist yet.
+---@param name string The pass name, namespaced to the host mod when it is not built-in and does not already carry a namespace.
+---@return PassDefinition pass The pass, for chaining its ordering.
+function PatchManagerCore:Pass(name) end
+
+---Begins a declarative prefab patch for one stock Addressables key.
+---@param name string
+---@param target string
+---@return PrefabPatchLuaBuilder
+function PatchManagerCore:Prefab(name, target) end
+
 ---Queues a brand-new asset for creation under the given label and address.
----@param converter string The name of the converter that will serialize `newObject` to JSON.
+---@param converter string The name of the converter that will serialize newObject to JSON.
 ---@param label string The addressables label to tag the new asset with.
 ---@param name string The asset's addressables address (globally unique).
 ---@param newObject any The Lua-facing value for the new asset.
----@error Thrown when `converter` is not registered.
+---@return LuaAsset asset The queued asset, for gating it with features.
+---@error Thrown when converter is not registered.
 function PatchManagerCore:New(converter, label, name, newObject) end
+
+---Declares a feature of the calling mod.
+---@param id string The feature ID, namespaced to the mod when it does not already carry a namespace.
+---@param options? { requires?: string[], conflicts?: string[], provides?: string[], recommended?: boolean } An optional table with `requires`, `conflicts` and `provides` lists of feature IDs, and a `recommended` boolean.
+---@error Thrown when called after patch registration has closed.
+function PatchManagerCore:DefineFeature(id, options) end
+
+---Runs body with a feature added to every patch, created asset, prefab patch and run
+---callback it registers.
+---@param id string The feature ID, namespaced to the calling mod when it does not already carry a namespace.
+---@param body fun() The function whose registrations get the feature.
+function PatchManagerCore:WithFeature(id, body) end
+
+---Registers a callback that runs before each feature set's patch run.
+---@param callback fun(features: table<string, true>) The callback, handed the set being built as a table of each id mapped to true.
+---@return FeatureGatedAction registered The registered callback, for gating it with features.
+function PatchManagerCore:OnBeginRun(callback) end
+
+---Registers a callback that runs after each feature set's patch run.
+---@param callback fun(features: table<string, true>) The callback, handed the set that was built as a table of each id mapped to true.
+---@return FeatureGatedAction registered The registered callback, for gating it with features.
+function PatchManagerCore:OnEndRun(callback) end
 
 ---Returns whether the mod with the given ID is loaded.
 ---@param modId string The mod ID to test.
@@ -65,7 +100,7 @@ function PatchManagerCore:Loaded(modId) end
 
 ---Lua module exposed under the global `J` namespace, providing helpers for constructing JSON
 ---literals that MoonSharp's auto-conversion does not produce. Also installed as callable: invoking
----`J(value)` converts `value` to a JsonUserData.
+---`J(value)` converts value to a JsonUserData.
 ---@class JsonModule
 ---@operator call(any): JsonUserData
 local JsonModule = {}
@@ -131,6 +166,20 @@ function PatchDefinition:Needs(...) end
 ---@return PatchDefinition<T, V> self The patch instance for chaining.
 function PatchDefinition:Conflicts(...) end
 
+---Makes the patch run only when these features are on.
+---@generic T, V
+---@param self PatchDefinition<T, V>
+---@param ... string The feature IDs, namespaced to the host mod when they do not already carry a namespace.
+---@return PatchDefinition<T, V> self The patch instance for chaining.
+function PatchDefinition:Feature(...) end
+
+---Makes the patch run only when these features are off.
+---@generic T, V
+---@param self PatchDefinition<T, V>
+---@param ... string The feature IDs, namespaced to the host mod when they do not already carry a namespace.
+---@return PatchDefinition<T, V> self The patch instance for chaining.
+function PatchDefinition:NoFeature(...) end
+
 ---Makes the patch require these other patches to run.
 ---@generic T, V
 ---@param self PatchDefinition<T, V>
@@ -181,7 +230,7 @@ function PatchDefinition:Before(...) end
 ---@return PatchDefinition<T, V> self The patch instance for chaining.
 function PatchDefinition:Requires(predicate, message) end
 
----Adds a constant gate that disables the patch entirely when `gate` is
+---Adds a constant gate that disables the patch entirely when gate is
 ---`false`. Each candidate asset is reported as skipped through the summary.
 ---@generic T, V
 ---@param self PatchDefinition<T, V>
@@ -190,16 +239,16 @@ function PatchDefinition:Requires(predicate, message) end
 ---@return PatchDefinition<T, V> self The patch instance for chaining.
 function PatchDefinition:Requires(gate, message) end
 
----Adds a requirement that the asset expose `key`, optionally with a predicate against the resolved value.
+---Adds a requirement that the asset expose key, optionally with a predicate against the resolved value.
 ---@generic T, V
 ---@param self PatchDefinition<T, V>
 ---@param key string The key the asset must expose.
----@param predicate? fun(value: V): boolean Optional predicate evaluated against the value resolved at `key`, not the asset itself.
+---@param predicate? fun(value: V): boolean Optional predicate evaluated against the value resolved at key, not the asset itself.
 ---@param message? string Optional assertion message logged when the key is present but the predicate fails.
 ---@return PatchDefinition<T, V> self The patch instance for chaining.
 function PatchDefinition:Has(key, predicate, message) end
 
----Adds a requirement that the asset does not expose `key`
+---Adds a requirement that the asset does not expose key
 ---@generic T, V
 ---@param self PatchDefinition<T, V>
 ---@param key string The key the asset must not expose.
@@ -219,11 +268,30 @@ function PatchDefinition:First() end
 ---@return PatchDefinition<T, V> self The patch instance for chaining.
 function PatchDefinition:Last() end
 
+---Makes the patch run in the given pass.
+---@generic T, V
+---@param self PatchDefinition<T, V>
+---@param name string The pass name, namespaced to the host mod when it is not built-in and does not already carry a namespace.
+---@return PatchDefinition<T, V> self The patch instance for chaining.
+function PatchDefinition:Pass(name) end
+
 ---Makes the patch run in the Early pass.
 ---@generic T, V
 ---@param self PatchDefinition<T, V>
 ---@return PatchDefinition<T, V> self The patch instance for chaining.
 function PatchDefinition:Early() end
+
+---Makes the patch run in the Default pass.
+---@generic T, V
+---@param self PatchDefinition<T, V>
+---@return PatchDefinition<T, V> self The patch instance for chaining.
+function PatchDefinition:Default() end
+
+---Makes the patch run in the Default pass, the same as Default.
+---@generic T, V
+---@param self PatchDefinition<T, V>
+---@return PatchDefinition<T, V> self The patch instance for chaining.
+function PatchDefinition:None() end
 
 ---Makes the patch run in the Late pass.
 ---@generic T, V
@@ -231,11 +299,60 @@ function PatchDefinition:Early() end
 ---@return PatchDefinition<T, V> self The patch instance for chaining.
 function PatchDefinition:Late() end
 
+---A named patch pass and the passes it is ordered against.
+---@class PassDefinition
+---@field Name string The pass's namespaced name, `modId:<supplied-name>` for every pass but the built-in ones.
+---@field PassModId string The ID of the mod that declared the pass, used to namespace the passes it refers to.
+local PassDefinition = {}
+
+---Makes this pass run after the given passes when they exist.
+---@param ... string The passes to run after, namespaced to the host mod when they are not built-in and do not already carry a namespace.
+---@return PassDefinition self The pass instance for chaining.
+function PassDefinition:After(...) end
+
+---Makes this pass run before the given passes when they exist.
+---@param ... string The passes to run before, namespaced to the host mod when they are not built-in and do not already carry a namespace.
+---@return PassDefinition self The pass instance for chaining.
+function PassDefinition:Before(...) end
+
+---Removes every ordering constraint from this pass, the default ones after Early and before Late included.
+---@return PassDefinition self The pass instance for chaining.
+function PassDefinition:ClearOrdering() end
+
 ---A new asset queued for creation by a Lua patch script.
 ---@class LuaAsset
----@field CurrentValue any The asset's current Lua-facing value. Initialized at creation time and replaced by each patch that runs against this asset.
----@field Label string The addressables label the asset is tagged with for group-based loading.
----@field Name string The addressables address of the asset (globally unique).
+local LuaAsset = {}
+
+---Creates the asset only when these features are on.
+---@param ... string The feature IDs, namespaced to the creating mod when they do not already carry a namespace.
+---@return LuaAsset self The asset for chaining.
+function LuaAsset:Feature(...) end
+
+---Creates the asset only when these features are off.
+---@param ... string The feature IDs, namespaced to the creating mod when they do not already carry a namespace.
+---@return LuaAsset self The asset for chaining.
+function LuaAsset:NoFeature(...) end
+
+---Work a mod registers to run when the active feature set allows it: only while the mod is enabled, and only while
+---the features selected with Feature are on and those selected with NoFeature are off.
+---@class FeatureGatedAction
+---@field ModId string Gets the mod the action belongs to, whose default feature must be on for it to run unless the mod is on in every set.
+---@field Name string Gets the name shown while the action runs.
+local FeatureGatedAction = {}
+
+---Runs only while a feature is on.
+---@param featureId string The feature id, bare ids belonging to the action's mod.
+---@return FeatureGatedAction self This action, for chaining.
+function FeatureGatedAction:Feature(featureId) end
+
+---Runs only while a feature is off.
+---@param featureId string The feature id, bare ids belonging to the action's mod.
+---@return FeatureGatedAction self This action, for chaining.
+function FeatureGatedAction:NoFeature(featureId) end
+
+---Checks whether the action runs in the active set.
+---@return boolean applies True if the mod and every selected feature allow it.
+function FeatureGatedAction:Applies() end
 
 ---The PatchManager Lua library, exposed to scripts as the global `PM`.
 ---@type PatchManagerCore
@@ -243,6 +360,6 @@ PM = nil
 
 ---Lua module exposed under the global `J` namespace, providing helpers for constructing JSON
 ---literals that MoonSharp's auto-conversion does not produce. Also installed as callable: invoking
----`J(value)` converts `value` to a JsonUserData.
+---`J(value)` converts value to a JsonUserData.
 ---@type JsonModule
 J = nil

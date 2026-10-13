@@ -1,15 +1,18 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
--- Source: ksp2redux/Packages/SpaceWarp/Runtime/Core/API/Config/ModConfig.cs
--- Source: ksp2redux/Packages/SpaceWarp/Runtime/Core/API/Config/ConfigBuilder.cs
--- Source: ksp2redux/Packages/SpaceWarp/Runtime/Core/API/Config/ConfigHandle.cs
--- Source: ksp2redux/Packages/SpaceWarp/Runtime/Core/API/Config/ConfigView.cs
--- Source: ksp2redux/Packages/SpaceWarp/Runtime/Core/API/Config/ConfigTypes.cs
--- Source: ksp2redux/Packages/SpaceWarp/Runtime/Core/API/Config/LuaColor.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Config/ModConfig.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Config/ConfigBuilder.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Config/ConfigHandle.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Config/ConfigView.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Config/ConfigTypes.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Config/IConfigType.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Config/ConfigTypeAttribute.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Config/LuaColor.cs
 
 ---The Lua `Config` global - a mod's own config namespace. Declare entries through Define,
 ---fetch existing ones through Get, and reach another mod's config through Mod.
 ---@class ModConfig
+local ModConfig = {}
 
 ---Begins defining a config entry in the given section and name. Chain the builder methods and finish with
 ---`:Bind()` to get a live handle.
@@ -34,9 +37,10 @@ function ModConfig:Mod(modId) end
 ---Fluent builder for a config entry. Accumulates the entry's shape and binds it at Bind,
 ---returning a live ConfigHandle.
 ---@class ConfigBuilder
+local ConfigBuilder = {}
 
 ---Sets the entry's config type (built-in such as `Double`, or a custom type).
----@param type any
+---@param type StringType|IntegerType|DoubleType|BooleanType|ColorType|userdata
 ---@return ConfigBuilder
 function ConfigBuilder:Type(type) end
 
@@ -56,7 +60,7 @@ function ConfigBuilder:Default(value) end
 function ConfigBuilder:Range(min, max, steps, format) end
 
 ---Constrains the value to an enumerated set, given as a Lua array of rich values.
----@param list any
+---@param list any[]
 ---@return ConfigBuilder
 function ConfigBuilder:Values(list) end
 
@@ -80,6 +84,16 @@ function ConfigBuilder:DescLoc(key) end
 ---@return ConfigBuilder
 function ConfigBuilder:Tag(name) end
 
+---Shows the entry in the settings menu only while a feature is on. A bare id names one of this mod's features.
+---@param featureId string
+---@return ConfigBuilder
+function ConfigBuilder:Feature(featureId) end
+
+---Shows the entry in the settings menu only while a feature is off. A bare id names one of this mod's features.
+---@param featureId string
+---@return ConfigBuilder
+function ConfigBuilder:NoFeature(featureId) end
+
 ---Binds the entry and returns a live handle over it.
 ---@return ConfigHandle
 function ConfigBuilder:Bind() end
@@ -88,6 +102,7 @@ function ConfigBuilder:Bind() end
 ---rich values while storage holds the C# value the settings menu renders.
 ---@class ConfigHandle
 ---@field value any The current value in the config type's rich Lua domain. Reading deserializes the stored value. Writing serializes, stores (which saves the file), and fires change callbacks.
+local ConfigHandle = {}
 
 ---Registers a callback fired whenever the value changes, receiving the old and new values in the rich
 ---Lua domain.
@@ -96,12 +111,13 @@ function ConfigHandle:OnChange(fn) end
 
 ---Determines whether the entry carries the given metadata tag.
 ---@param tag string The tag to check for.
----@return boolean True if the entry has the tag, false otherwise.
+---@return boolean hasTag True if the entry has the tag, false otherwise.
 function ConfigHandle:HasTag(tag) end
 
 ---A read/write view over a config file - a mod's own, or another mod's via `Config:Mod(id)`. Reaches
 ---existing entries with Get; it cannot define new ones (defining is an own-config operation).
 ---@class ConfigView
+local ConfigView = {}
 
 ---Returns a live handle over an existing entry, or `nil` if the section or entry does not exist (the
 ---owning mod may not have bound it yet).
@@ -111,26 +127,81 @@ function ConfigHandle:HasTag(tag) end
 function ConfigView:Get(section, name) end
 
 ---A string config value, stored as a string.
----The global name is `String`.
 ---@class StringType
+---@field StorageType any The C# type the entry stores, and the type the settings menu renders the entry by.
+local StringType = {}
+
+---Converts a rich Lua value to the C# storage value the entry holds.
+---@param value any The rich Lua value.
+---@return string storage The storage value.
+function StringType:Serialize(value) end
+
+---Converts the C# storage value back to the rich Lua value scripts use.
+---@param storage string The storage value.
+---@return string value The rich Lua value.
+function StringType:Deserialize(storage) end
 
 ---An integer config value, stored as an int.
----The global name is `Integer`.
 ---@class IntegerType
+---@field StorageType any The C# type the entry stores, and the type the settings menu renders the entry by.
+local IntegerType = {}
+
+---Converts a rich Lua value to the C# storage value the entry holds.
+---@param value any The rich Lua value.
+---@return integer storage The storage value.
+function IntegerType:Serialize(value) end
+
+---Converts the C# storage value back to the rich Lua value scripts use.
+---@param storage integer The storage value.
+---@return integer value The rich Lua value.
+function IntegerType:Deserialize(storage) end
 
 ---A floating-point config value, stored as a double.
----The global name is `Double`.
 ---@class DoubleType
+---@field StorageType any The C# type the entry stores, and the type the settings menu renders the entry by.
+local DoubleType = {}
+
+---Converts a rich Lua value to the C# storage value the entry holds.
+---@param value any The rich Lua value.
+---@return number storage The storage value.
+function DoubleType:Serialize(value) end
+
+---Converts the C# storage value back to the rich Lua value scripts use.
+---@param storage number The storage value.
+---@return number value The rich Lua value.
+function DoubleType:Deserialize(storage) end
 
 ---A boolean config value, stored as a bool.
----The global name is `Boolean`.
 ---@class BooleanType
+---@field StorageType any The C# type the entry stores, and the type the settings menu renders the entry by.
+local BooleanType = {}
+
+---Converts a rich Lua value to the C# storage value the entry holds.
+---@param value any The rich Lua value.
+---@return boolean storage The storage value.
+function BooleanType:Serialize(value) end
+
+---Converts the C# storage value back to the rich Lua value scripts use.
+---@param storage boolean The storage value.
+---@return boolean value The rich Lua value.
+function BooleanType:Deserialize(storage) end
 
 ---A color config value: a LuaColor on the script side, a `UnityEngine.Color` in storage
 ---so the settings menu renders it as a color picker. Accepts a LuaColor or a table (keyed
 ---`{r=, g=, b=, a=}` or indexed `{1, 0.5, 0, 1}`) when serializing.
----The global name is `Color`.
 ---@class ColorType
+---@field StorageType any The C# type the entry stores, and the type the settings menu renders the entry by.
+local ColorType = {}
+
+---Converts a rich Lua value to the C# storage value the entry holds.
+---@param value LuaColor|table The rich Lua value.
+---@return any storage The storage value.
+function ColorType:Serialize(value) end
+
+---Converts the C# storage value back to the rich Lua value scripts use.
+---@param storage any The storage value.
+---@return LuaColor value The rich Lua value.
+function ColorType:Deserialize(storage) end
 
 ---The Lua-side representation of a color config value.
 ---@class LuaColor

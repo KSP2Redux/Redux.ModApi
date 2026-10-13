@@ -1,139 +1,134 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
--- Source: ksp2redux/Packages/SpaceWarp/Runtime/Core/API/Lifecycle/ModScriptRuntime.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Lifecycle/ModScriptRuntime.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Lifecycle/ModRequire.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Lifecycle/SwLibrary.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Lifecycle/LuaRegistration.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Lifecycle/IModEnvContributor.cs
+-- Source: Assets/Modules/Redux.ModApi/SpaceWarp/Runtime/Core/API/Config/ConfigTypes.cs
+-- Source: Assets/Code/Redux/Lua/ReduxContributors.cs
+-- Source: Assets/Code/Redux/Lua/WaitLibrary.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/LuaPatching/Builtin/PatchManagerEnvContributor.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/LuaPatching/Builtin/JsonModule.cs
+-- Source: Assets/Code/KSP/Sim/impl/lua/ViewControllerLua.cs
+-- Source: Assets/Code/KSP/Sim/impl/lua/SpaceSimulationLua.cs
+-- Source: Assets/Code/KSP/ScriptUI/LuaUIMgr.cs
+-- Source: Assets/Code/KSP/game/Missions/KSP2MissionLuaInterface.cs
+-- Source: Assets/Code/KSP/game/Colonies/ColonyManager.cs
+-- Source: Assets/Code/KSP/Rendering/LightingSettingsLua.cs
+-- Source: Assets/Code/KSP/Rendering/PlanetSettingsLua.cs
+-- Source: Assets/Code/KSP/Rendering/PostProcessingSettingsLua.cs
+-- Source: Assets/Code/KSP/VolumeCloud/lua/VolumeCloudLua.cs
+-- Source: Assets/Code/Root/CheatSystem.cs
+-- Source: Assets/Code/Root/DebugVisualizer.cs
+-- Source: Assets/Code/KSP/DebugTools/QuickActionDebugTools.cs
+-- Source: Assets/Code/KSP/DebugTools/FXDebugTools.cs
+-- Source: Assets/Code/Root/KSPAudioDebug.cs
 
---#region SpaceWarp core
-
----The SpaceWarp library global. Registers lifecycle closures and named loggers.
----@type SwLibrary
-SW = nil
-
----The calling mod's default logger.
----@type ModLogger
-Log = nil
-
----Exposes mod values and functions to the in-game console.
----@type ConsoleLibrary
-Console = nil
-
----The calling mod's id.
 ---@type string
 ModId = nil
 
----The calling mod's location on disk, or nil for the console environment.
 ---@type string?
 Location = nil
 
---#endregion
+---@type boolean
+Enabled = nil
 
---#region Config
+---@type SwLibrary
+SW = nil
 
----The calling mod's config namespace. Define, get, and reach other mods' config entries.
----@type ModConfig
-Config = nil
+---@type ModLogger
+Log = nil
 
----The string config type, passed to a config builder's Type method.
 ---@type StringType
 String = nil
 
----The integer config type, passed to a config builder's Type method.
 ---@type IntegerType
 Integer = nil
 
----The floating-point config type, passed to a config builder's Type method.
 ---@type DoubleType
 Double = nil
 
----The boolean config type, passed to a config builder's Type method.
 ---@type BooleanType
 Boolean = nil
 
----The color config type, passed to a config builder's Type method.
 ---@type ColorType
 Color = nil
 
---#endregion
+---@type ModConfig
+Config = nil
 
---#region Lifecycle
+---@type ModConfig
+CampaignConfig = nil
 
----Registers live-game lifecycle closures (Update, scene callbacks, coroutines).
+---@type ConsoleLibrary
+Console = nil
+
+---@type FeaturesLibrary
+Features = nil
+
+---@type PatchManagerCore
+PM = nil
+
+---@type JsonModule
+J = nil
+
 ---@type GameLifecycleLibrary
 Game = nil
 
----Maps each high-level game-state name to its numeric value, for comparison against scene callback arguments.
 ---@type GameState
 GameState = nil
 
---#endregion
+---@type InputLibrary
+Input = nil
 
---#region Stock game globals
+---@type FilesLibrary
+Files = nil
 
----View-layer scripting bridge: active vessel, flight camera, and vessel queries.
+---@type Wait
+Wait = nil
+
+---@type ScriptContextLibrary
+Script = nil
+
 ---@type View
 View = nil
 
----Space-simulation scripting bridge: teleport, debug, and Hand of God forces.
 ---@type SpaceSimulation
 SpaceSimulation = nil
 
----Builds lightweight in-game windows, controls, and dialogs from a script.
 ---@type LuaUIMgr
 UI = nil
 
----Mission scripting interface: activation and state-management callbacks.
 ---@type KSP2MissionLuaInterface
 Missions = nil
 
----Colony scripting bridge: colony debug and test callbacks.
 ---@type ColonyManager
 Colonies = nil
 
---#endregion
-
---#region Debug and dev tools
-
----Lighting graphics debug settings: atmospheric scattering, global illumination, reflections.
 ---@type LightingDebug
 LightingDebug = nil
 
----Planet rendering debug settings: scatter, collider visibility, low-quality mode.
 ---@type PlanetDebug
 PlanetDebug = nil
 
----Post-processing and tutorial overlay debug settings.
 ---@type PostProcessingDebug
 PostProcessingDebug = nil
 
----Volumetric cloud debug settings: enable state and raymarch step size.
 ---@type VolumeCloud
 VolumeCloud = nil
 
----Runtime cheat toggles: physics, aerodynamics, thermodynamics, part unlocking, resources.
 ---@type Cheats
 Cheats = nil
 
----In-game debug visualizations and debug tool toggles.
 ---@type DebugVisualizer
 DebugVisualizer = nil
 
----Quick-action debug callbacks that spawn vessels in various game states.
 ---@type QuickActions
 QuickActions = nil
 
----Debug window for inspecting and controlling visual effects on parts and vessels.
 ---@type FXDebugTools
 FXDebugTools = nil
 
---#endregion
-
---#region Script utilities
-
----Keyboard input queries for the current frame.
----@type Input
-Input = nil
-
----The calling script's own identity, logging, waits, and file access.
----@type Script
-Script = nil
-
---#endregion
+---@type AudioDebug
+AudioDebug = nil

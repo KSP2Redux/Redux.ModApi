@@ -1,20 +1,19 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
--- Source: Assets/Modules/PatchManager/Runtime/Missions/UserData/MissionUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Missions/UserData/StageUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Missions/UserData/StagesUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Missions/UserData/ContentBranchesUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Missions/UserData/MissionRewardUserData.cs
--- Source: Assets/Modules/PatchManager/Runtime/Missions/Converters/MissionConverter.cs
--- Source: Assets/Modules/PatchManager/Runtime/Missions/MissionsLuaModule.cs
--- Source: Assets/Modules/PatchManager/Runtime/Missions/MissionsTypes.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Missions/UserData/MissionUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Missions/UserData/StageUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Missions/UserData/StagesUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Missions/UserData/ContentBranchesUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Missions/UserData/MissionRewardUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Missions/MissionsLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Missions/Converters/MissionConverter.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Missions/MissionsTypes.cs
 -- Source: Assets/Code/KSP/game/Missions/Definitions/MissionData.cs
 -- Source: Assets/Code/KSP/game/Missions/Definitions/MissionStage.cs
--- Source: Assets/Code/KSP/game/Missions/Definitions/MissionReward.cs
--- Source: Assets/Code/KSP/game/Missions/Definitions/MissionRewardDefinition.cs
--- Source: Assets/Code/KSP/game/Missions/Definitions/MissionProgressScope.cs
 -- Source: Assets/Code/KSP/game/Missions/MissionBranch.cs
 -- Source: Assets/Code/KSP/game/Missions/MissionContentBranch.cs
+-- Source: Assets/Code/KSP/game/Missions/Definitions/MissionReward.cs
+-- Source: Assets/Code/KSP/game/Missions/Definitions/MissionRewardDefinition.cs
 -- Source: Assets/Code/KSP/game/Missions/Condition.cs
 -- Source: Assets/Code/KSP/game/Missions/ConditionSet.cs
 -- Source: Assets/Code/KSP/game/Missions/PropertyCondition.cs
@@ -67,11 +66,11 @@ local MissionsLuaModule = {}
 ---@return PatchDefinition<MissionUserData, any> patch The registered patch.
 function MissionsLuaModule:Patch(name) end
 
----Registers a patch that copies each mission it matches under a new name, then runs the chained `:Do` callback on the copy.
----Restrict the pass and ordering like any other patch. Internal ID fields in the copy are left alone.
+---Registers a patch that copies each mission it matches under a new name, then runs patchMethod
+---on the copy.
 ---@param source string The name of the mission to copy. Supports `*` and `?` wildcards.
 ---@param newName string The name of the copy, with `{name}` standing in for the source's name.
----@param patchMethod? fun(copy: MissionUserData): string? Shorthand for chaining `:Do(callback)`, which is the canonical form. Leave both off to copy without changes.
+---@param patchMethod? fun(copy: MissionUserData): string? The callback to run on each copy, or `nil` to copy without changes.
 ---@return PatchDefinition<MissionUserData, any> patch The registered patch.
 function MissionsLuaModule:Duplicate(source, newName, patchMethod) end
 
@@ -172,9 +171,9 @@ function MissionsLuaModule:Action(type, callback) end
 ---@field TargetStage integer The stage ID this branch transitions to when its condition is satisfied.
 ---@field ExceptionBranch boolean Indicates whether this branch represents an exception path in the mission flow.
 ---@field IsPreRequisiteBranch boolean Gets a value indicating whether this branch acts as a pre-requisite gate before the owning stage proceeds.
----@field IsExceptionBranch boolean Gets a value indicating whether this branch is currently marked as an exception branch.
+---@field IsExceptionBranch? boolean Gets a value indicating whether this branch is currently marked as an exception branch.
 
----@alias MissionBranch _MissionBranch | { condition: Condition, TargetStage: integer, ExceptionBranch: boolean, IsPreRequisiteBranch: boolean, IsExceptionBranch: boolean }
+---@alias MissionBranch _MissionBranch | { condition: Condition, TargetStage: integer, ExceptionBranch: boolean, IsPreRequisiteBranch: boolean, IsExceptionBranch: boolean? }
 
 ---Represents a named branch of mission actions that can be activated or deactivated on demand by branch ID.
 ---@class _MissionContentBranch : _JsonUserDataBase
@@ -226,8 +225,9 @@ function MissionsLuaModule:Action(type, callback) end
 ---@field CaptureIsInput boolean Whether the capture watcher uses CaptureInputstring as its input parameter.
 ---@field CaptureInputstring string Optional input passed to the capture watcher.
 ---@field ConditionType "PropertyCondition" Gets the condition type identifier string for this condition.
+---@field PropertyTypeAQNAbbrev? string Gets an abbreviated, human-readable form of PropertyTypeAQN with assembly details stripped.
 
----@alias PropertyCondition _PropertyCondition | { RequireCurrentValue: boolean, valueMet: boolean, PropertyTypeAQN: string, TestWatchedValue: number, TestWatchedstring: string, TestWatchedStringVariable: string, TestWatchedInt: integer, TestWatchedBool: boolean, propOperator: PropertyOperator, isInput: boolean, Inputstring: string, CaptureValueAsVariable: string, CapturePropertyTypeAQN: string, CaptureIsInput: boolean, CaptureInputstring: string, ConditionType: "PropertyCondition" }
+---@alias PropertyCondition _PropertyCondition | { RequireCurrentValue: boolean, valueMet: boolean, PropertyTypeAQN: string, TestWatchedValue: number, TestWatchedstring: string, TestWatchedStringVariable: string, TestWatchedInt: integer, TestWatchedBool: boolean, propOperator: PropertyOperator, isInput: boolean, Inputstring: string, CaptureValueAsVariable: string, CapturePropertyTypeAQN: string, CaptureIsInput: boolean, CaptureInputstring: string, ConditionType: "PropertyCondition", PropertyTypeAQNAbbrev: string? }
 
 ---Condition that evaluates to true when a specified game message event type has been observed.
 ---@class _EventCondition : _ConditionBase
@@ -235,8 +235,9 @@ function MissionsLuaModule:Action(type, callback) end
 ---@field inputString string
 ---@field EventTypeAQN string The assembly-qualified name of the event type used to resolve eventType at initialization.
 ---@field ConditionType "EventCondition" Gets the string identifier for this condition type.
+---@field EventTypeAQNAbbrev? string Gets the abbreviated form of EventTypeAQN, with assembly information stripped.
 
----@alias EventCondition _EventCondition | { eventObserved: boolean, inputString: string, EventTypeAQN: string, ConditionType: "EventCondition" }
+---@alias EventCondition _EventCondition | { eventObserved: boolean, inputString: string, EventTypeAQN: string, ConditionType: "EventCondition", EventTypeAQNAbbrev: string? }
 
 ---Condition that evaluates success by subscribing to a configurable message event type and delegating evaluation to a ScriptMethodReference script.
 ---@class _ScriptCondition : _ConditionBase

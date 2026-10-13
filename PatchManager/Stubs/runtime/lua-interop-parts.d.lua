@@ -1,176 +1,195 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartStateConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartStatusConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartPropertiesConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartDefinitionConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartDefinitionContainerConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartOwnerStateConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartOwnerDefinitionConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartRelationshipDataConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/AttachNodeDefinitionConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/AttachNodeStateConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/AttchNodeConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/ScriptInterop/impl/moonsharp/StagePartsStateConverter.cs
--- Source: ksp2redux/Assets/Code/KSP/Sim/Definitions/PartProperties.cs
--- Source: ksp2redux/Assets/Code/KSP/Sim/Definitions/PartDefinition.cs
--- Source: ksp2redux/Assets/Code/KSP/Sim/Definitions/AttachNodeDefinition.cs
--- Source: ksp2redux/Assets/Code/KSP/Sim/PartRelationshipData.cs
--- Source: ksp2redux/Assets/Code/KSP/Sim/PartStatus.cs
--- Source: ksp2redux/Assets/Code/KSP/Sim/AttachNodeType.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartStatusConverter.cs
+-- Source: Assets/Code/KSP/Sim/PartStatus.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/AttchNodeConverter.cs
+-- Source: Assets/Code/KSP/Sim/AttachNodeType.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartPropertiesConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/PartProperties.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/AttachNodeDefinitionConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/AttachNodeDefinition.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/AttachNodeMethod.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/AttachNodeStateConverter.cs
+-- Source: Assets/Code/KSP/Sim/State/AttachNodeState.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartStateConverter.cs
+-- Source: Assets/Code/KSP/Sim/State/PartState.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartDefinitionConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/PartDefinition.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartDefinitionContainerConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/PartDefinitionContainer.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartOwnerStateConverter.cs
+-- Source: Assets/Code/KSP/Sim/State/PartOwnerState.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartOwnerDefinitionConverter.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/NullableConverter.cs
+-- Source: Assets/Code/KSP/Sim/Definitions/PartOwnerDefinition.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/PartRelationshipDataConverter.cs
+-- Source: Assets/Code/KSP/Sim/PartRelationshipData.cs
+-- Source: Assets/Code/KSP/ScriptInterop/impl/moonsharp/StagePartsStateConverter.cs
+-- Source: Assets/Code/KSP/Sim/State/StagePartsState.cs
 
+-- alt: KSP.Sim.PartStatus
 ---Operational status of a part.
 ---@alias PartStatus
----| "NONE"
----| "IDLE"
----| "ACTIVE"
----| "DEACTIVATED"
----| "DEAD"
+---| "NONE" # No status assigned.
+---| "IDLE" # Part is present but not actively operating.
+---| "ACTIVE" # Part is actively operating.
+---| "DEACTIVATED" # Part has been explicitly deactivated.
+---| "DEAD" # Part is destroyed or otherwise non-functional.
 
+-- alt: AttachNodeType, NodeType, KSP.Sim.AttachNodeType
+---The type of attachment node used to connect spacecraft parts.
+---@alias AttachNodeTypeInterop
+---| "Stack" # A rigid axial attachment node that connects parts end-to-end along a stack axis.
+---| "Surface" # An attachment node that connects a part to the surface of another part.
+---| "Dock" # An attachment node used for docking port connections between vessels.
+
+-- alt: PartProperties, KSP.Sim.Definitions.PartProperties
 ---Represents the raw serialized properties of a part definition, including physical, thermal, attachment, and resource configuration.
 ---@class Part
--- alt: PartProperties, KSP.Sim.Definitions.PartProperties
----@field partName string
----@field model string
----@field ActivatesEvenIfDisconnected boolean
----@field alphaCutoff number
----@field angularDrag number
----@field attachRules AttachRulesInterop
----@field author string
----@field bodyLiftOnlyAttachName string
----@field bodyLiftOnlyUnattachedLift boolean
----@field buoyancy number
----@field buoyancyUseSine boolean
----@field boundsCentroidOffset Vec3
----@field boundsMultiplier number
----@field breakingForce number
----@field breakingTorque number
----@field bulkheadProfiles string
----@field category string
----@field family string
----@field CoMOffset Vec3
----@field CoPOffset Vec3
----@field CoLOffset Vec3
----@field CenterOfBuoyancy Vec3
----@field CenterOfDisplacement Vec3
----@field childStageOffset integer
----@field cost integer
----@field crashTolerance number
----@field CrewCapacity integer
----@field description string
----@field dragModelType string
----@field emissiveConstant number
----@field entryCost integer
----@field explosionPotential number
----@field fuelCrossFeed boolean
----@field heatConductivity number
----@field heatConvectiveConstant number
----@field iconCenter Vec3
----@field inverseStageCarryover boolean
----@field isCompound boolean
----@field manufacturer string
----@field mass number
----@field maximum_drag number
----@field maxLength integer
----@field maxTemp number
----@field minimum_drag number
----@field mirrorRefAxis Vec3
----@field noAutoEVAMulti boolean
----@field oabEditorCategory OABEditorCategory
----@field radiatorHeadroom number
----@field radiatorMax number
----@field resourcePriorityUseParentInverseStage boolean
----@field rimFalloff integer
----@field PhysicsMode any C# field type is PartPhysicsModes, which has no registered converter.
----@field scale number
----@field sizeKey string
----@field sizeCategory MetaAssemblySizeFilterTypeInterop
----@field skinMassPerArea number
----@field skinMaxTemp number
----@field skinInternalConductionMult number
----@field skipColliderIgnores boolean
----@field specPower number
----@field stackSymmetry integer
----@field stageOffset integer
----@field stageType AssemblyPartStageTypeInterop
----@field subcategory string
----@field tags string
----@field TechRequired string
----@field title string
----@field thermalMassModifier number
----@field allowKinematicPhysicsIfIntersectTerrain boolean
----@field attachNodes AttachNode[]
----@field resources ContainedResourceDefinitionInterop[]
----@field partCosts PartResourceCost[]
----@field modules table[]
+---@field partName string The name identifier of the part.
+---@field name? string The name identifier of the part.
+---@field model string The asset address or path of the part model.
+---@field ActivatesEvenIfDisconnected boolean A value indicating whether this part activates even when disconnected from the vessel.
+---@field alphaCutoff number The alpha cutoff threshold used for transparency rendering on the part.
+---@field angularDrag number The angular drag coefficient applied to the part during physics simulation.
+---@field attachRules AttachRulesInterop The attach rules defining how and where other parts may be attached to this part.
+---@field author string The name of the author who created the part.
+---@field bodyLiftOnlyAttachName string The name of the attach node used when body lift is restricted to the unattached state.
+---@field bodyLiftOnlyUnattachedLift boolean A value indicating whether body lift is only applied when the part is unattached.
+---@field buoyancy number The buoyancy scalar applied to the part when submerged.
+---@field buoyancyUseSine boolean A value indicating whether buoyancy force is calculated using a sine curve.
+---@field boundsCentroidOffset Vec3 The offset from the part origin to the center of the computed bounds.
+---@field boundsMultiplier number A multiplier applied to the part bounds for collision and drag calculations.
+---@field breakingForce number The force, in kilonewtons, required to break the part's structural joint.
+---@field breakingTorque number The torque, in kilonewton-meters, required to break the part's structural joint.
+---@field bulkheadProfiles string A pipe-separated string listing the bulkhead profiles this part is compatible with.
+---@field category string The editor category string used to sort this part in the parts list.
+---@field family string The family group this part belongs to, used for part variant grouping.
+---@field CoMOffset Vec3 The offset of the center of mass from the part origin.
+---@field CoPOffset Vec3 The offset of the center of pressure from the part origin.
+---@field CoLOffset Vec3 The offset of the center of lift from the part origin.
+---@field CenterOfBuoyancy Vec3 The local position of the center of buoyancy relative to the part origin.
+---@field CenterOfDisplacement Vec3 The local position of the center of displacement used for buoyancy volume calculations.
+---@field childStageOffset integer The staging index offset applied to child parts relative to this part's stage.
+---@field cost integer The base cost of the part in funds.
+---@field crashTolerance number The impact speed, in meters per second, that the part can withstand before being destroyed.
+---@field CrewCapacity integer The number of crew members this part can hold.
+---@field description string The human-readable description of the part shown in the editor.
+---@field dragModelType string The drag model type identifier that controls how aerodynamic drag is computed for this part.
+---@field emissiveConstant number The emissive constant used in thermal radiation calculations for this part.
+---@field entryCost integer The one-time science or technology entry cost associated with unlocking this part.
+---@field explosionPotential number A scalar value representing how much explosive force this part contributes when destroyed.
+---@field fuelCrossFeed boolean A value indicating whether this part allows fuel to flow across its attachment connections.
+---@field heatConductivity number The rate at which heat conducts through the part's body.
+---@field heatConvectiveConstant number The convective heat transfer constant applied during atmospheric heating.
+---@field iconCenter Vec3 The center position used when rendering the part icon in the editor.
+---@field inverseStageCarryover boolean A value indicating whether this part's staging state carries over to the inverse stage.
+---@field isCompound boolean A value indicating whether this part is a compound part composed of multiple meshes.
+---@field manufacturer string The name of the manufacturer associated with this part.
+---@field mass number The dry mass of the part in metric tons.
+---@field maximum_drag number The maximum drag coefficient applied to the part.
+---@field maxLength integer The maximum stack length allowed when stacking this part in the editor.
+---@field maxTemp number The maximum temperature, in Kelvin, the part can withstand before being destroyed.
+---@field minimum_drag number The minimum drag coefficient applied to the part.
+---@field mirrorRefAxis Vec3 The axis used as the reference direction when mirroring this part.
+---@field noAutoEVAMulti boolean A value indicating whether automatic EVA multi-mode is disabled for this part.
+---@field oabEditorCategory OABEditorCategory The editor category assigned to this part in the Object Assembly Building interface.
+---@field radiatorHeadroom number The thermal headroom margin reserved for radiator cooling calculations.
+---@field radiatorMax number The maximum heat flux, in kilowatts, that radiators on this part can dissipate.
+---@field resourcePriorityUseParentInverseStage boolean A value indicating whether resource priority uses the parent part's inverse stage value.
+---@field rimFalloff integer The falloff exponent applied to rim highlight rendering on this part.
+---@field PhysicsMode? any The physics simulation mode applied to this part.
+---@field partType? string The string identifier of the part type category used for classification.
+---@field scale number The uniform scale factor applied to the part model.
+---@field sizeKey string The size key string used to match this part against bulkhead size filters.
+---@field sizeCategory MetaAssemblySizeFilterTypeInterop The size category used to filter this part in the assembly meta-size system.
+---@field skinMassPerArea number The mass per unit skin area used in thermal skin conduction calculations.
+---@field skinMaxTemp number The maximum temperature, in Kelvin, the outer skin of the part can sustain.
+---@field skinInternalConductionMult number A multiplier on the conduction rate between the skin and internal part temperature.
+---@field skipColliderIgnores boolean A value indicating whether collider ignore pairs for this part are skipped during initialization.
+---@field specPower number The specular power exponent used in the part's shading calculations.
+---@field stackSymmetry integer The number of symmetry counterparts placed per stack when using stack symmetry in the editor.
+---@field stageOffset integer The index offset applied to this part's own staging group.
+---@field stageType AssemblyPartStageTypeInterop The staging behavior type assigned to this part.
+---@field subcategory string The subcategory string used for secondary filtering in the parts list.
+---@field tags string A space-separated list of search tags associated with this part.
+---@field TechRequired string The technology node identifier required to unlock this part.
+---@field title string The human-readable display title of the part shown in the editor.
+---@field thermalMassModifier number A multiplier applied to the thermal mass of the part during heat simulation.
+---@field allowKinematicPhysicsIfIntersectTerrain boolean A value indicating whether this part is permitted to enter kinematic physics mode when intersecting terrain.
+---@field attachNodes? AttachNode[] The list of attach node definitions specifying connection points on this part.
+---@field resources? ContainedResourceDefinitionInterop[] The list of resource containers specifying which resources this part holds and their capacities.
+---@field partCosts? PartResourceCost[] The list of resource cost entries that contribute to this part's total cost calculation.
+---@field modules? { name: string, [string]: any }[] A list of unparsed legacy module data dictionaries read from older part definition formats.
 
+-- alt: KSP.Sim.Definitions.AttachNodeDefinition
 ---Represents the definition of a part attachment node, including its position, orientation, type, and joint configuration.
 ---@class AttachNode
--- alt: KSP.Sim.Definitions.AttachNodeDefinition
----@field nodeID string Required. Must be unique for this node.
----@field nodeType AttachNodeType
----@field attachMethod string Enum AttachNodeMethod marshalled as its name string (no converter).
----@field position Vec3d
----@field orientation Vec3d
----@field size integer
----@field sizeKey string
----@field resourceXFeed boolean
----@field rigid boolean
----@field angularStrengthMultiplier number
----@field visualSize number
+---@field nodeID string The unique identifier for this attachment node.
+---@field nodeType AttachNodeTypeInterop The type of this attachment node, controlling how it participates in part attachment.
+---@field attachMethod "FIXED_JOINT" | "HINGE_JOINT" | "LOCKED_JOINT" | "MERGED_PHYSICS" | "NO_PHYSICS" | "NONE" The method used to attach a part at this node.
+---@field position Vec3d The local position of this attachment node relative to its part.
+---@field orientation Vec3d The local orientation direction of this attachment node relative to its part.
+---@field size integer The integer size category of this attachment node, used for compatibility checks between nodes.
+---@field sizeKey? string The string key identifying the size category of this attachment node.
+---@field resourceXFeed boolean A value indicating whether resources can flow across this attachment node to connected parts.
+---@field rigid boolean A value indicating whether this attachment node creates a rigid joint that resists flex.
+---@field angularStrengthMultiplier number A multiplier applied to the angular break strength of the joint at this attachment node.
+---@field visualSize number The visual scale of this attachment node as rendered in the editor.
 
----Converts AttachNodeState values between C# and MoonSharp script representations.
----@class AttachNodeState
 -- alt: KSP.Sim.State.AttachNodeState
----@field nodeId string
----@field IsDynamic boolean
----@field AttachedPartGuid IGGuid
----@field attachedPartNodeID string
----@field SizeForDynamic number
----@field SizeKeyForDynamic string
----@field LocalPositionForDynamic Vec3d
----@field LocalRotationForDynamic Quatd
+---Represents the serialized state of a part attachment node, including the attached part identity and dynamic position and orientation.
+---@class AttachNodeState
+---@field nodeId string The identifier of this attachment node on its owning part.
+---@field IsDynamic boolean Indicates whether this attachment node is a dynamic node whose size, key, position, and orientation are captured in the dynamic fields on this state.
+---@field AttachedPartGuid any The IGGuid identifying the simulation object of the part attached at this node.
+---@field attachedPartNodeID string The identifier of the node on the attached part that connects to this node.
+---@field SizeForDynamic number The serialized size value for a dynamic attachment node.
+---@field SizeKeyForDynamic string The serialized size key for a dynamic attachment node.
+---@field LocalPositionForDynamic Vec3 The local-space position of a dynamic attachment node relative to its owning part.
+---@field LocalRotationForDynamic Quat3 The local-space rotation of a dynamic attachment node relative to its owning part.
 
----Converts PartState struct values to and from MoonSharp script table representations.
----@class PartState
 -- alt: KSP.Sim.State.PartState
----@field PartOwnerGuid IGGuid
----@field localPosition Vec3d
----@field localRotation Quatd
----@field partStatus PartStatus
----@field attachNodeStates AttachNodeState[]
+---Represents the serialized state of a part, including position, rotation, attach nodes, resources, and simulation properties.
+---@class PartState
+---@field PartOwnerGuid any The GUID identifying the owner of this part.
+---@field localPosition Vec3d The position of the part relative to its parent coordinate frame.
+---@field localRotation Quatd The rotation of the part relative to its parent coordinate frame.
+---@field partStatus PartStatus The current operational status of the part.
+---@field attachNodeStates AttachNodeState[] The serialized states of all attach nodes on this part.
 
----Converts PartDefinition struct values between the CLR and MoonSharp script representations.
----@class PartDefinition
 -- alt: KSP.Sim.Definitions.PartDefinition
----@field Guid any C# System.Guid marshalled raw, no registered converter.
----@field Properties any C# field type is PartData, which has no registered converter.
----@field Modules any[] Element type SerializedPartModule has no registered converter.
+---Represents the definition of a spacecraft part, containing its identifier, data properties, and serialized module list.
+---@class PartDefinition
+---@field Guid any The globally unique identifier for this part.
+---@field Properties any The serialized data definition for this part, containing physical properties, attachment rules, resource containers, and module configuration.
+---@field Modules any[] The list of serialized part module snapshots attached to this part, each capturing module name, component type, behaviour type, and module data.
 
----Converts PartDefinitionContainer values between the CLR representation and MoonSharp DynValue tables.
----@class partcontainer
 -- alt: PartDefinitionContainer, KSP.Sim.Definitions.PartDefinitionContainer
----@field partGuid string
----@field partDefinition PartDefinition
----@field partState PartState?
+---Represents a serializable container associating a part GUID and name with its PartDefinition.
+---@class partcontainer
+---@field partGuid string The unique GUID string identifying this part.
+---@field partDefinition PartDefinition The definition of this part, containing its identifier, data properties, and module list.
+---@field partState? PartState The optional serialized state of this part, capturing position, rotation, attach nodes, resources, and simulation properties.
 
----Converts PartOwnerState struct values between CLR and MoonSharp script representations.
----@class PartOwnerState
 -- alt: KSP.Sim.State.PartOwnerState
----@field virtualConnections PartRelationship[]
+---Represents the state of a part owner, including its virtual part connections.
+---@class PartOwnerState
+---@field virtualConnections PartRelationship[] The list of virtual part connections for this part owner.
 
----Represents the MoonSharp script interop converter for PartOwnerDefinition.
----@class PartOwner
 -- alt: PartOwnerDefinition, KSP.Sim.Definitions.PartOwnerDefinition
+---Represents a definition marker identifying a part owner entity.
+---No fields are exposed to Lua.
+---@class PartOwner
 
+-- alt: KSP.Sim.PartRelationshipData
 ---Represents a directional relationship between two simulation parts, defined by their GUIDs and a relationship type.
 ---@class PartRelationship
--- alt: KSP.Sim.PartRelationshipData
----@field HostPartGuid IGGuid
----@field TargetPartGuid IGGuid
----@field relationshipType PartRelationshipType
+---@field HostPartGuid any The GUID of the host part in this relationship.
+---@field TargetPartGuid any The GUID of the target part in this relationship.
+---@field relationshipType PartRelationshipType The type of structural or fluid connection this relationship represents.
 
----Converts StagePartsState values to and from MoonSharp script values.
----@class StageParts
 -- alt: StagePartsState, KSP.Sim.State.StagePartsState
----@field PartIds IGGuid[]
+---Represents the state of a single staging group, holding the stage ID, active status, associated part IDs, and delta-V situation.
+---@class StageParts
+---@field PartIds any[] The list of in-game globally-unique identifiers for the parts belonging to this stage.

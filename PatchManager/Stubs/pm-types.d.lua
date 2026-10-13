@@ -22,6 +22,7 @@
 -- Source: Assets/Code/KSP/game/Science/ScienceSitutation.cs
 -- Source: Assets/Code/KSP/game/Science/ScienceReportType.cs
 -- Source: Assets/Code/KSP/game/Missions/Definitions/MissionProgressScope.cs
+-- Source: Assets/Code/KSP/IO/IOProvider.cs
 
 ---Categories available for classifying parts in the vehicle assembly editor.
 ---@alias PartCategories

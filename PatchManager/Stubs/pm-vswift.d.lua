@@ -1,37 +1,37 @@
 ---@meta
 -- AUTO-GENERATED from analysis of codebase and assets - do not edit by hand.
--- Source: Assets/Modules/V-SwiFT/Runtime/VSwift/VSwiftLuaModule.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/VSwift/UserData/PartSwitchUserData.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/VSwift/UserData/VariantSetsUserData.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/VSwift/UserData/VariantSetUserData.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/VSwift/UserData/VariantUserData.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/VSwift/Utilities/Adapters.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/VSwift/Utilities/Transformers.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/VSwift/Attributes/TransformerAdapter.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/VSwift/UserData/AttachNodeAdderUserData.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/VSwift/UserData/EngineModeSwapperUserData.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/VSwift/UserData/NodesUserData.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Data/Data_PartSwitch.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Variants/VariantSet.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Variants/Variant.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/ITransformer.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/Transformer.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/AttachNodeAdder.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/AttachNodeMover.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/DefaultEngineModesVisualizer.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/DefaultMassVisualizer.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/DefaultScalarVisualizer.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/EngineModeSwapper.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/MassModifier.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/MaterialSwapper.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/ModuleDefinitionTransformer.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/PartScalarTransformer.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/ResourceContainerAdder.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/ResourceContainerRemover.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/TextVisualizer.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/Modules/Transformers/TransformActivator.cs
--- Source: Assets/Modules/V-SwiFT/Runtime/VSwift/Utilities/SerializedDictionary.cs
--- Source: Assets/Modules/PatchManager/Runtime/Parts/UserData/ModuleUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/VSwift/VSwiftLuaModule.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/VSwift/UserData/PartSwitchUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/VSwift/UserData/VariantSetsUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/VSwift/UserData/VariantSetUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/VSwift/UserData/VariantUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/VSwift/Utilities/Adapters.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/VSwift/Utilities/Transformers.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/VSwift/Attributes/TransformerAdapter.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/VSwift/UserData/AttachNodeAdderUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/VSwift/UserData/EngineModeSwapperUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/VSwift/UserData/NodesUserData.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Data/Data_PartSwitch.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Variants/VariantSet.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Variants/Variant.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/ITransformer.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/Transformer.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/AttachNodeAdder.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/AttachNodeMover.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/DefaultEngineModesVisualizer.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/DefaultMassVisualizer.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/DefaultScalarVisualizer.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/EngineModeSwapper.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/MassModifier.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/MaterialSwapper.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/ModuleDefinitionTransformer.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/PartScalarTransformer.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/ResourceContainerAdder.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/ResourceContainerRemover.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/TextVisualizer.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/Modules/Transformers/TransformActivator.cs
+-- Source: Assets/Modules/Redux.ModApi/V-SwiFT/Runtime/VSwift/Utilities/SerializedDictionary.cs
+-- Source: Assets/Modules/Redux.ModApi/PatchManager/Runtime/Parts/UserData/ModuleUserData.cs
 
 ---Lua module exposed under the global `PM.VSwift`, providing helpers for attaching V-SwiFT part-switching to parts.
 ---@class VSwiftLuaModule
@@ -207,14 +207,14 @@ function AttachNodeAdderUserData:Add(id, callback) end
 
 ---Module-data attached to a part-switch module, carrying the variant sets, the per-set active variant, and the predefined dynamic attach nodes.
 ---@class _Data_PartSwitch : _JsonUserDataBase
----@field DataType "VSwift.Modules.Data.Data_PartSwitch, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Data.Data_PartSwitch, Ksp2Redux" | "VSwift.Modules.Data.Data_PartSwitch, Assembly-CSharp"
 ---@field VariantSets JsonList<VariantSet> The variant sets this module data carries.
 ---@field ActiveVariants JsonList<string> The currently-active variant ID per variant set, indexed positionally.
 ---@field DefaultActiveVariants JsonList<string> The definition-side default variant ID per variant set, indexed positionally.
 ---@field PredefinedDynamicNodes JsonList<AttachNodeDefinition> Attach nodes whose dynamic state can be toggled by transformers.
 ---@field MassModifier number Gets or sets the additional mass contributed by the active variant configuration.
 
----@alias Data_PartSwitch _Data_PartSwitch | { DataType: "VSwift.Modules.Data.Data_PartSwitch, Assembly-CSharp", VariantSets: JsonList<VariantSet>, ActiveVariants: JsonList<string>, DefaultActiveVariants: JsonList<string>, PredefinedDynamicNodes: JsonList<AttachNodeDefinition>, MassModifier: number }
+---@alias Data_PartSwitch _Data_PartSwitch | { ["$type"]: "VSwift.Modules.Data.Data_PartSwitch, Ksp2Redux" | "VSwift.Modules.Data.Data_PartSwitch, Assembly-CSharp", VariantSets: JsonList<VariantSet>, ActiveVariants: JsonList<string>, DefaultActiveVariants: JsonList<string>, PredefinedDynamicNodes: JsonList<AttachNodeDefinition>, MassModifier: number }
 
 ---A switchable axis on a part-switch module, listing the variants the player can pick from.
 ---@class _VariantSet : _JsonUserDataBase
@@ -234,106 +234,107 @@ function AttachNodeAdderUserData:Add(id, callback) end
 
 ---@alias Variant _Variant | { VariantId: string, VariantLocalizationKey: string, VariantTechs: JsonList<string>, Transformers: JsonList<ITransformer> }
 
+---Interface for V-SwiFT transformers, the per-variant operations that mutate a part when a variant is active.
 ---@alias ITransformer table | AttachNodeAdder | AttachNodeMover | DefaultEngineModesVisualizer | DefaultMassVisualizer | DefaultScalarVisualizer | EngineModeSwapper | MassModifier | MaterialSwapper | ModuleDefinitionTransformer | PartScalarTransformer | ResourceContainerAdder | ResourceContainerRemover | TextVisualizer | TransformActivator
 
 ---Adds attach nodes to the part (or repositions existing nodes whose tag matches a configured node) when active.
 ---@class _AttachNodeAdder : _JsonUserDataBase
----@field ["$type"] "VSwift.Modules.Transformers.AttachNodeAdder, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Transformers.AttachNodeAdder, Ksp2Redux" | "VSwift.Modules.Transformers.AttachNodeAdder, Assembly-CSharp"
 ---@field Nodes JsonList<AttachNodeDefinition> The attach-node definitions to add or reposition.
 
----@alias AttachNodeAdder _AttachNodeAdder | { ["$type"]: "VSwift.Modules.Transformers.AttachNodeAdder, Assembly-CSharp", Nodes: JsonList<AttachNodeDefinition> }
+---@alias AttachNodeAdder _AttachNodeAdder | { ["$type"]: "VSwift.Modules.Transformers.AttachNodeAdder, Ksp2Redux" | "VSwift.Modules.Transformers.AttachNodeAdder, Assembly-CSharp", Nodes: JsonList<AttachNodeDefinition> }
 
 ---Repositions existing attach nodes on the part to the configured local positions when active.
 ---@class _AttachNodeMover : _JsonUserDataBase
----@field ["$type"] "VSwift.Modules.Transformers.AttachNodeMover, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Transformers.AttachNodeMover, Ksp2Redux" | "VSwift.Modules.Transformers.AttachNodeMover, Assembly-CSharp"
 ---@field MovedNodes JsonTable<Vector3d> Map of node ID to the new local position to move it to.
 
----@alias AttachNodeMover _AttachNodeMover | { ["$type"]: "VSwift.Modules.Transformers.AttachNodeMover, Assembly-CSharp", MovedNodes: JsonTable<Vector3d> }
+---@alias AttachNodeMover _AttachNodeMover | { ["$type"]: "VSwift.Modules.Transformers.AttachNodeMover, Ksp2Redux" | "VSwift.Modules.Transformers.AttachNodeMover, Assembly-CSharp", MovedNodes: JsonTable<Vector3d> }
 
 ---Renders the part's original engine-mode stat blocks (propellant, thrust, ISP) in the variant-info popout without modifying the part.
 ---@class _DefaultEngineModesVisualizer : _JsonUserDataBase
----@field ["$type"] "VSwift.Modules.Transformers.DefaultEngineModesVisualizer, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Transformers.DefaultEngineModesVisualizer, Ksp2Redux" | "VSwift.Modules.Transformers.DefaultEngineModesVisualizer, Assembly-CSharp"
 
----@alias DefaultEngineModesVisualizer _DefaultEngineModesVisualizer | { ["$type"]: "VSwift.Modules.Transformers.DefaultEngineModesVisualizer, Assembly-CSharp" }
+---@alias DefaultEngineModesVisualizer _DefaultEngineModesVisualizer | { ["$type"]: "VSwift.Modules.Transformers.DefaultEngineModesVisualizer, Ksp2Redux" | "VSwift.Modules.Transformers.DefaultEngineModesVisualizer, Assembly-CSharp" }
 
 ---Renders the part's original mass as a stat block in the variant-info popout without modifying the part.
 ---@class _DefaultMassVisualizer : _JsonUserDataBase
----@field ["$type"] "VSwift.Modules.Transformers.DefaultMassVisualizer, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Transformers.DefaultMassVisualizer, Ksp2Redux" | "VSwift.Modules.Transformers.DefaultMassVisualizer, Assembly-CSharp"
 
----@alias DefaultMassVisualizer _DefaultMassVisualizer | { ["$type"]: "VSwift.Modules.Transformers.DefaultMassVisualizer, Assembly-CSharp" }
+---@alias DefaultMassVisualizer _DefaultMassVisualizer | { ["$type"]: "VSwift.Modules.Transformers.DefaultMassVisualizer, Ksp2Redux" | "VSwift.Modules.Transformers.DefaultMassVisualizer, Assembly-CSharp" }
 
 ---Renders the value at the configured key on the part data as a stat block in the variant-info popout without modifying the part.
 ---@class _DefaultScalarVisualizer : _JsonUserDataBase
----@field ["$type"] "VSwift.Modules.Transformers.DefaultScalarVisualizer, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Transformers.DefaultScalarVisualizer, Ksp2Redux" | "VSwift.Modules.Transformers.DefaultScalarVisualizer, Assembly-CSharp"
 ---@field Key string The key to read from the part data.
 
----@alias DefaultScalarVisualizer _DefaultScalarVisualizer | { ["$type"]: "VSwift.Modules.Transformers.DefaultScalarVisualizer, Assembly-CSharp", Key: string }
+---@alias DefaultScalarVisualizer _DefaultScalarVisualizer | { ["$type"]: "VSwift.Modules.Transformers.DefaultScalarVisualizer, Ksp2Redux" | "VSwift.Modules.Transformers.DefaultScalarVisualizer, Assembly-CSharp", Key: string }
 
 ---Replaces matching engine modes on the part's `Module_Engine` with the configured modes when active, persists them across saves, and renders their stats in the variant-info popout.
 ---@class _EngineModeSwapper : _JsonUserDataBase
----@field ["$type"] "VSwift.Modules.Transformers.EngineModeSwapper, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Transformers.EngineModeSwapper, Ksp2Redux" | "VSwift.Modules.Transformers.EngineModeSwapper, Assembly-CSharp"
 ---@field Modes JsonList<Data_Engine_EngineMode> The engine modes to swap in. Each entry replaces the existing mode whose `engineID` matches.
 ---@field Name string The transformer instance name. Defaults to the `EngineModeSwapper` short name.
 
----@alias EngineModeSwapper _EngineModeSwapper | { ["$type"]: "VSwift.Modules.Transformers.EngineModeSwapper, Assembly-CSharp", Modes: JsonList<Data_Engine_EngineMode>, Name: string }
+---@alias EngineModeSwapper _EngineModeSwapper | { ["$type"]: "VSwift.Modules.Transformers.EngineModeSwapper, Ksp2Redux" | "VSwift.Modules.Transformers.EngineModeSwapper, Assembly-CSharp", Modes: JsonList<Data_Engine_EngineMode>, Name: string }
 
 ---Adds a fixed value to the part's MassModifier when active.
 ---@class _MassModifier : _JsonUserDataBase
----@field ["$type"] "VSwift.Modules.Transformers.MassModifier, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Transformers.MassModifier, Ksp2Redux" | "VSwift.Modules.Transformers.MassModifier, Assembly-CSharp"
 ---@field Modifier number The mass delta added to the part when this transformer is active.
 
----@alias MassModifier _MassModifier | { ["$type"]: "VSwift.Modules.Transformers.MassModifier, Assembly-CSharp", Modifier: number }
+---@alias MassModifier _MassModifier | { ["$type"]: "VSwift.Modules.Transformers.MassModifier, Ksp2Redux" | "VSwift.Modules.Transformers.MassModifier, Assembly-CSharp", Modifier: number }
 
 ---Swaps materials on the part by mapping each source material name to a replacement loaded from addressables.
 ---@class _MaterialSwapper : _JsonUserDataBase
----@field ["$type"] "VSwift.Modules.Transformers.MaterialSwapper, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Transformers.MaterialSwapper, Ksp2Redux" | "VSwift.Modules.Transformers.MaterialSwapper, Assembly-CSharp"
 ---@field Swaps JsonTable<string> Map of source material name to the addressables address of the replacement material.
 
----@alias MaterialSwapper _MaterialSwapper | { ["$type"]: "VSwift.Modules.Transformers.MaterialSwapper, Assembly-CSharp", Swaps: JsonTable<string> }
+---@alias MaterialSwapper _MaterialSwapper | { ["$type"]: "VSwift.Modules.Transformers.MaterialSwapper, Ksp2Redux" | "VSwift.Modules.Transformers.MaterialSwapper, Assembly-CSharp", Swaps: JsonTable<string> }
 
 ---Replaces a part module's data with a configured replacement when active, persisted across saves.
 ---@class _ModuleDefinitionTransformer : _JsonUserDataBase
----@field ["$type"] "VSwift.Modules.Transformers.ModuleDefinitionTransformer, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Transformers.ModuleDefinitionTransformer, Ksp2Redux" | "VSwift.Modules.Transformers.ModuleDefinitionTransformer, Assembly-CSharp"
 ---@field BehaviourType string The short name of the part-behaviour-module type whose data this transformer replaces.
 ---@field DataType string The short name of the module-data type whose value at Key is replaced.
 ---@field Key string The field name on the module-data type to replace.
 ---@field Value any The replacement value to deserialize into the field at Key.
 
----@alias ModuleDefinitionTransformer _ModuleDefinitionTransformer | { ["$type"]: "VSwift.Modules.Transformers.ModuleDefinitionTransformer, Assembly-CSharp", BehaviourType: string, DataType: string, Key: string, Value: any }
+---@alias ModuleDefinitionTransformer _ModuleDefinitionTransformer | { ["$type"]: "VSwift.Modules.Transformers.ModuleDefinitionTransformer, Ksp2Redux" | "VSwift.Modules.Transformers.ModuleDefinitionTransformer, Assembly-CSharp", BehaviourType: string, DataType: string, Key: string, Value: any }
 
 ---Sets a scalar value at the configured key path on the part data when active, persisted across saves.
 ---@class _PartScalarTransformer : _JsonUserDataBase
----@field ["$type"] "VSwift.Modules.Transformers.PartScalarTransformer, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Transformers.PartScalarTransformer, Ksp2Redux" | "VSwift.Modules.Transformers.PartScalarTransformer, Assembly-CSharp"
 ---@field Key string The key path on the part data to set.
 ---@field Value any The value to set at Key.
 
----@alias PartScalarTransformer _PartScalarTransformer | { ["$type"]: "VSwift.Modules.Transformers.PartScalarTransformer, Assembly-CSharp", Key: string, Value: any }
+---@alias PartScalarTransformer _PartScalarTransformer | { ["$type"]: "VSwift.Modules.Transformers.PartScalarTransformer, Ksp2Redux" | "VSwift.Modules.Transformers.PartScalarTransformer, Assembly-CSharp", Key: string, Value: any }
 
 ---Adds resource containers to the part when active, persisted across saves and rendered in the variant-info popout.
 ---@class _ResourceContainerAdder : _JsonUserDataBase
----@field ["$type"] "VSwift.Modules.Transformers.ResourceContainerAdder, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Transformers.ResourceContainerAdder, Ksp2Redux" | "VSwift.Modules.Transformers.ResourceContainerAdder, Assembly-CSharp"
 ---@field Containers JsonList<ContainedResourceDefinition> The resource-container definitions to add.
 
----@alias ResourceContainerAdder _ResourceContainerAdder | { ["$type"]: "VSwift.Modules.Transformers.ResourceContainerAdder, Assembly-CSharp", Containers: JsonList<ContainedResourceDefinition> }
+---@alias ResourceContainerAdder _ResourceContainerAdder | { ["$type"]: "VSwift.Modules.Transformers.ResourceContainerAdder, Ksp2Redux" | "VSwift.Modules.Transformers.ResourceContainerAdder, Assembly-CSharp", Containers: JsonList<ContainedResourceDefinition> }
 
 ---Removes resource containers by name from the part when active, persisted across saves.
 ---@class _ResourceContainerRemover : _JsonUserDataBase
----@field ["$type"] "VSwift.Modules.Transformers.ResourceContainerRemover, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Transformers.ResourceContainerRemover, Ksp2Redux" | "VSwift.Modules.Transformers.ResourceContainerRemover, Assembly-CSharp"
 ---@field Containers JsonList<string> The resource-container names to remove.
 
----@alias ResourceContainerRemover _ResourceContainerRemover | { ["$type"]: "VSwift.Modules.Transformers.ResourceContainerRemover, Assembly-CSharp", Containers: JsonList<string> }
+---@alias ResourceContainerRemover _ResourceContainerRemover | { ["$type"]: "VSwift.Modules.Transformers.ResourceContainerRemover, Ksp2Redux" | "VSwift.Modules.Transformers.ResourceContainerRemover, Assembly-CSharp", Containers: JsonList<string> }
 
 ---Renders a localized title and description as a stat block in the variant-info popout without modifying the part.
 ---@class _TextVisualizer : _JsonUserDataBase
----@field ["$type"] "VSwift.Modules.Transformers.TextVisualizer, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Transformers.TextVisualizer, Ksp2Redux" | "VSwift.Modules.Transformers.TextVisualizer, Assembly-CSharp"
 ---@field TitleKey string Localization key for the stat block's title.
 ---@field DescriptionKey string Localization key for the stat block's description.
 
----@alias TextVisualizer _TextVisualizer | { ["$type"]: "VSwift.Modules.Transformers.TextVisualizer, Assembly-CSharp", TitleKey: string, DescriptionKey: string }
+---@alias TextVisualizer _TextVisualizer | { ["$type"]: "VSwift.Modules.Transformers.TextVisualizer, Ksp2Redux" | "VSwift.Modules.Transformers.TextVisualizer, Assembly-CSharp", TitleKey: string, DescriptionKey: string }
 
 ---Activates child GameObject transforms on the part by name when active.
 ---@class _TransformActivator : _JsonUserDataBase
----@field ["$type"] "VSwift.Modules.Transformers.TransformActivator, Assembly-CSharp"
+---@field ["$type"] "VSwift.Modules.Transformers.TransformActivator, Ksp2Redux" | "VSwift.Modules.Transformers.TransformActivator, Assembly-CSharp"
 ---@field Transforms JsonList<string> The names of the child transforms to activate.
 
----@alias TransformActivator _TransformActivator | { ["$type"]: "VSwift.Modules.Transformers.TransformActivator, Assembly-CSharp", Transforms: JsonList<string> }
+---@alias TransformActivator _TransformActivator | { ["$type"]: "VSwift.Modules.Transformers.TransformActivator, Ksp2Redux" | "VSwift.Modules.Transformers.TransformActivator, Assembly-CSharp", Transforms: JsonList<string> }
