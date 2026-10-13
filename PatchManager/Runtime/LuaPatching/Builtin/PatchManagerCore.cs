@@ -319,14 +319,12 @@ namespace PatchManager.LuaPatching.Builtin
         #region Other Methods
 
         /// <summary>
-        /// Returns whether the mod with the given ID is loaded.
+        /// Returns whether the mod with the given ID is installed and on in the feature set being built. During
+        /// registration no set is active, so every installed mod counts as on.
         /// </summary>
         /// <param name="modId">The mod ID to test.</param>
-        /// <returns>True if the mod is loaded, false otherwise.</returns>
-        public bool Loaded(string modId)
-        {
-            return _universe.AllMods.Contains(modId);
-        }
+        /// <returns>True if the mod is on, false otherwise.</returns>
+        public bool Loaded(string modId) => _universe.IsModOn(modId);
     
         #endregion
     }

@@ -60,8 +60,7 @@ namespace PatchManager.LuaPatching
         public readonly Action<string> MessageLogger;
 
         /// <summary>
-        /// The set of mod IDs the universe was constructed with, used by stage scheduling and
-        /// <see cref="PatchManagerCore.Loaded" />.
+        /// The set of mod IDs the universe was constructed with, the installed mods <see cref="IsModOn" /> checks.
         /// </summary>
         public readonly HashSet<string> AllMods;
 
@@ -140,6 +139,19 @@ namespace PatchManager.LuaPatching
         /// registration regardless of features.
         /// </summary>
         public ISet<string> EnabledFeatures => ActiveFeatures.EnabledSet;
+
+        /// <summary>
+        /// Checks whether a mod is installed and its default feature is on in <see cref="EnabledFeatures" />.
+        /// Before a set activates, every installed mod counts as on.
+        /// </summary>
+        /// <param name="modId">The mod ID.</param>
+        /// <returns>True if the mod takes part in the set being built.</returns>
+        public bool IsModOn(string modId) => AllMods.Contains(modId) && FeatureSelector.AllowsMod(modId, EnabledFeatures);
+
+        /// <summary>
+        /// Gets the installed mods whose default feature is on in <see cref="EnabledFeatures" />.
+        /// </summary>
+        public HashSet<string> ModsOn => AllMods.Where(IsModOn).ToHashSet();
 
         /// <summary>
         /// Gets the queued new assets whose features are on in <see cref="EnabledFeatures" />.
@@ -409,7 +421,7 @@ namespace PatchManager.LuaPatching
 
                 foreach (var mod in patch.NeedsMods)
                 {
-                    if (!AllMods.Contains(mod))
+                    if (!IsModOn(mod))
                     {
                         Summary.Remove(patch.Name, "MISSING", $"mod - {mod}");
                         goto continue_mod;
@@ -418,7 +430,7 @@ namespace PatchManager.LuaPatching
 
                 foreach (var mod in patch.ConflictsMods)
                 {
-                    if (AllMods.Contains(mod))
+                    if (IsModOn(mod))
                     {
                         Summary.Remove(patch.Name, "CONFLICT", $"mod - {mod}");
                         goto continue_mod;

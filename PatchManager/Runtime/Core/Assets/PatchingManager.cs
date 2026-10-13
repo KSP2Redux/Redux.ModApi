@@ -130,7 +130,7 @@ namespace PatchManager.Core.Assets
         }
 
         /// <summary>
-        /// Picks the feature set this boot patches for: the main menu umbrella plus every installed mod's default.
+        /// Picks the feature set this boot patches for: the main menu umbrella plus the modding framework's defaults.
         /// </summary>
         /// <remarks>
         /// Runs once registration has closed, so features declared from Lua are in the registry.
@@ -141,7 +141,7 @@ namespace PatchManager.Core.Assets
         }
 
         /// <summary>
-        /// Gets the set the main menu runs with: the main menu umbrella plus every installed mod's default.
+        /// Gets the set the main menu runs with: the main menu umbrella plus the modding framework's defaults.
         /// </summary>
         /// <returns>The enabled feature ids.</returns>
         internal static IReadOnlyCollection<string> MainMenuFeatures()
@@ -151,8 +151,8 @@ namespace PatchManager.Core.Assets
         }
 
         /// <summary>
-        /// Builds the set the main menu and a fresh boot run with: the main menu umbrella plus every installed mod's
-        /// default feature, closed over their requirements.
+        /// Builds the set the main menu and a fresh boot run with: the main menu umbrella plus the default feature of
+        /// each installed framework mod, closed over their requirements. Every other mod is off.
         /// </summary>
         /// <param name="registry">The feature registry.</param>
         /// <param name="installedModIds">The ids of the installed, enabled mods.</param>
@@ -160,7 +160,7 @@ namespace PatchManager.Core.Assets
         internal static IReadOnlyCollection<string> MainMenuSet(FeatureRegistry registry, IEnumerable<string> installedModIds)
         {
             var requested = new List<string> { MAIN_MENU_FEATURE };
-            requested.AddRange(installedModIds.Select(FeatureRegistry.DefaultFor));
+            requested.AddRange(installedModIds.Where(ModIds.AlwaysOn.Contains).Select(FeatureRegistry.DefaultFor));
             FeatureResolution resolution = registry.Resolve(requested);
 
             // No player chooses between a feature and its stand-ins here, so the feature itself stays on
@@ -327,7 +327,7 @@ namespace PatchManager.Core.Assets
                 })
                 .ToArray();
             PrefabPatchRuntime.DiscoverAndResolve(
-                Universe.AllMods,
+                Universe.ModsOn,
                 Universe.EnabledFeatures,
                 manifestSources,
                 () =>
