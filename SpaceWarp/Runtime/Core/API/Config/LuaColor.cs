@@ -14,7 +14,7 @@ namespace SpaceWarp2.API.Config
     /// so the settings menu renders it as a color picker.
     /// </remarks>
     [MoonSharpUserData]
-    public sealed class LuaColor
+    public class LuaColor
     {
         /// <summary>
         /// The red channel.
@@ -39,6 +39,25 @@ namespace SpaceWarp2.API.Config
         static LuaColor()
         {
             UserData.RegisterType<LuaColor>();
+            RegisterConversions();
+        }
+
+        /// <summary>
+        /// Lets a <see cref="LuaColor" /> stand wherever C# takes a <see cref="Color" />, as the game's table colours
+        /// already do, so a config colour can be handed straight to a game call.
+        /// </summary>
+        internal static void RegisterConversions()
+        {
+            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
+                DataType.UserData,
+                typeof(Color),
+                value => value.UserData?.Object is LuaColor color ? color.ToColor() : null
+            );
+            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
+                DataType.UserData,
+                typeof(Color?),
+                value => value.UserData?.Object is LuaColor color ? color.ToColor() : null
+            );
         }
 
         public LuaColor(double r, double g, double b, double a)

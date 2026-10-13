@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using KSP.ScriptInterop.impl.moonsharp;
 using MoonSharp.Interpreter;
 using SpaceWarp2.API.Logging;
 using SpaceWarp2.API.Reflection;
@@ -182,21 +183,12 @@ namespace SpaceWarp2.API.Config
             );
         }
 
+        // The game's channel lookup, so a table means the same colour to config and to game calls. A missing channel
+        // reads as the fallback, where the game's converter rejects the table.
         private static float ReadChannel(Table t, int index, string shortKey, string longKey, float fallback)
         {
-            var v = t.Get(shortKey);
-            if (v.Type == DataType.Number)
-                return (float)v.Number;
-
-            v = t.Get(longKey);
-            if (v.Type == DataType.Number)
-                return (float)v.Number;
-
-            v = t.Get(index);
-            if (v.Type == DataType.Number)
-                return (float)v.Number;
-
-            return fallback;
+            DynValue v = TypeInterop.GetIndexedChannel(t, index, shortKey, longKey);
+            return v.Type == DataType.Number ? (float)v.Number : fallback;
         }
     }
 }
