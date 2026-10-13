@@ -5,11 +5,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using SpaceWarp2.API;
 using SpaceWarp2.API.Configuration;
 using SpaceWarp2.API.Logging;
 using SpaceWarp2.API.Reflection;
 using UnityEngine;
-using ReduxManager = Redux.ReduxManager;
 
 namespace SpaceWarp2.Modules
 {
@@ -40,10 +40,26 @@ namespace SpaceWarp2.Modules
             return module != null;
         }
 
+        /// <summary>
+        /// Gets a module's config file, renaming the <c>.cfg</c> file earlier versions wrote the same JSON to.
+        /// </summary>
+        /// <param name="directory">The module config folder.</param>
+        /// <param name="moduleName">The module's name.</param>
+        /// <returns>The path of the module's JSON config.</returns>
+        internal static string ModuleConfigPath(string directory, string moduleName)
+        {
+            string path = Path.Combine(directory, moduleName + ".json");
+            string legacyPath = Path.Combine(directory, moduleName + ".cfg");
+            if (!File.Exists(path) && File.Exists(legacyPath))
+                File.Move(legacyPath, path);
+
+            return path;
+        }
+
         internal static void LoadAllModules()
         {
             _moduleManagerLogSource = LogManager.GetLogger("SpaceWarp.ModuleManager");
-            var configDirectory = new DirectoryInfo(Path.Combine(ReduxManager.REDUX_FOLDER, "Config", "SWModuleConfig"));
+            var configDirectory = new DirectoryInfo(CommonPaths.ModuleConfigFolder);
             _moduleManagerLogSource.LogInfo($"Redux Module Config Path: {configDirectory}");
             if (!Directory.Exists(configDirectory.FullName)) configDirectory.Create();
             // foreach (var module in modules.EnumerateFiles("*.dll", SearchOption.TopDirectoryOnly))
@@ -96,9 +112,7 @@ namespace SpaceWarp2.Modules
                 try
                 {
                     module.ModuleLogger = LogManager.GetLogger(module.Name);
-                    module.ModuleConfiguration = new JsonConfigFile(
-                        Path.Combine(configDirectory.FullName, module.Name + ".cfg")
-                    );
+                    module.ModuleConfiguration = new JsonConfigFile(ModuleConfigPath(configDirectory.FullName, module.Name));
                     module.LoadModule();
                 }
                 catch (Exception e)

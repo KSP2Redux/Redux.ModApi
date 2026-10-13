@@ -107,7 +107,10 @@ namespace SpaceWarp2.API.Backend.Modding
             foreach (var mod in ReduxInternalModRegister.InternalPluginDescriptors)
             {
                 mod.Plugin.SWLogger ??= LogManager.GetLogger(mod.Guid);
-                mod.Plugin.SWConfiguration = mod.ConfigFile = new JsonConfigFile(Path.Combine(mod.Folder.FullName, "config.json"));
+                // Redux's settings live in the core file, so a script asking for Redux's config gets them
+                mod.Plugin.SWConfiguration = mod.ConfigFile = mod.Guid == ModIds.KSP2_REDUX
+                    ? ReduxManager.ReduxCoreConfig
+                    : new JsonConfigFile(Path.Combine(mod.Folder.FullName, "config.json"));
                 mod.IsCore = true;
                 PluginList.RegisterPlugin(mod);
             }

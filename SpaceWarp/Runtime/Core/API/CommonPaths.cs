@@ -17,6 +17,21 @@ namespace SpaceWarp2.API
         public static string FeatureDefaults = "feature_defaults.cfg";
         public static string HashLocation = "mod_list_hash.txt";
 
+        /// <summary>
+        /// The core Redux settings file, which Redux, SpaceWarp and the built-in tools bind into.
+        /// </summary>
+        public static string CoreConfig = "Redux/config.json";
+
+        /// <summary>
+        /// The folder holding the built-in mods' configs, one subfolder per mod id.
+        /// </summary>
+        public static string ConfigFolder = "Redux/Config";
+
+        /// <summary>
+        /// The folder holding SpaceWarp's module configs, one JSON file per module name.
+        /// </summary>
+        public static string ModuleConfigFolder = "Redux/Config/SWModuleConfig";
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
@@ -25,6 +40,9 @@ namespace SpaceWarp2.API
             DisabledPlugins = "disabled_plugins.cfg";
             FeatureDefaults = "feature_defaults.cfg";
             HashLocation = "mod_list_hash.txt";
+            CoreConfig = "Redux/config.json";
+            ConfigFolder = "Redux/Config";
+            ModuleConfigFolder = "Redux/Config/SWModuleConfig";
         }
     }
 }
