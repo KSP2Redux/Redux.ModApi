@@ -4,13 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
+using KSP.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.UnityConverters.Configuration;
 using UnityEngine;
 
 namespace SpaceWarp2.API.Configuration
@@ -121,9 +120,7 @@ namespace SpaceWarp2.API.Configuration
         public IConfigSection GetOrCreateSection(string name, string? localizationKey)
         {
             if (Sections.TryGet(name, out var existing))
-            {
                 return existing!;
-            }
 
             JObject? slice = null;
             if (_previousConfigObject != null
@@ -188,7 +185,8 @@ namespace SpaceWarp2.API.Configuration
                 .OfType<JsonConfigSection>()
                 .Where(s => s.Entries.Count > 0)
                 .ToList();
-            if (nonEmptySections.Count == 0) return null;
+            if (nonEmptySections.Count == 0)
+                return null;
 
             var boundSections = nonEmptySections.ToDictionary(section => section.Name);
             var writtenSections = new HashSet<string>();
@@ -239,40 +237,6 @@ namespace SpaceWarp2.API.Configuration
             return result.ToString();
         }
 
-        private static List<JsonConverter>? _defaultConverters;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStaticState()
-        {
-            _defaultConverters = null;
-        }
-
-        private static List<JsonConverter>? CreateDefaultConverters()
-        {
-            var method = Assembly.Load("Newtonsoft.Json.UnityConverters")
-                .GetType("Newtonsoft.Json.UnityConverters.UnityConverterInitializer")
-                .GetMethod("CreateConverters", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
-            var parameters = new object[] { ScriptableObject.CreateInstance<UnityConvertersConfig>() };
-            return (List<JsonConverter>)method.Invoke(null, parameters);
-        }
-
-        /// <summary>
-        /// The default converters to use when serializing/deserializing JSON.
-        /// </summary>
-        public static List<JsonConverter>? DefaultConverters
-        {
-            get
-            {
-                if (_defaultConverters != null) return _defaultConverters;
-                _defaultConverters = (CreateDefaultConverters() ?? new List<JsonConverter>())
-                    .Where(x => !JsonConverterFilter.ShouldFilterConverter(x))
-                    .ToList();
-                _defaultConverters.Add(new StringEnumConverter());
-
-                return _defaultConverters;
-            }
-        }
-
         internal static bool DumpEntry(
             StringBuilder result,
             bool hadPreviousKey,
@@ -308,7 +272,8 @@ namespace SpaceWarp2.API.Configuration
             string serialized;
             try
             {
-                var converters = DefaultConverters?.ToArray() ?? Array.Empty<JsonConverter>();
+                // The game's converters, which reading the value back through JToken.ToObject also uses
+                JsonConverter[] converters = IOProvider.Converters.ToArray();
                 serialized = JsonConvert.SerializeObject(entry.Value.Value, Formatting.Indented, converters);
                 if (string.IsNullOrWhiteSpace(serialized))
                 {
