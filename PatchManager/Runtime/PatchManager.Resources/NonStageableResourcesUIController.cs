@@ -38,7 +38,8 @@ namespace PatchManager.Resources
             if (_activeVessel is null)
                 return;
 
-            if (!_needNsUiUpdate) return;
+            if (!_needNsUiUpdate)
+                return;
             
             _needNsUiUpdate = false;
 
@@ -63,7 +64,7 @@ namespace PatchManager.Resources
             // Get number of non-stageable resources in the active vessel
             int nsResourcesCount = GetNonStageableResourcesCount(_activeVessel);
 
-            Logging.LogInfo(
+            PatchManager.Logger.LogInfo(
                 $"Updating the Non-Stageable Resource UI. Found {nsResourcesCount} Resources to display.");
 
             // Find the non-stageable resources window game object
@@ -71,7 +72,8 @@ namespace PatchManager.Resources
                 GameObject.Find(
                     NON_STAGEABLE_RESOURCES_UI_PANEL_PATH);
 
-            if (_nsResourcesUI == null) return;
+            if (_nsResourcesUI == null)
+                return;
             
             // Number of resources above the default maximum of 2 (EC & Monoprop)
             var extraResources = Math.Max(0, nsResourcesCount - 2);
@@ -95,7 +97,8 @@ namespace PatchManager.Resources
 
             var controlOwner = vessel.GetControlOwner();
             
-            if (controlOwner == null || controlOwner.PartOwner == null) return count;
+            if (controlOwner == null || controlOwner.PartOwner == null)
+                return count;
             
             var containerGroup = controlOwner.PartOwner.ContainerGroup;
             

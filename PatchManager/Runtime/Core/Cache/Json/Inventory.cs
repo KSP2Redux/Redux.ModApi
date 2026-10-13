@@ -107,7 +107,7 @@ namespace PatchManager.Core.Cache.Json
         {
             if (!File.Exists(path))
             {
-                Logging.LogDebug("Inventory file does not exist, creating new inventory.");
+                PatchManager.Logger.LogDebug("Inventory file does not exist, creating new inventory.");
                 return Create();
             }
 
@@ -115,12 +115,12 @@ namespace PatchManager.Core.Cache.Json
             {
                 var inventoryText = File.ReadAllText(path);
                 var inventory = JsonConvert.DeserializeObject<Inventory>(inventoryText);
-                Logging.LogDebug("Inventory file loaded successfully.");
+                PatchManager.Logger.LogDebug("Inventory file loaded successfully.");
                 return inventory;
             }
             catch (Exception e)
             {
-                Logging.LogError($"Inventory file was corrupted: {e.Message}");
+                PatchManager.Logger.LogError($"Inventory file was corrupted: {e.Message}");
                 return Create();
             }
         }

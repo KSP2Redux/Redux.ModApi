@@ -53,7 +53,7 @@ namespace PatchManager.LuaPatching
                 {
                     if (!attributes.OfType<MoonSharpUserDataAttribute>().Any())
                     {
-                        Logging.LogWarning($"LuaPatchingModule: found Patch Manager module {pmma.SubmoduleName} without MoonSharpUserData attribute, skipping!");
+                        PatchManager.Logger.LogWarning($"LuaPatchingModule: found Patch Manager module {pmma.SubmoduleName} without MoonSharpUserData attribute, skipping!");
                         continue;
                     }
 
@@ -64,7 +64,7 @@ namespace PatchManager.LuaPatching
                 {
                     if (!typeof(IConverter).IsAssignableFrom(type))
                     {
-                        Logging.LogWarning($"LuaPatchingModule: found Patch Manager converter {conv.Name} that does not implement IConverter, skipping");
+                        PatchManager.Logger.LogWarning($"LuaPatchingModule: found Patch Manager converter {conv.Name} that does not implement IConverter, skipping");
                         continue;
                     }
                     Universe.Converters[conv.Name] = (IConverter)Activator.CreateInstance(type);

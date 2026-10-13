@@ -36,7 +36,7 @@ namespace PatchManager.Parts.Patchers
         /// components, and replaces <paramref name="gameObject" /> with an instantiated prefab when one is registered
         /// for the part.
         /// </summary>
-        /// <param name="gameObject">The part's GameObject; may be reassigned to a freshly-instantiated prefab.</param>
+        /// <param name="gameObject">The part's GameObject, which may be reassigned to a freshly-instantiated prefab.</param>
         /// <param name="partData">The part's data, supplying the list of serialized modules.</param>
         /// <param name="replacePrefab">If true, registered prefab aliases replace <paramref name="gameObject" />.</param>
         internal static void ApplyOnGameObject(ref GameObject gameObject, PartData partData, bool replacePrefab = true)
@@ -57,44 +57,34 @@ namespace PatchManager.Parts.Patchers
                 var behaviourType = module.BehaviourType;
                 if (behaviourType == null || !typeof(Component).IsAssignableFrom(behaviourType))
                 {
-                    Logging.LogWarning(
+                    PatchManager.Logger.LogWarning(
                         $"Skipping invalid part module behaviour on {partData.partName}: {behaviourType}");
                     continue;
                 }
 
-                // Debug.Log($"ApplyOnGameObject - {partData.partName} testing {behaviourType.FullName}");
                 if (obj.GetComponent(behaviourType) != null)
-                {
                     continue;
-                }
 
-                // Debug.Log($"ApplyOnGameObject - {partData.partName} adding {behaviourType.FullName}");
                 var instance = obj.AddComponent(behaviourType);
                 if (instance == null)
                 {
-                    Logging.LogWarning(
+                    PatchManager.Logger.LogWarning(
                         $"Unable to add part module behaviour {behaviourType.FullName} to {partData.partName}.");
                     continue;
                 }
 
-                Logging.LogInfo(
+                PatchManager.Logger.LogInfo(
                     $"Attempting to setup serialized fields on {partData.partName} of type {behaviourType}");
-                foreach (var field in behaviourType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
-                             .Concat(behaviourType.GetFields(BindingFlags.Public | BindingFlags.Instance)))
+                var fields = behaviourType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Concat(behaviourType.GetFields(BindingFlags.Public | BindingFlags.Instance));
+                foreach (var field in fields)
                 {
-                    // Logging.LogInfo($"Found field: {field.Name} of type {field.FieldType}");
                     if (!field.GetCustomAttributes(typeof(SerializeField), false).Any())
-                    {
                         continue;
-                    }
 
-                    // Logging.LogInfo($"Field has SerializeField attribute");
                     if (!field.FieldType.IsSubclassOf(typeof(ModuleData)))
-                    {
                         continue;
-                    }
 
-                    // Logging.LogInfo($"Field type {field.FieldType} is subclass of ModuleData, setting value");
                     var data = default(SerializedModuleData);
                     var foundData = false;
                     foreach (var moduleData in module.ModuleData)
@@ -109,7 +99,7 @@ namespace PatchManager.Parts.Patchers
 
                     if (!foundData)
                     {
-                        Logging.LogWarning(
+                        PatchManager.Logger.LogWarning(
                             $"No serialized data of type {field.FieldType.FullName} found for module {behaviourType.FullName} on {partData.partName}.");
                         continue;
                     }
@@ -141,9 +131,7 @@ namespace PatchManager.Parts.Patchers
                 if (partData.serializedPartModules.All(x => x.BehaviourType != t))
                 {
                     if (IsRequiredBySerializedModule(t, partData))
-                    {
                         continue;
-                    }
 
                     // This runs while reconciling a freshly cloned/instantiated part prefab. Runtime Destroy is
                     // deferred, which leaves DisallowMultipleComponent blockers alive until end of frame.
@@ -158,16 +146,12 @@ namespace PatchManager.Parts.Patchers
             {
                 var behaviourType = module.BehaviourType;
                 if (behaviourType == null)
-                {
                     continue;
-                }
 
                 foreach (var attribute in behaviourType.GetCustomAttributes(typeof(RequireComponent), true))
                 {
                     if (attribute is RequireComponent requireComponent && RequiresComponent(requireComponent, componentType))
-                    {
                         return true;
-                    }
                 }
             }
 

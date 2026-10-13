@@ -19,7 +19,7 @@ namespace PatchManager.Core.Assets
             {
                 var archiveName = provideHandle.Location.PrimaryKey;
                 var file = provideHandle.Location.InternalId;
-                Logging.LogDebug($"Loading {archiveName}/{file}");
+                PatchManager.Logger.LogDebug($"Loading {archiveName}/{file}");
 
                 var archive = CacheManager.GetArchive(archiveName);
                 var asset = new TextAsset(archive.ReadFile(file))
@@ -30,7 +30,7 @@ namespace PatchManager.Core.Assets
             }
             catch (Exception e)
             {
-                Logging.LogError(e);
+                PatchManager.Logger.LogError(e);
                 provideHandle.Complete<AssetBundle>(null, false, e);
             }
         }

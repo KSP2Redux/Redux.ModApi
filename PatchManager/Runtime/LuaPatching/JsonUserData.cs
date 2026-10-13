@@ -281,7 +281,7 @@ namespace PatchManager.LuaPatching
             {
                 if (Token.Type != JTokenType.Array)
                 {
-                    Logging.LogDebug($"Read [{key.Number}] on non-array JSON ({Token.Type}); returning nil");
+                    PatchManager.Logger.LogDebug($"Read [{key.Number}] on non-array JSON ({Token.Type}); returning nil");
                     return null;
                 }
 
@@ -296,7 +296,7 @@ namespace PatchManager.LuaPatching
             {
                 if (Token.Type != JTokenType.Object)
                 {
-                    Logging.LogDebug($"Read .{key.String} on non-object JSON ({Token.Type}); returning nil");
+                    PatchManager.Logger.LogDebug($"Read .{key.String} on non-object JSON ({Token.Type}); returning nil");
                     return null;
                 }
 
@@ -380,7 +380,7 @@ namespace PatchManager.LuaPatching
             {
                 if (Token is JArray array)
                     return array.Count;
-                Logging.LogDebug($"Read .Count on non-array JSON ({Token.Type}); returning 0");
+                PatchManager.Logger.LogDebug($"Read .Count on non-array JSON ({Token.Type}); returning 0");
                 return 0;
             }
         }
@@ -438,7 +438,7 @@ namespace PatchManager.LuaPatching
                 });
             }
 
-            Logging.LogDebug($"Iterated non-object/non-array JSON ({Token.Type}); returning empty iterator");
+            PatchManager.Logger.LogDebug($"Iterated non-object/non-array JSON ({Token.Type}); returning empty iterator");
             return DynValue.NewCallback((ctx, args) => DynValue.Nil);
         }
 
@@ -521,7 +521,7 @@ namespace PatchManager.LuaPatching
         {
             if (Token.Type != JTokenType.Object)
             {
-                Logging.LogDebug($"Read .Keys() on non-object JSON ({Token.Type}); returning empty");
+                PatchManager.Logger.LogDebug($"Read .Keys() on non-object JSON ({Token.Type}); returning empty");
                 yield break;
             }
             foreach (var value in (JObject)Token)

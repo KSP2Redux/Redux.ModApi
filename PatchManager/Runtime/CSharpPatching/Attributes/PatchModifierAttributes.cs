@@ -370,7 +370,7 @@ namespace PatchManager.CSharpPatching.Attributes
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
             if (mi == null)
             {
-                Logging.LogError($"[{tag}] could not find predicate method '{methodName}' on {owner.GetType().Name}");
+                PatchManager.Logger.LogError($"[{tag}] could not find predicate method '{methodName}' on {owner.GetType().Name}");
             }
             return mi;
         }

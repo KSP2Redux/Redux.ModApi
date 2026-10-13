@@ -47,7 +47,7 @@ namespace PatchManager.Parts.Patchers
                     var def = GameManager.Instance.Game.Parts.Get(name);
                     if (def == null)
                     {
-                        Logging.LogWarning($"Invalid part {name} found on vessel {vessel.AssemblyDefinition.assemblyName}, removing vessel from save file\n");
+                        PatchManager.Logger.LogWarning($"Invalid part {name} found on vessel {vessel.AssemblyDefinition.assemblyName}, removing vessel from save file\n");
                         toRemove.Add(idx);
                         break;
                     }

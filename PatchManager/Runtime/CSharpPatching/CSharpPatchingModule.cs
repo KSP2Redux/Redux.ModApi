@@ -26,7 +26,7 @@ namespace PatchManager.CSharpPatching
             var universe = PatchingManager.Universe;
             if (universe == null)
             {
-                Logging.LogWarning("CSharpPatchingModule: universe not created, skipping C# patch discovery");
+                PatchManager.Logger.LogWarning("CSharpPatchingModule: universe not created, skipping C# patch discovery");
                 return;
             }
 
@@ -43,14 +43,14 @@ namespace PatchManager.CSharpPatching
                 }
                 catch (Exception ex)
                 {
-                    Logging.LogError($"CSharpPatchingModule: failed to construct [PMPatch] class {type.FullName}: {ex.Message}");
+                    PatchManager.Logger.LogError($"CSharpPatchingModule: failed to construct [PMPatch] class {type.FullName}: {ex.Message}");
                     continue;
                 }
 
                 var modId = string.IsNullOrEmpty(pmPatch.ModId) ? PluginList.ModIdOf(type.Assembly) : pmPatch.ModId;
                 if (modId == null)
                 {
-                    Logging.LogError(
+                    PatchManager.Logger.LogError(
                         $"CSharpPatchingModule: [PMPatch] class {type.FullName} names no ModId, and no single mod loaded its assembly");
                     continue;
                 }
@@ -71,7 +71,7 @@ namespace PatchManager.CSharpPatching
         {
             if (!Universe.Converters.TryGetValue(target.Converter, out var converter))
             {
-                Logging.LogError(
+                PatchManager.Logger.LogError(
                     $"CSharpPatchingModule: patch {method.DeclaringType?.Name}.{method.Name} uses unknown converter '{target.Converter}'");
                 return;
             }
@@ -96,7 +96,7 @@ namespace PatchManager.CSharpPatching
 
             patch.Do(BuildPatchMethod(owner, method));
             universe.AddPatch(patch);
-            Logging.LogInfo(
+            PatchManager.Logger.LogInfo(
                 $"CSharpPatchingModule: registered C# patch {patch.Name} ({target.Converter}/{target.Label})");
         }
 

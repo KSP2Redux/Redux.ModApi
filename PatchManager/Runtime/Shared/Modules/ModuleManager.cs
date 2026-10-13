@@ -37,13 +37,13 @@ namespace PatchManager.Shared.Modules
         /// Registers a PatchManager module DLL to be loaded. The module must contain a single class that inherits
         /// from <see cref="IModule" />.
         /// </summary>
-        /// <param name="moduleType">The module's type; must implement <see cref="IModule" /> and have a parameterless constructor.</param>
+        /// <param name="moduleType">The module's type, which must implement <see cref="IModule" /> and have a parameterless constructor.</param>
         [PublicAPI]
         public static void Register(Type moduleType)
         {
             if (!typeof(IModule).IsAssignableFrom(moduleType))
             {
-                Logging.LogError(
+                PatchManager.Logger.LogError(
                     $"module type {moduleType} is not a subclass of IModule"
                 );
                 return;
@@ -66,9 +66,7 @@ namespace PatchManager.Shared.Modules
         private static void RegisterPlaySessionActionsAll()
         {
             if (_playSessionActionsRegistered)
-            {
                 return;
-            }
 
             foreach (var module in Modules)
             {

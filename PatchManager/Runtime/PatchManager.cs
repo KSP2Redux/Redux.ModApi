@@ -11,6 +11,7 @@ using PatchManager.Science;
 using PatchManager.Shared;
 using PatchManager.Shared.Modules;
 using Redux.ExtraModTypes;
+using SpaceWarp2.API.Logging;
 using SpaceWarp2.API.Mods;
 using UnityEngine.UIElements;
 
@@ -25,6 +26,19 @@ namespace PatchManager
         /// Singleton instance, set during <see cref="Awake" />.
         /// </summary>
         internal static PatchManager Instance;
+
+        private static ILogger _logger;
+
+        /// <summary>
+        /// Gets the logger PatchManager's modules, patchers and caches write to.
+        /// </summary>
+        internal static ILogger Logger => _logger ??= LogManager.GetLogger(ModIds.PATCH_MANAGER);
+
+        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetLogger()
+        {
+            _logger = null;
+        }
 
         // NOTE: Instance is intentionally NOT reset on Play Mode enter. Awake (which sets it) only runs
         // once per domain, but the per-play lifecycle hooks (OnPreInitialized/OnInitialized, run by
@@ -47,7 +61,6 @@ namespace PatchManager
             ModuleManager.Register(typeof(ScienceModule));
             ModuleManager.Register(typeof(PlanetsModule));
             ModuleManager.Register(typeof(CSharpPatchingModule));
-            Logging.Initialize(SWLogger);
             foreach (var module in ModuleManager.Modules)
             {
                 // Bind against Redux's core configuration.

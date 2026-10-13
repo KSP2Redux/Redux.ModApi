@@ -126,8 +126,7 @@ namespace PatchManager.Core.Assets
         {
             var loadedPlugins = PluginList.AllLoadedPlugins.Select(x => x.Guid).ToList();
             loadedPlugins.AddRange(singleFileModIds);
-            Universe = new(Logging.LogError, Logging.LogMessage,
-                loadedPlugins);
+            Universe = new(PatchManager.Logger.LogError, PatchManager.Logger.LogMessage, loadedPlugins);
         }
 
         /// <summary>
@@ -238,7 +237,7 @@ namespace PatchManager.Core.Assets
         public static void ActivateSet(IEnumerable<string> features)
         {
             ActiveFeatures.Activate(features);
-            Logging.LogInfo($"Patching for {Universe.EnabledFeatures.Count} enabled feature(s)");
+            PatchManager.Logger.LogInfo($"Patching for {Universe.EnabledFeatures.Count} enabled feature(s)");
             var setId = SetIdOf(Universe.EnabledFeatures);
             CacheManager.UseSet(setId);
             var ordered = Universe.EnabledFeatures.OrderBy(id => id, StringComparer.OrdinalIgnoreCase);
@@ -462,15 +461,15 @@ namespace PatchManager.Core.Assets
         /// </summary>
         public static void RegisterPatches()
         {
-            Logging.LogInfo("Registering all patches!");
+            PatchManager.Logger.LogInfo("Registering all patches!");
             TotalPatchCount = 0;
             TotalErrorCount = 0;
             TotalNewAssetCount = 0;
             TotalDefinitionPatchCount = 0;
             CSharpPatching.FluentPatchRegistry.Flush(Universe);
             Universe.SetupPatchesForRun();
-            Logging.LogInfo($"{Universe.TotalPatchCount} patchers registered!");
-            Logging.LogInfo($"{Universe.AllNewAssets.Count} assets created!");
+            PatchManager.Logger.LogInfo($"{Universe.TotalPatchCount} patchers registered!");
+            PatchManager.Logger.LogInfo($"{Universe.AllNewAssets.Count} assets created!");
         }
 
         /// <summary>
@@ -578,12 +577,12 @@ namespace PatchManager.Core.Assets
 
             if (CacheManager.Inventory.Checksum == checksum)
             {
-                Logging.LogInfo("Cache is valid, skipping rebuild.");
+                PatchManager.Logger.LogInfo("Cache is valid, skipping rebuild.");
                 CacheManager.CacheValidLabels.AddRange(CacheManager.Inventory.CacheEntries.Keys);
                 return true;
             }
 
-            Logging.LogInfo("Cache is invalid, rebuilding.");
+            PatchManager.Logger.LogInfo("Cache is invalid, rebuilding.");
             CacheManager.InvalidateCache();
             CacheManager.Inventory.Checksum = checksum;
             CacheManager.Inventory.Patches = setHashes;
@@ -604,7 +603,7 @@ namespace PatchManager.Core.Assets
             {
                 try
                 {
-                    Logging.LogDebug($"Generated an asset with the label {generator.Label}, and name {generator.Name}");
+                    PatchManager.Logger.LogDebug($"Generated an asset with the label {generator.Label}, and name {generator.Name}");
 
                     if (!_createdAssets.ContainsKey(generator.Label))
                     {
@@ -620,7 +619,7 @@ namespace PatchManager.Core.Assets
                 catch (Exception e)
                 {
                     TotalErrorCount += 1;
-                    Logging.LogError($"Failed to generate an asset due to: {e}");
+                    PatchManager.Logger.LogError($"Failed to generate an asset due to: {e}");
                     Universe.Summary.BeginLabel(generator.Label);
                     Universe.Summary.BeginAsset(generator.Name, null);
                     Universe.Summary.Error(generator.Name, e);
@@ -963,7 +962,7 @@ namespace PatchManager.Core.Assets
             catch (Exception e)
             {
                 TotalErrorCount += 1;
-                Logging.LogError($"Failed to parse {state.Label}:{assetName}: {e.Message}");
+                PatchManager.Logger.LogError($"Failed to parse {state.Label}:{assetName}: {e.Message}");
                 Universe.Summary.BeginLabel(state.Label);
                 Universe.Summary.BeginAsset(assetName, null);
                 Universe.Summary.Error(assetName, e);
@@ -1050,7 +1049,7 @@ namespace PatchManager.Core.Assets
                 catch (Exception e)
                 {
                     TotalErrorCount += 1;
-                    Logging.LogError($"Failed to serialize {state.Label}:{name}: {e.Message}");
+                    PatchManager.Logger.LogError($"Failed to serialize {state.Label}:{name}: {e.Message}");
                     Universe.Summary.BeginLabel(state.Label);
                     Universe.Summary.BeginAsset(name, null);
                     Universe.Summary.Error(name, e);

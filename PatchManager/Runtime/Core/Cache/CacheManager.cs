@@ -116,7 +116,7 @@ namespace PatchManager.Core.Cache
             }
             catch (Exception e)
             {
-                Logging.LogError($"Failed to clear the patch cache of set {ActiveSet}: {e}");
+                PatchManager.Logger.LogError($"Failed to clear the patch cache of set {ActiveSet}: {e}");
             }
 
             _inventory = Inventory.Create();
@@ -240,7 +240,7 @@ namespace PatchManager.Core.Cache
                 );
                 foreach (var id in ChooseEvictions(uses, maxSets))
                 {
-                    Logging.LogDebug($"Evicting the patch cache of set {id}");
+                    PatchManager.Logger.LogDebug($"Evicting the patch cache of set {id}");
                     DeleteDirectory(SetDirectory(id));
                     inventories.Remove(id);
                 }
@@ -268,7 +268,7 @@ namespace PatchManager.Core.Cache
             }
             catch (Exception e)
             {
-                Logging.LogError($"Failed to evict stale patch caches: {e}");
+                PatchManager.Logger.LogError($"Failed to evict stale patch caches: {e}");
             }
         }
 

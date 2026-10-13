@@ -165,7 +165,7 @@ namespace PatchManager.CSharpPatching
 
             if (Pending.Count > 0)
             {
-                Logging.LogInfo($"Flushed {Pending.Count} fluent C# patch(es)");
+                PatchManager.Logger.LogInfo($"Flushed {Pending.Count} fluent C# patch(es)");
             }
 
             Pending.Clear();
