@@ -28,10 +28,20 @@ namespace SpaceWarp2.API.Features
         private static HashSet<string>? _enabled;
 
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStaticState()
+        internal static void ResetStaticState()
         {
             _enabled = null;
+            Changed = null;
         }
+
+        /// <summary>
+        /// Raised after each set activates, once every <see cref="FeatureAttribute" /> field and script environment
+        /// matches it, with the new set's enabled feature ids, or null for no set.
+        /// </summary>
+        /// <remarks>
+        /// Each handler runs on its own, so one that throws is logged and the rest still run.
+        /// </remarks>
+        public static event Action<IReadOnlyCollection<string>?>? Changed;
 
         /// <summary>
         /// Gets the enabled feature ids, or null before any set has activated.
@@ -60,6 +70,7 @@ namespace SpaceWarp2.API.Features
             }
 
             ModScriptRuntime.RefreshFeatureEnvironments();
+            RaiseChanged();
         }
 
         /// <summary>
@@ -96,6 +107,25 @@ namespace SpaceWarp2.API.Features
             foreach (var (field, featureId) in FeatureFieldsOf(target.GetType()))
             {
                 field.SetValue(target, IsEnabled(FeatureRegistry.Qualify(modId, featureId)));
+            }
+        }
+
+        // A mod's broken handler must not stop the set switch or another mod's handler
+        private static void RaiseChanged()
+        {
+            if (Changed == null)
+                return;
+
+            foreach (Delegate handler in Changed.GetInvocationList())
+            {
+                try
+                {
+                    ((Action<IReadOnlyCollection<string>?>)handler)(_enabled);
+                }
+                catch (Exception exception)
+                {
+                    UnityEngine.Debug.LogError($"[Features] A feature set change handler failed: {exception}");
+                }
             }
         }
 

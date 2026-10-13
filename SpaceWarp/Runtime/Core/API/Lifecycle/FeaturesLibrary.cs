@@ -32,6 +32,31 @@ namespace SpaceWarp2.API.Lifecycle
         }
 
         /// <summary>
+        /// Calls a function after each feature set activates, with the new set as <see cref="All" /> gives it.
+        /// </summary>
+        /// <remarks>
+        /// Like the mod's other hooks, it is only called while the calling mod is on in the new set.
+        /// </remarks>
+        /// <param name="context">The calling script.</param>
+        /// <param name="fn">The function to call.</param>
+        /// <exception cref="ScriptRuntimeException">Thrown when <paramref name="fn" /> is not a function.</exception>
+        public void OnChanged(ScriptExecutionContext context, DynValue fn)
+        {
+            if (fn.Type != DataType.Function)
+                throw new ScriptRuntimeException("Features:OnChanged expects a function.");
+
+            string modId = ModScriptRuntime.ModIdOf(context);
+            Closure closure = fn.Function;
+            ActiveFeatures.Changed += enabled =>
+            {
+                if (modId != null && !ActiveFeatures.RunsHooksOf(modId))
+                    return;
+
+                closure.Call(enabled == null ? DynValue.Nil : SetTable(closure.OwnerScript, enabled));
+            };
+        }
+
+        /// <summary>
         /// Lists the enabled features as a set.
         /// </summary>
         /// <param name="context">The calling script.</param>
