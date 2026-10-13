@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using KSP.Game;
 using UnityEngine;
 using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.ResourceLocations;
@@ -6,33 +7,25 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 namespace PatchManager.Core.Assets
 {
     /// <summary>
-    /// A class that holds all the custom resource locators for patched asset files.
+    /// Patch Manager's door to the game's override locators, the ones whose patched assets replace the catalogs'.
     /// </summary>
+    /// <remarks>
+    /// The locators live on the game's <see cref="KSP.Assets.AssetProvider" />, which is created for each play
+    /// session, so registrations do not outlive the session that made them.
+    /// </remarks>
     public static class Locators
     {
-        private static readonly List<IResourceLocator> ResourceLocators = new();
-
-        // CoreModule.RegisterResourceLocator (a loading flow action) calls Register() on every Play Mode
-        // enter. With Domain Reload disabled this static list persists across sessions, so without clearing
-        // it the locators accumulate and LocateAll returns duplicate locations. A Domain Reload would have
-        // emptied it; do the same here.
-        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStaticState()
-        {
-            ResourceLocators.Clear();
-        }
-
         /// <summary>
-        /// Register a custom resource locator.
+        /// Registers an override locator, whose locations replace every other source's for the keys it knows.
         /// </summary>
         /// <param name="locator">Locator to register.</param>
         public static void Register(IResourceLocator locator)
         {
-            ResourceLocators.Add(locator);
+            GameManager.Instance.Assets.RegisterOverrideLocator(locator);
         }
 
         /// <summary>
-        /// Locate assets by label.
+        /// Locates patched text assets by label.
         /// </summary>
         /// <param name="label">Label of the assets to be located.</param>
         /// <param name="locations">List of locations of the found assets.</param>
@@ -43,28 +36,21 @@ namespace PatchManager.Core.Assets
         }
 
         /// <summary>
-        /// Locate assets by key and requested type across every Patch Manager
-        /// asset-domain locator.
+        /// Locates assets by key and requested type across the override locators.
         /// </summary>
-        public static bool LocateAll(
-            object key,
-            System.Type type,
-            out List<IResourceLocation> locations
-        )
+        /// <param name="key">The key or label.</param>
+        /// <param name="type">The asset type.</param>
+        /// <param name="locations">The override locations, empty when none knows the key.</param>
+        /// <returns>True if any assets were found, false otherwise.</returns>
+        public static bool LocateAll(object key, System.Type type, out List<IResourceLocation> locations)
         {
-            locations = new List<IResourceLocation>();
-            foreach (var locator in ResourceLocators)
+            if (GameManager.Instance?.Assets == null)
             {
-                if (
-                    locator.Locate(key, type, out var foundLocations)
-                    && foundLocations != null
-                )
-                {
-                    locations.AddRange(foundLocations);
-                }
+                locations = new List<IResourceLocation>();
+                return false;
             }
 
-            return locations.Count > 0;
+            return GameManager.Instance.Assets.LocateOverrides(key, type, out locations);
         }
     }
 }
