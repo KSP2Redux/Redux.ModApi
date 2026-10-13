@@ -1,6 +1,8 @@
 #nullable enable
 
 using System.IO;
+using SpaceWarp2.API.Logging;
+using SpaceWarp2.API.Mods;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.AddressableAssets.ResourceLocators;
@@ -10,22 +12,36 @@ namespace SpaceWarp2.InternalUtilities
 {
     internal static class AssetHelpers
     {
-        public static IResourceLocator LoadAddressable(string catalog)
-        {
-            SpaceWarpPlugin.Instance.SWLogger.LogInfo($"Attempting to load {catalog}");
-            var operation = Addressables.LoadContentCatalogAsync(catalog);
-            operation.WaitForCompletion();
-            if (operation.Status == AsyncOperationStatus.Failed)
-            {
-                SpaceWarpPlugin.Instance.SWLogger.LogError($"Failed to load addressables catalog {catalog}");
-                return null;
-            }
+        // Fetched per use, since Redux's catalog can load before the game installs its log provider
+        private static ILogger CatalogLogger => LogManager.GetLogger("Addressables Loader");
 
-            SpaceWarpPlugin.Instance.SWLogger.LogInfo($"Loaded addressables catalog {catalog}");
-            var locator = operation.Result;
-            SpaceWarpPlugin.Instance.SWLogger.LogInfo($"{catalog} ----- {locator.LocatorId}");
-            // GameManager.Instance.Assets.RegisterResourceLocator(locator);
-            return locator;
+        /// <summary>
+        /// Starts loading a mod's addressables catalog, and records its locator on the mod's descriptor once it loads,
+        /// which is how the feature gate tells whose assets are whose.
+        /// </summary>
+        /// <param name="catalogPath">The catalog file.</param>
+        /// <param name="modId">The mod the catalog belongs to.</param>
+        /// <returns>The catalog load, for the caller to wait on or yield.</returns>
+        internal static AsyncOperationHandle<IResourceLocator> LoadModCatalog(string catalogPath, string modId)
+        {
+            CatalogLogger.LogInfo($"Loading addressables catalog {catalogPath}");
+            AsyncOperationHandle<IResourceLocator> operation = Addressables.LoadContentCatalogAsync(catalogPath);
+            operation.Completed += loaded =>
+            {
+                if (loaded.Status != AsyncOperationStatus.Succeeded || loaded.Result == null)
+                {
+                    CatalogLogger.LogError($"Failed to load addressables catalog {catalogPath}");
+                    return;
+                }
+
+                CatalogLogger.LogInfo($"Loaded addressables catalog {catalogPath} as {loaded.Result.LocatorId}");
+                SpaceWarpPluginDescriptor descriptor = PluginList.TryGetDescriptor(modId);
+                if (descriptor != null && !descriptor.AddressableResourceLocators.Contains(loaded.Result))
+                {
+                    descriptor.AddressableResourceLocators.Add(loaded.Result);
+                }
+            };
+            return operation;
         }
 
         internal static void LoadLocalizationFromFolder(string folder)

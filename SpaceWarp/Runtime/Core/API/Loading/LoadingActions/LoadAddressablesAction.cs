@@ -34,14 +34,7 @@ namespace SpaceWarp2.Patching.LoadingActions
                 if (File.Exists(catalogPath))
                 {
                     Logger.LogInfo($"Found addressables for {_plugin.SWInfo.Name}");
-                    var locator = AssetHelpers.LoadAddressable(catalogPath);
-                    if (
-                        locator != null
-                        && !_plugin.AddressableResourceLocators.Contains(locator)
-                    )
-                    {
-                        _plugin.AddressableResourceLocators.Add(locator);
-                    }
+                    AssetHelpers.LoadModCatalog(catalogPath, _plugin.Guid).WaitForCompletion();
                 }
                 else
                 {
