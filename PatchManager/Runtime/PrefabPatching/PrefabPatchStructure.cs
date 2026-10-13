@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Redux.IO;
 using UnityEngine;
 
 namespace PatchManager.PrefabPatching
@@ -22,7 +23,7 @@ namespace PatchManager.PrefabPatching
             var description = Describe(root);
             return description == null
                 ? null
-                : PrefabPatchJson.Sha256(description);
+                : Sha256.OfString(description);
         }
 
         /// <summary>
@@ -44,7 +45,7 @@ namespace PatchManager.PrefabPatching
         /// </summary>
         /// <param name="root">Ancestor transform.</param>
         /// <param name="target">Descendant transform.</param>
-        /// <returns>The sibling-index path relative to <paramref name="root"/>.</returns>
+        /// <returns>The sibling-index path relative to <paramref name="root" />.</returns>
         public static int[] GetSiblingPath(Transform root, Transform target)
         {
             var reverse = new List<int>();
@@ -163,7 +164,9 @@ namespace PatchManager.PrefabPatching
 
             builder.Append(']');
             for (var i = 0; i < transform.childCount; i++)
+            {
                 Append(transform.GetChild(i), builder, false);
+            }
         }
     }
 }

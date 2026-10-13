@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using PatchManager.Core.Cache.Json;
 using PatchManager.PrefabPatching;
 using PatchManager.Shared;
+using Redux.IO;
 
 namespace PatchManager.Core.Cache
 {
@@ -354,7 +354,6 @@ namespace PatchManager.Core.Cache
         /// <returns>The archive filename.</returns>
         internal static string ContentAddressedName(IEnumerable<(string name, string text)> entries)
         {
-            using var sha = SHA256.Create();
             using var stream = new MemoryStream();
             using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
             {
@@ -367,8 +366,7 @@ namespace PatchManager.Core.Cache
             }
 
             stream.Position = 0;
-            var digest = sha.ComputeHash(stream);
-            return $"{BitConverter.ToString(digest).Replace("-", "").ToLowerInvariant()}.zip";
+            return $"{Sha256.OfStream(stream)}.zip";
         }
 
         private static string InventoryPath(string setId) => Path.Combine(SetDirectory(setId), INVENTORY_FILENAME);

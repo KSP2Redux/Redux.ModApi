@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using PatchManager.LuaPatching;
 using PatchManager.Shared;
+using Redux.IO;
 using SpaceWarp2.API.Features;
 
 namespace PatchManager.PrefabPatching
@@ -149,7 +150,7 @@ namespace PatchManager.PrefabPatching
                 unityVersion,
                 targetPlatform
             );
-            plan.CacheKey = PrefabPatchJson.Sha256(
+            plan.CacheKey = Sha256.OfString(
                 $"{address}|{plan.TargetPrefab?.CanonicalKey}|{plan.InputHash}"
             );
             plan.IsValid = !fatal;
@@ -893,7 +894,7 @@ namespace PatchManager.PrefabPatching
                     }
                 )
             };
-            return PrefabPatchJson.Sha256(PrefabPatchJson.Serialize(value));
+            return Sha256.OfString(PrefabPatchJson.Serialize(value));
         }
 
         private static bool RegisterFragment(

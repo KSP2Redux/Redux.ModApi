@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+using Redux.IO;
 
 namespace SpaceWarp2.API
 {
@@ -58,7 +58,7 @@ namespace SpaceWarp2.API
                 newHash += File.ReadAllText(swinfo);
             }
 
-            newHash = GetHash(newHash);
+            newHash = Sha256.OfString(newHash);
 
             File.WriteAllText(CommonPaths.HashLocation, newHash);
 
@@ -103,18 +103,6 @@ namespace SpaceWarp2.API
                     MarkedFeatureDefaults.Add(line.Trim());
                 }
             }
-        }
-
-        private static string GetHash(string text)
-        {
-            var crypt = new System.Security.Cryptography.SHA256Managed();
-            var hash = new StringBuilder();
-            var crypto = crypt.ComputeHash(Encoding.UTF8.GetBytes(text));
-            foreach (byte theByte in crypto)
-            {
-                hash.Append(theByte.ToString("x2"));
-            }
-            return hash.ToString();
         }
     }
 }

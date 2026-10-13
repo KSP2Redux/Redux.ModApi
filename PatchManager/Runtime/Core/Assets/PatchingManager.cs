@@ -14,8 +14,9 @@ using PatchManager.LuaPatching;
 using PatchManager.LuaPatching.Builtin;
 using PatchManager.PrefabPatching;
 using PatchManager.Shared;
-using SpaceWarp2.API.Configuration;
 using Redux.Features;
+using Redux.IO;
+using SpaceWarp2.API.Configuration;
 using SpaceWarp2.API.Features;
 using SpaceWarp2.API.Loading;
 using SpaceWarp2.API.Mods;
@@ -417,9 +418,7 @@ namespace PatchManager.Core.Assets
         {
             var ordered = features.Select(id => id.ToLowerInvariant()).OrderBy(id => id, StringComparer.Ordinal);
             // A collision would serve one set's content to another without a word, so the id is a full SHA-256
-            using var sha = System.Security.Cryptography.SHA256.Create();
-            var digest = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(string.Join("\n", ordered)));
-            return BitConverter.ToString(digest).Replace("-", "").ToLowerInvariant();
+            return Sha256.OfString(string.Join("\n", ordered));
         }
 
         // Every pack's and every single-player save's set, whose caches eviction keeps whatever their age

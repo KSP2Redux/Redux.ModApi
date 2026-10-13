@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using Redux.IO;
 
 namespace PatchManager.PrefabPatching
 {
@@ -146,7 +147,7 @@ namespace PatchManager.PrefabPatching
             var identity = target?.Address ?? target?.CanonicalKey ?? "invalid";
             return Path.Combine(
                 _directory,
-                $"{PrefabPatchJson.Sha256(identity)}.{PrefabPatchJson.Sha256(sourceFingerprint).Substring(0, 16)}.plan.gz"
+                $"{Sha256.OfString(identity)}.{Sha256.OfString(sourceFingerprint).Substring(0, 16)}.plan.gz"
             );
         }
 
@@ -197,7 +198,7 @@ namespace PatchManager.PrefabPatching
                     }
                 )
             };
-            return PrefabPatchJson.Sha256(PrefabPatchJson.Serialize(value));
+            return Sha256.OfString(PrefabPatchJson.Serialize(value));
         }
 
         private static bool TryRead(
