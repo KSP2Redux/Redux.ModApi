@@ -12,8 +12,9 @@ namespace SpaceWarp2.API.Features
     /// </summary>
     /// <remarks>
     /// Each mod gets a default feature, <c>ModId:ModId</c>, which requires the default features of its dependencies and
-    /// conflicts with those of its conflicts. Every other feature of a mod requires that mod's default feature. Ids
-    /// match case-insensitively and resolve to the casing they were declared with.
+    /// conflicts with those of its conflicts. Every other feature of a mod requires that mod's default feature. A
+    /// feature may provide others, standing in for them in requirements. Ids match case-insensitively and resolve to
+    /// the casing they were declared with.
     /// </remarks>
     [PublicAPI]
     public class FeatureRegistry
@@ -50,6 +51,8 @@ namespace SpaceWarp2.API.Features
         }
 
         private readonly Dictionary<string, FeatureDefinition> _features = new(StringComparer.OrdinalIgnoreCase);
+        // The features that provide each provided id, sorted
+        private readonly Dictionary<string, List<string>> _standIns = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Gets the one registry every feature is declared in: the loaded mods' swinfo features, then those Lua and C#
@@ -167,6 +170,21 @@ namespace SpaceWarp2.API.Features
                 QualifyAll(owner, allProvides)
             );
             _features[id] = definition;
+            foreach (string provided in newProvides)
+            {
+                if (!_standIns.TryGetValue(provided, out List<string> standIns))
+                {
+                    standIns = new List<string>();
+                    _standIns[provided] = standIns;
+                }
+
+                if (!standIns.Contains(id, StringComparer.OrdinalIgnoreCase))
+                {
+                    standIns.Add(id);
+                    standIns.Sort(StringComparer.Ordinal);
+                }
+            }
+
             return definition;
         }
 
@@ -180,14 +198,17 @@ namespace SpaceWarp2.API.Features
         /// </remarks>
         /// <param name="featureId">The qualified feature id, in any casing.</param>
         /// <returns>The providers' ids, sorted.</returns>
-        public List<string> ProvidersOf(string featureId) =>
-            _features.Values
-                .Where(definition =>
-                    string.Equals(definition.Id, featureId, StringComparison.OrdinalIgnoreCase)
-                    || definition.Provides.Contains(featureId, StringComparer.OrdinalIgnoreCase))
-                .Select(definition => definition.Id)
-                .OrderBy(id => id, StringComparer.Ordinal)
-                .ToList();
+        public List<string> ProvidersOf(string featureId)
+        {
+            var providers = new List<string>(StandInsOf(featureId));
+            if (_features.TryGetValue(featureId, out FeatureDefinition definition))
+            {
+                providers.Add(definition.Id);
+                providers.Sort(StringComparer.Ordinal);
+            }
+
+            return providers;
+        }
 
         /// <summary>
         /// Looks a feature up by id.
@@ -213,28 +234,68 @@ namespace SpaceWarp2.API.Features
         /// <summary>
         /// Turns a requested set of features into the set that ends up on.
         /// </summary>
+        /// <remarks>
+        /// A requirement on an id something provides is met by any provider in the set, and a stand-in meets it without
+        /// turning a real feature under that id on. With no provider in the set, the one installed provider that can
+        /// be turned on is chosen, the real feature counting as one. A requested real feature is on whatever stands in
+        /// for it. A provided virtual id is on whenever one of its providers is.
+        /// </remarks>
         /// <param name="requested">The requested qualified feature ids.</param>
-        /// <returns>The enabled closure, the unknown ids, and the conflicts between enabled features.</returns>
+        /// <returns>The enabled closure, the unmet ids, and the conflicts between enabled features.</returns>
         public FeatureResolution Resolve(IEnumerable<string> requested)
         {
             var enabled = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var missing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var pending = new Stack<string>(requested);
-            while (pending.Count > 0)
+            // Held back until the rest of the set is in, since a provider anywhere in it meets them
+            var deferred = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+            var pending = new Stack<(string Id, bool IsRequirement)>(requested.Select(id => (id, false)));
+            while (true)
             {
-                string id = pending.Pop();
-                if (!_features.TryGetValue(id, out FeatureDefinition definition))
+                while (pending.Count > 0)
                 {
-                    missing.Add(id);
-                    continue;
+                    (string id, bool isRequirement) = pending.Pop();
+                    bool isDeclared = _features.TryGetValue(id, out FeatureDefinition definition);
+                    if ((isRequirement || !isDeclared) && _standIns.ContainsKey(id))
+                    {
+                        deferred.Add(id);
+                        continue;
+                    }
+
+                    if (!isDeclared)
+                    {
+                        missing.Add(id);
+                        continue;
+                    }
+
+                    if (!enabled.Add(definition.Id))
+                        continue;
+
+                    foreach (string required in definition.Requires)
+                    {
+                        pending.Push((required, true));
+                    }
                 }
 
-                if (!enabled.Add(definition.Id))
-                    continue;
+                string? choice = deferred
+                    .Where(id => !IsMet(id, enabled))
+                    .Select(SoleProviderOf)
+                    .FirstOrDefault(provider => provider != null);
+                if (choice == null)
+                    break;
 
-                foreach (string required in definition.Requires)
+                pending.Push((choice, false));
+            }
+
+            missing.UnionWith(deferred.Where(id => !IsMet(id, enabled)));
+
+            foreach (string id in enabled.OrderBy(id => id, StringComparer.Ordinal).ToList())
+            {
+                foreach (string provided in _features[id].Provides)
                 {
-                    pending.Push(required);
+                    if (!_features.ContainsKey(provided))
+                    {
+                        enabled.Add(provided);
+                    }
                 }
             }
 
@@ -245,18 +306,35 @@ namespace SpaceWarp2.API.Features
             );
         }
 
-        private bool IsSatisfiable(string featureId, HashSet<string> visited)
-        {
-            if (!_features.TryGetValue(featureId, out FeatureDefinition definition))
-                return false;
+        private IReadOnlyList<string> StandInsOf(string featureId) =>
+            _standIns.TryGetValue(featureId, out List<string> standIns) ? standIns : Array.Empty<string>();
 
-            // A feature already on the walk is either being checked further up or already passed, so a cycle does not
-            // make it unsatisfiable on its own.
-            if (!visited.Add(definition.Id))
+        private bool IsMet(string featureId, HashSet<string> enabled) =>
+            enabled.Contains(featureId) || StandInsOf(featureId).Any(enabled.Contains);
+
+        private string? SoleProviderOf(string featureId)
+        {
+            List<string> providers = ProvidersOf(featureId)
+                .Where(provider => CanTurnOn(provider, new HashSet<string>(StringComparer.OrdinalIgnoreCase)))
+                .ToList();
+            return providers.Count == 1 ? providers[0] : null;
+        }
+
+        private bool IsSatisfiable(string featureId, HashSet<string> onPath)
+        {
+            // An id already on the path is being checked further up, so a cycle does not make it unsatisfiable on its own
+            if (!onPath.Add(featureId))
                 return true;
 
-            return definition.Requires.All(required => IsSatisfiable(required, visited));
+            bool isSatisfiable = CanTurnOn(featureId, onPath)
+                || StandInsOf(featureId).Any(standIn => CanTurnOn(standIn, onPath));
+            onPath.Remove(featureId);
+            return isSatisfiable;
         }
+
+        private bool CanTurnOn(string featureId, HashSet<string> onPath) =>
+            _features.TryGetValue(featureId, out FeatureDefinition definition)
+            && definition.Requires.All(required => IsSatisfiable(required, onPath));
 
         private List<(string First, string Second)> FindConflicts(HashSet<string> enabled)
         {
@@ -264,7 +342,11 @@ namespace SpaceWarp2.API.Features
             var seen = new HashSet<(string, string)>();
             foreach (string id in enabled.OrderBy(id => id, StringComparer.Ordinal))
             {
-                foreach (string conflicting in _features[id].Conflicts)
+                // A provided virtual id has no definition, so it declares no conflicts
+                if (!_features.TryGetValue(id, out FeatureDefinition definition))
+                    continue;
+
+                foreach (string conflicting in definition.Conflicts)
                 {
                     if (!_features.TryGetValue(conflicting, out FeatureDefinition other) || !enabled.Contains(other.Id))
                         continue;
@@ -273,6 +355,23 @@ namespace SpaceWarp2.API.Features
                     if (seen.Add(conflict))
                     {
                         conflicts.Add(conflict);
+                    }
+                }
+            }
+
+            // Every provider of an id conflicts with every other, the real feature under that id included
+            foreach (string provided in _standIns.Keys.OrderBy(id => id, StringComparer.Ordinal))
+            {
+                List<string> providers = ProvidersOf(provided).Where(enabled.Contains).ToList();
+                for (int first = 0; first < providers.Count; first++)
+                {
+                    for (int second = first + 1; second < providers.Count; second++)
+                    {
+                        var conflict = (providers[first], providers[second]);
+                        if (seen.Add(conflict))
+                        {
+                            conflicts.Add(conflict);
+                        }
                     }
                 }
             }

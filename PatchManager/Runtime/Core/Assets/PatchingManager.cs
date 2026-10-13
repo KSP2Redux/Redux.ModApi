@@ -161,7 +161,11 @@ namespace PatchManager.Core.Assets
         {
             var requested = new List<string> { MAIN_MENU_FEATURE };
             requested.AddRange(installedModIds.Select(FeatureRegistry.DefaultFor));
-            return registry.Resolve(requested).Enabled;
+            FeatureResolution resolution = registry.Resolve(requested);
+
+            // No player chooses between a feature and its stand-ins here, so the feature itself stays on
+            List<string> unchosen = resolution.Missing.Where(id => registry.TryGet(id, out _)).ToList();
+            return unchosen.Count == 0 ? resolution.Enabled : registry.Resolve(requested.Concat(unchosen)).Enabled;
         }
 
         /// <summary>
