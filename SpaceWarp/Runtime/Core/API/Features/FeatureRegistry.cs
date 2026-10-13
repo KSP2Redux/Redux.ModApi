@@ -106,7 +106,14 @@ namespace SpaceWarp2.API.Features
 
             foreach (KeyValuePair<string, FeatureInfo> feature in info.Features)
             {
-                Define(modId, feature.Key, feature.Value.Requires, feature.Value.Conflicts, feature.Value.Provides);
+                Define(
+                    modId,
+                    feature.Key,
+                    feature.Value.Requires,
+                    feature.Value.Conflicts,
+                    feature.Value.Provides,
+                    feature.Value.Recommended
+                );
             }
         }
 
@@ -116,13 +123,15 @@ namespace SpaceWarp2.API.Features
         /// <remarks>
         /// Declaring an id that already exists adds its requirements, conflicts and provided features to the earlier
         /// declaration's, which is how a mod states its default feature's relations beyond its swinfo dependencies and
-        /// conflicts. A mod declares only its own features, but may provide any mod's.
+        /// conflicts. A feature either declaration recommends stays recommended. A mod declares only its own features,
+        /// but may provide any mod's.
         /// </remarks>
         /// <param name="modId">The declaring mod.</param>
         /// <param name="featureId">The feature id, bare or qualified with the declaring mod.</param>
         /// <param name="requires">The required feature ids, bare ones relative to the declaring mod.</param>
         /// <param name="conflicts">The conflicting feature ids, bare ones relative to the declaring mod.</param>
         /// <param name="provides">The provided feature ids, bare ones relative to the declaring mod.</param>
+        /// <param name="isRecommended">Whether the mod recommends the feature.</param>
         /// <returns>The declared feature.</returns>
         /// <exception cref="ArgumentException">Thrown when the id names another mod, or the feature provides itself.</exception>
         public FeatureDefinition Define(
@@ -130,7 +139,8 @@ namespace SpaceWarp2.API.Features
             string featureId,
             IEnumerable<string>? requires = null,
             IEnumerable<string>? conflicts = null,
-            IEnumerable<string>? provides = null
+            IEnumerable<string>? provides = null,
+            bool isRecommended = false
         )
         {
             string id = FeatureRegistry.Qualify(modId, featureId);
@@ -160,6 +170,7 @@ namespace SpaceWarp2.API.Features
                 allRequires = existing.Requires.Concat(allRequires);
                 allConflicts = existing.Conflicts.Concat(allConflicts);
                 allProvides = existing.Provides.Concat(allProvides);
+                isRecommended |= existing.IsRecommended;
             }
 
             var definition = new FeatureDefinition(
@@ -167,7 +178,8 @@ namespace SpaceWarp2.API.Features
                 owner,
                 QualifyAll(owner, allRequires),
                 QualifyAll(owner, allConflicts),
-                QualifyAll(owner, allProvides)
+                QualifyAll(owner, allProvides),
+                isRecommended
             );
             _features[id] = definition;
             foreach (string provided in newProvides)

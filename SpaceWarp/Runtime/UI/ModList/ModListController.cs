@@ -8,6 +8,7 @@ using System.Linq;
 using KSP.Game;
 using SpaceWarp2.UI.Backend.Extensions;
 using SpaceWarp2.API;
+using SpaceWarp2.API.Features;
 using SpaceWarp2.API.Mods;
 using SpaceWarp2.UI.API;
 using SpaceWarp2.UI.Backend;
@@ -80,6 +81,10 @@ namespace SpaceWarp2.UI.ModList
         private Foldout _detailsConflictFoldout;
         private VisualElement _detailsDependenciesList;
         private VisualElement _detailsConflictList;
+        private Foldout _detailsFeaturesFoldout;
+        private VisualElement _detailsFeaturesList;
+        private Button _detailsFeaturesRecommendedButton;
+        private string _detailsFeaturesModId;
 
         private static LocalizedString _missingDependency = "SpaceWarp/ModList/MissingDependency";
         private static LocalizedString _erroredDependency = "SpaceWarp/ModList/ErroredDependency";
@@ -241,6 +246,11 @@ namespace SpaceWarp2.UI.ModList
 
             _detailsConflictFoldout = _container.Q<Foldout>("details-conflicts-foldout");
             _detailsConflictList = _container.Q<VisualElement>("details-conflicts-list");
+
+            _detailsFeaturesFoldout = _container.Q<Foldout>("details-features-foldout");
+            _detailsFeaturesList = _container.Q<VisualElement>("details-features-list");
+            _detailsFeaturesRecommendedButton = _container.Q<Button>("details-features-recommended");
+            _detailsFeaturesRecommendedButton.clicked += MarkRecommendedFeatureDefaults;
 
             // Show only categories that have any mods in them
             if (PluginList.AllLoadedPlugins.Any(x => !x.IsCore && !x.IsKsp1))
@@ -569,6 +579,77 @@ namespace SpaceWarp2.UI.ModList
                 data.GetDetails,
                 x => data.StoredDetails = x
             );
+            SetFeatureDefaults(data.Guid);
+        }
+
+        // Each switch marks a feature to start new campaigns with
+        private void SetFeatureDefaults(string modId)
+        {
+            _detailsFeaturesModId = modId;
+            _detailsFeaturesList.Clear();
+            List<FeatureDefinition> features = DefaultableFeaturesOf(FeatureRegistry.Instance, modId);
+            _detailsFeaturesFoldout.style.display = features.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            _detailsFeaturesRecommendedButton.style.display =
+                features.Any(feature => feature.IsRecommended) ? DisplayStyle.Flex : DisplayStyle.None;
+
+            foreach (FeatureDefinition feature in features)
+            {
+                var toggle = new Toggle(FeatureNameOf(feature))
+                {
+                    value = SpaceWarp2.API.ModList.FeatureDefaults.Contains(feature.Id)
+                };
+                toggle.AddToClassList("switch");
+                toggle.AddToClassList("details-feature-toggle");
+                string featureId = feature.Id;
+                toggle.RegisterValueChangedCallback(evt => SpaceWarp2.API.ModList.SetFeatureDefault(featureId, evt.newValue));
+                _detailsFeaturesList.Add(toggle);
+            }
+        }
+
+        private void MarkRecommendedFeatureDefaults()
+        {
+            List<FeatureDefinition> features = DefaultableFeaturesOf(FeatureRegistry.Instance, _detailsFeaturesModId);
+            foreach (FeatureDefinition feature in features.Where(feature => feature.IsRecommended))
+            {
+                SpaceWarp2.API.ModList.SetFeatureDefault(feature.Id, true);
+            }
+
+            SetFeatureDefaults(_detailsFeaturesModId);
+        }
+
+        /// <summary>
+        /// Lists the features of a mod the player can mark to start new campaigns with: every one that can be turned
+        /// on, the mod's own default feature first.
+        /// </summary>
+        /// <remarks>
+        /// Redux's own features are left out. Campaign packs either rely on its missions and the rest or leave them
+        /// out on purpose, so marking them by default would only work against the pack. The always-on modding
+        /// framework has nothing to mark.
+        /// </remarks>
+        /// <param name="registry">The feature registry.</param>
+        /// <param name="modId">The mod's ID.</param>
+        /// <returns>The features.</returns>
+        internal static List<FeatureDefinition> DefaultableFeaturesOf(FeatureRegistry registry, string modId)
+        {
+            if (string.Equals(modId, ModIds.KSP2_REDUX, StringComparison.OrdinalIgnoreCase) || ModIds.AlwaysOn.Contains(modId))
+                return new List<FeatureDefinition>();
+
+            string defaultId = FeatureRegistry.DefaultFor(modId);
+            return registry.All
+                .Where(feature => string.Equals(feature.ModId, modId, StringComparison.OrdinalIgnoreCase))
+                .Where(feature => registry.IsSatisfiable(feature.Id))
+                .OrderBy(feature => string.Equals(feature.Id, defaultId, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+                .ThenBy(feature => feature.Id, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        // Mods name their features' keys themselves, so a missing name shows the ID
+        private static string FeatureNameOf(FeatureDefinition feature)
+        {
+            string bareId = feature.Id.Substring(feature.Id.IndexOf(FeatureRegistry.SEPARATOR) + 1);
+            return I2.Loc.LocalizationManager.TryGetTranslation($"Feature/{feature.ModId}/{bareId}/Name", out string name)
+                ? name
+                : feature.Id;
         }
 
         private void SetSelected(

@@ -35,6 +35,11 @@ namespace SpaceWarp2.API.Features
         public IReadOnlyCollection<string> Provides { get; }
 
         /// <summary>
+        /// Gets a value indicating whether the declaring mod recommends this feature.
+        /// </summary>
+        public bool IsRecommended { get; }
+
+        /// <summary>
         /// Creates a feature definition.
         /// </summary>
         /// <param name="id">The qualified feature id.</param>
@@ -42,12 +47,14 @@ namespace SpaceWarp2.API.Features
         /// <param name="requires">The qualified ids of the required features.</param>
         /// <param name="conflicts">The qualified ids of the conflicting features.</param>
         /// <param name="provides">The qualified ids of the provided features.</param>
+        /// <param name="isRecommended">Whether the declaring mod recommends the feature.</param>
         public FeatureDefinition(
             string id,
             string modId,
             IReadOnlyCollection<string> requires,
             IReadOnlyCollection<string> conflicts,
-            IReadOnlyCollection<string> provides
+            IReadOnlyCollection<string> provides,
+            bool isRecommended = false
         )
         {
             Id = id;
@@ -55,6 +62,7 @@ namespace SpaceWarp2.API.Features
             Requires = requires;
             Conflicts = conflicts;
             Provides = provides;
+            IsRecommended = isRecommended;
         }
     }
 }

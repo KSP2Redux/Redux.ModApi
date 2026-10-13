@@ -180,7 +180,8 @@ namespace PatchManager.LuaPatching.Builtin
         /// <param name="context">The Lua execution context. Its env's <c>ModId</c> global names the declaring mod.</param>
         /// <param name="id">The feature ID, namespaced to the mod when it does not already carry a namespace.</param>
         /// <param name="options">
-        /// An optional table with <c>requires</c>, <c>conflicts</c> and <c>provides</c> lists of feature IDs.
+        /// An optional table with <c>requires</c>, <c>conflicts</c> and <c>provides</c> lists of feature IDs, and a
+        /// <c>recommended</c> boolean.
         /// </param>
         /// <exception cref="ScriptRuntimeException">Thrown when called after patch registration has closed.</exception>
         public void DefineFeature(ScriptExecutionContext context, string id, Table options = null)
@@ -193,7 +194,8 @@ namespace PatchManager.LuaPatching.Builtin
                 id,
                 StringsIn(options?.Get("requires")),
                 StringsIn(options?.Get("conflicts")),
-                StringsIn(options?.Get("provides"))
+                StringsIn(options?.Get("provides")),
+                options?.Get("recommended").CastToBool() ?? false
             );
         }
 

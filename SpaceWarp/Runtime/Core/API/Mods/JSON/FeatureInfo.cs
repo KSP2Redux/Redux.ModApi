@@ -32,5 +32,11 @@ namespace SpaceWarp2.API.Mods.JSON
         /// </summary>
         [JsonProperty("provides", Required = Required.DisallowNull)]
         public List<string> Provides { get; internal set; } = new();
+
+        /// <summary>
+        /// Whether the mod recommends this feature, which the feature editor's Enable Recommended turns on.
+        /// </summary>
+        [JsonProperty("recommended")]
+        public bool Recommended { get; internal set; }
     }
 }

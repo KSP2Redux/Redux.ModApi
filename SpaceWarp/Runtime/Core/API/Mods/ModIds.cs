@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 
 namespace SpaceWarp2.API.Mods
@@ -27,5 +29,13 @@ namespace SpaceWarp2.API.Mods
         /// V-SwiFT, the part switching mod.
         /// </summary>
         public const string V_SWIFT = "VSwift";
+
+        /// <summary>
+        /// The modding framework, whose default features every campaign has and no player switches.
+        /// </summary>
+        public static readonly IReadOnlyCollection<string> AlwaysOn = new HashSet<string>(
+            new[] { SPACE_WARP, PATCH_MANAGER, V_SWIFT },
+            StringComparer.OrdinalIgnoreCase
+        );
     }
 }
