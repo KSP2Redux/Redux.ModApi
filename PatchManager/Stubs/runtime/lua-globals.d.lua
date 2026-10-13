@@ -88,10 +88,6 @@ Missions = nil
 ---@type ColonyManager
 Colonies = nil
 
----Mod management scripting bridge: discovery, loading, and version tracking.
----@type KSP2ModManager
-Modding = nil
-
 --#endregion
 
 --#region Debug and dev tools
