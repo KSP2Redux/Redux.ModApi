@@ -53,6 +53,9 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnDestroy()
         {
+            if (Game == null)
+                return;
+
             Game.Messages.Unsubscribe<GameLoadFinishedMessage>(OnGameLoadFinished);
         }
 

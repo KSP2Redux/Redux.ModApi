@@ -68,6 +68,9 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnDestroy()
         {
+            if (Game == null)
+                return;
+
             Game.Messages.Unsubscribe<NewMissionAvailableMessage>(OnMissionMessage);
             Game.Messages.Unsubscribe<MissionCompleteMessage>(OnMissionMessage);
             Game.Messages.Unsubscribe<MissionStageCompleted>(OnMissionMessage);

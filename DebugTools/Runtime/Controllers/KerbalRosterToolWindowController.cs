@@ -35,7 +35,9 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnDestroy()
         {
-            
+            if (Game == null)
+                return;
+
             Game.Messages.Unsubscribe<KerbalAddedToRoster>(OnNeedRefresh);
             Game.Messages.Unsubscribe<KerbalRemovedFromRoster>(OnNeedRefresh);
             Game.Messages.Unsubscribe<KerbalLocationChanged>(OnNeedRefresh);
