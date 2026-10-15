@@ -59,6 +59,9 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnDestroy()
         {
+            if (Game == null)
+                return;
+
             Game.Messages.Unsubscribe<AddVesselToMapMessage>(OnVesselAdded);
             Game.Messages.Unsubscribe<VesselDestroyedMessage>(OnVesselRemoved);
             Game.Messages.Unsubscribe<GameLoadFinishedMessage>(OnGameLoaded);
