@@ -7,6 +7,7 @@ using PatchManager.LuaPatching.Attributes;
 using PatchManager.LuaPatching.Builtin;
 using PatchManager.LuaPatching.Utility;
 using PatchManager.Science.UserData;
+using UnityEngine;
 
 namespace PatchManager.Science
 {
@@ -194,6 +195,32 @@ namespace PatchManager.Science
         {
             return _core.Duplicate(context, "JSON", "techNodeData", source, newName, patchMethod);
         }
+
+        /// <summary>
+        /// Creates a new tech node with the given ID and runs <paramref name="callback" /> against it for further
+        /// configuration.
+        /// </summary>
+        /// <remarks>
+        /// The node starts with every field the game reads, its lists empty, so the callback can append to them.
+        /// </remarks>
+        /// <param name="context">The Lua execution context. Its env's <c>ModId</c> global names the creating mod.</param>
+        /// <param name="name">The node's ID, which is also its asset name.</param>
+        /// <param name="callback">Callback that receives the new node for further configuration.</param>
+        /// <returns>The queued asset, for gating it with features.</returns>
+        public LuaAsset NewTechNode(ScriptExecutionContext context, string name, Action<JsonUserData> callback)
+        {
+            var node = new JsonUserData(StartingTechNode(name));
+            callback(node);
+            return _core.New(context, "JSON", "techNodeData", name, MoonSharp.Interpreter.UserData.Create(node));
+        }
+
+        /// <summary>
+        /// Builds the JSON a new tech node starts from.
+        /// </summary>
+        /// <param name="id">The node's ID.</param>
+        /// <returns>The node as the game writes it, with every field at its default and the given ID.</returns>
+        internal static JObject StartingTechNode(string id) =>
+            JObject.Parse(JsonUtility.ToJson(new TechNodeData { ID = id }));
 
         /// <summary>
         /// Adds the given part IDs to the tech node named <paramref name="nodeName" />'s <c>UnlockedPartsIDs</c> list.

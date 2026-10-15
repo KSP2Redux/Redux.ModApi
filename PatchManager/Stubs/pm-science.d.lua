@@ -105,6 +105,13 @@ function ScienceLuaModule:PatchTechNodes(name) end
 ---@return PatchDefinition<TechNodeUserData, any> patch The registered patch.
 function ScienceLuaModule:DuplicateTechNodes(source, newName, patchMethod) end
 
+---Creates a new tech node with the given ID and runs callback against it for further
+---configuration.
+---@param name string The node's ID, which is also its asset name.
+---@param callback fun(node: TechNodeUserData) Callback that receives the new node for further configuration.
+---@return LuaAsset asset The queued asset, for gating it with features.
+function ScienceLuaModule:NewTechNode(name, callback) end
+
 ---Adds the given part IDs to the tech node named nodeName's `UnlockedPartsIDs` list.
 ---@param nodeName string The tech node name.
 ---@param ... string The part IDs to append.
