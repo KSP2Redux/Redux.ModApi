@@ -99,7 +99,6 @@
                     </ui:Foldout>
                     <ui:Foldout name="details-features-foldout" text="#SpaceWarp/ModList/DefaultFeatures">
                         <ui:VisualElement name="details-features-list" />
-                        <ui:Button name="details-features-recommended" text="#SpaceWarp/ModList/EnableRecommended" class="details-features-recommended" />
                     </ui:Foldout>
                 </ui:VisualElement>
             </ui:ScrollView>

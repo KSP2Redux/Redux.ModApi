@@ -138,12 +138,6 @@
     margin-bottom: 4px;
 }
 
-.unity-button.details-features-recommended {
-    height: 26px;
-    margin-top: 6px;
-    font-size: 12px;
-}
-
 #footer {
     flex-direction: row;
     margin-top: 8px;

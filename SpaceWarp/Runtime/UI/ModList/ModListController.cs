@@ -83,8 +83,6 @@ namespace SpaceWarp2.UI.ModList
         private VisualElement _detailsConflictList;
         private Foldout _detailsFeaturesFoldout;
         private VisualElement _detailsFeaturesList;
-        private Button _detailsFeaturesRecommendedButton;
-        private string _detailsFeaturesModId;
 
         private static LocalizedString _missingDependency = "SpaceWarp/ModList/MissingDependency";
         private static LocalizedString _erroredDependency = "SpaceWarp/ModList/ErroredDependency";
@@ -249,8 +247,6 @@ namespace SpaceWarp2.UI.ModList
 
             _detailsFeaturesFoldout = _container.Q<Foldout>("details-features-foldout");
             _detailsFeaturesList = _container.Q<VisualElement>("details-features-list");
-            _detailsFeaturesRecommendedButton = _container.Q<Button>("details-features-recommended");
-            _detailsFeaturesRecommendedButton.clicked += MarkRecommendedFeatureDefaults;
 
             // Show only categories that have any mods in them
             if (PluginList.AllLoadedPlugins.Any(x => !x.IsCore && !x.IsKsp1))
@@ -585,13 +581,11 @@ namespace SpaceWarp2.UI.ModList
         // Each switch marks a feature to start new campaigns with
         private void SetFeatureDefaults(string modId)
         {
-            _detailsFeaturesModId = modId;
             _detailsFeaturesList.Clear();
             List<FeatureDefinition> features = DefaultableFeaturesOf(FeatureRegistry.Instance, modId);
             _detailsFeaturesFoldout.style.display = features.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
-            _detailsFeaturesRecommendedButton.style.display =
-                features.Any(feature => feature.IsRecommended) ? DisplayStyle.Flex : DisplayStyle.None;
 
+            var toggles = new Dictionary<string, Toggle>(StringComparer.OrdinalIgnoreCase);
             foreach (FeatureDefinition feature in features)
             {
                 var toggle = new Toggle(FeatureNameOf(feature))
@@ -601,20 +595,50 @@ namespace SpaceWarp2.UI.ModList
                 toggle.AddToClassList("switch");
                 toggle.AddToClassList("details-feature-toggle");
                 string featureId = feature.Id;
-                toggle.RegisterValueChangedCallback(evt => SpaceWarp2.API.ModList.SetFeatureDefault(featureId, evt.newValue));
+                toggle.RegisterValueChangedCallback(evt =>
+                {
+                    if (!evt.newValue)
+                    {
+                        SpaceWarp2.API.ModList.SetFeatureDefault(featureId, false);
+                        return;
+                    }
+
+                    foreach (string marked in MarkedWith(FeatureRegistry.Instance, featureId))
+                    {
+                        SpaceWarp2.API.ModList.SetFeatureDefault(marked, true);
+                        if (toggles.TryGetValue(marked, out Toggle markedToggle))
+                        {
+                            markedToggle.SetValueWithoutNotify(true);
+                        }
+                    }
+                });
+                toggles[featureId] = toggle;
                 _detailsFeaturesList.Add(toggle);
             }
         }
 
-        private void MarkRecommendedFeatureDefaults()
+        /// <summary>
+        /// Lists the features marked when the player marks one: the feature itself, and for a mod's own default
+        /// feature also the mod's recommended features.
+        /// </summary>
+        /// <param name="registry">The feature registry.</param>
+        /// <param name="featureId">The marked feature's id.</param>
+        /// <returns>The features to mark.</returns>
+        internal static List<string> MarkedWith(FeatureRegistry registry, string featureId)
         {
-            List<FeatureDefinition> features = DefaultableFeaturesOf(FeatureRegistry.Instance, _detailsFeaturesModId);
-            foreach (FeatureDefinition feature in features.Where(feature => feature.IsRecommended))
+            var marked = new List<string> { featureId };
+            if (!registry.TryGet(featureId, out FeatureDefinition feature)
+                || !string.Equals(featureId, FeatureRegistry.DefaultFor(feature.ModId), StringComparison.OrdinalIgnoreCase))
             {
-                SpaceWarp2.API.ModList.SetFeatureDefault(feature.Id, true);
+                return marked;
             }
 
-            SetFeatureDefaults(_detailsFeaturesModId);
+            marked.AddRange(
+                DefaultableFeaturesOf(registry, feature.ModId)
+                    .Where(candidate => candidate.IsRecommended)
+                    .Select(candidate => candidate.Id)
+            );
+            return marked;
         }
 
         /// <summary>
