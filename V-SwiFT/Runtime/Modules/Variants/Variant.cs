@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Newtonsoft.Json;
 using UnityEngine;
 using VSwift.Modules.Transformers;
 
@@ -28,11 +29,10 @@ namespace VSwift.Modules.Variants
         public string VariantLocalizationKey = ""; // If null or empty, defaults to the variant ID
 
         /// <summary>
-        /// Technology IDs that must be unlocked for this variant to be selectable.
+        /// Gets the key the variant's name is localized under: its localization key, or its ID when it has none.
         /// </summary>
-        [Tooltip("Technology IDs that must be unlocked before this variant is selectable.")]
-        [UsedImplicitly]
-        public List<string> VariantTechs = new() { }; // This is a list of technologies to unlock this variant
+        [JsonIgnore]
+        public string DisplayNameKey => string.IsNullOrEmpty(VariantLocalizationKey) ? VariantId : VariantLocalizationKey;
 
         /// <summary>
         /// The transformers applied to the part when this variant is active.

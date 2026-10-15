@@ -133,21 +133,18 @@ namespace VSwift.UI
         private static readonly LocalizedString UnmetRequirementsLoc = "VSwift/UnmetRequirements";
         private static readonly LocalizedString CurrentlySelectedLoc = "VSwift/CurrentlySelected";
         private static readonly LocalizedString SelectLoc = "VSwift/Select";
-        private const string CheckMark = "✓";
         private const string XMark = "×";
 
-        private VisualElement GetButtonForVariant(Variant variant)
+        // A locked variant names the tech node that unlocks it
+        private VisualElement GetButtonForVariant(VariantSet variantSet, Variant variant)
         {
-            var localizedString = new LocalizedString(variant.VariantLocalizationKey.IsNullOrEmpty()
-                ? variant.VariantId
-                : variant.VariantLocalizationKey);
-            var hasUnlockRequirements = variant.VariantTechs.Count > 0;
-            var unlockedTechs = variant.VariantTechs.Select(x => (GetTechDisplayName(x), IsTechUnlocked(x))).ToList();
+            var scienceManager = GameManager.Instance.Game.ScienceManager;
+            string partName = _currentPartSwitchModule!.OABPart.Name;
+            var isUnlocked = scienceManager.IsVariantUnlocked(partName, variantSet.VariantSetId, variant.VariantId);
             var instance = VariantNameContainer.CloneTree().Q<VisualElement>("variant-container");
             var variantName = instance.Q<Label>("variant-name");
-            var allUnlocked = unlockedTechs.All(x => x.Item2);
-            variantName.text = localizedString;
-            if (!hasUnlockRequirements || allUnlocked)
+            variantName.text = new LocalizedString(variant.DisplayNameKey);
+            if (isUnlocked)
             {
                 instance.Q<Label>("unlockability").RemoveFromHierarchy();
                 instance.Q<VisualElement>("requirements").RemoveFromHierarchy();
@@ -157,18 +154,16 @@ namespace VSwift.UI
                 var unlockability = instance.Q<Label>("unlockability");
                 unlockability.text = UnmetRequirementsLoc;
                 unlockability.AddToClassList("locked");
-                var reqs = instance.Q<VisualElement>("requirements");
-                foreach (var (techName, isUnlocked) in unlockedTechs)
-                {
-                    var requirementInstance = RequirementContainer.CloneTree().Q<VisualElement>("requirement");
-                    var checkMark = requirementInstance.Q<Label>("is-unlocked");
-                    var technology = requirementInstance.Q<Label>("technology");
-                    checkMark.text = isUnlocked ? CheckMark : XMark;
-                    technology.text = techName;
-                    checkMark.AddToClassList(isUnlocked ? "unlocked-technology" : "locked-technology");
-                    technology.AddToClassList(isUnlocked ? "unlocked-technology" : "locked-technology");
-                    reqs.Add(requirementInstance);
-                }
+                string techNodeID =
+                    scienceManager.TechNodeDataStore.VariantLookup[(partName, variantSet.VariantSetId, variant.VariantId)];
+                var requirementInstance = RequirementContainer.CloneTree().Q<VisualElement>("requirement");
+                var checkMark = requirementInstance.Q<Label>("is-unlocked");
+                var technology = requirementInstance.Q<Label>("technology");
+                checkMark.text = XMark;
+                technology.text = GetTechDisplayName(techNodeID);
+                checkMark.AddToClassList("locked-technology");
+                technology.AddToClassList("locked-technology");
+                instance.Q<VisualElement>("requirements").Add(requirementInstance);
             }
 
             var clickable = new Clickable(() =>
@@ -183,7 +178,7 @@ namespace VSwift.UI
                     _selectVariant.text = CurrentlySelectedLoc;
                     if (_lastClickAction != null) _selectVariant.clicked -= _lastClickAction;
                     _lastClickAction = null;
-                } else if (!allUnlocked)
+                } else if (!isUnlocked)
                 {
                     _selectVariant.text = UnmetRequirementsLoc;
                     if (_lastClickAction != null) _selectVariant.clicked -= _lastClickAction;
@@ -210,13 +205,6 @@ namespace VSwift.UI
             return instance;
         }
 
-        private static bool IsTechUnlocked(string tech)
-        {
-            if (!GameManager.Instance.GameModeManager.IsGameModeFeatureEnabled("SciencePoints")) return true;
-            var scienceManager = GameManager.Instance.Game.ScienceManager;
-            return scienceManager.IsNodeUnlocked(tech);
-        }
-
         private static LocalizedString GetTechDisplayName(string tech) =>
             GameManager.Instance.Game
                 .ScienceManager.TechNodeDataStore.AvailableData[tech]?.NameLocKey ?? "";
@@ -241,7 +229,7 @@ namespace VSwift.UI
 
             foreach (var variant in variantSet.Variants)
             {
-                _variantSelect.Add(GetButtonForVariant(variant));
+                _variantSelect.Add(GetButtonForVariant(variantSet, variant));
             }
 
             GenerateInformationFor(variantSet.Variants.First(x => x.VariantId == CurrentlySelected));

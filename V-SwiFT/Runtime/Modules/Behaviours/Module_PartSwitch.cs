@@ -140,17 +140,16 @@ namespace VSwift.Modules.Behaviours
                 }
             };
             var list = new DropdownItemList();
+            var scienceManager = GameManager.Instance.Game.ScienceManager;
             foreach (var variant in variantSet.Variants)
             {
-                if (!AreAllTechsUnlocked(variant.VariantTechs))
+                if (!scienceManager.IsVariantUnlocked(OABPart.Name, variantSet.VariantSetId, variant.VariantId))
                     continue;
 
                 list.Add(variant.VariantId, new DropdownItem
                 {
                     key = variant.VariantId,
-                    text = LocalizationManager.GetTranslation(variant.VariantLocalizationKey.IsNullOrEmpty()
-                        ? variant.VariantId
-                        : variant.VariantLocalizationKey)
+                    text = LocalizationManager.GetTranslation(variant.DisplayNameKey)
                 });
             }
 
@@ -472,15 +471,6 @@ namespace VSwift.Modules.Behaviours
                 var reverter = transformer.Reverter;
                 _storedState.OriginalTransformerData[reverter!] = reverter!.Store(this);
             }
-        }
-
-        private static bool AreAllTechsUnlocked(IEnumerable<string> techs)
-        {
-            if (!GameManager.Instance.GameModeManager.IsGameModeFeatureEnabled("SciencePoints"))
-                return true;
-
-            var scienceManager = GameManager.Instance.Game.ScienceManager;
-            return techs.All(tech => scienceManager.IsNodeUnlocked(tech));
         }
 
         /// <inheritdoc />

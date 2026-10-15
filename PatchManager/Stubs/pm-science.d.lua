@@ -19,6 +19,7 @@
 -- Source: Assets/Code/KSP/game/Science/CelestialBodyDiscoverablePosition.cs
 -- Source: Assets/Code/KSP/game/Science/TechNodeData.cs
 -- Source: Assets/Code/KSP/game/Science/TechRequiredResearchData.cs
+-- Source: Assets/Code/KSP/game/Science/TechUnlockedVariant.cs
 
 ---@class DiscoverablePositionUserData : _CelestialBodyDiscoverablePosition, JsonUserData
 
@@ -211,6 +212,7 @@ function ScienceLuaModule:AddPartsToTechNode(nodeName, ...) end
 ---@field DescriptionLocKey string The localization key for the description text of this tech node.
 ---@field RequiredSciencePoints integer The number of science points required to unlock this tech node.
 ---@field UnlockedPartsIDs JsonList<string> The identifiers of the parts that become available when this tech node is unlocked.
+---@field UnlockedVariants JsonList<TechUnlockedVariant> The part variants that become selectable when this tech node is unlocked. A variant no node names is always selectable.
 ---@field RequiredTechNodeIDs JsonList<string> The identifiers of tech nodes that must be unlocked before this node can be researched.
 ---@field RequiredMissionIDs JsonList<string> The identifiers of missions that must be completed before this tech node can be unlocked.
 ---@field RequiredResearchData JsonList<TechRequiredResearchData> The research conditions that must be satisfied to unlock this tech node.
@@ -218,7 +220,7 @@ function ScienceLuaModule:AddPartsToTechNode(nodeName, ...) end
 ---@field TechTreePosition Vector2 The 2D position of this tech node within the tech tree layout.
 ---@field MysteryTech boolean When true, the node name and description are hidden until all prerequisites are fulfilled.
 
----@alias TechNodeData _TechNodeData | { Version: integer, ID: string, NameLocKey: string, IconID: string, CategoryID: string, HiddenByNodeID: string, DescriptionLocKey: string, RequiredSciencePoints: integer, UnlockedPartsIDs: JsonList<string>, RequiredTechNodeIDs: JsonList<string>, RequiredMissionIDs: JsonList<string>, RequiredResearchData: JsonList<TechRequiredResearchData>, TierToUnlock: integer, TechTreePosition: Vector2, MysteryTech: boolean }
+---@alias TechNodeData _TechNodeData | { Version: integer, ID: string, NameLocKey: string, IconID: string, CategoryID: string, HiddenByNodeID: string, DescriptionLocKey: string, RequiredSciencePoints: integer, UnlockedPartsIDs: JsonList<string>, UnlockedVariants: JsonList<TechUnlockedVariant>, RequiredTechNodeIDs: JsonList<string>, RequiredMissionIDs: JsonList<string>, RequiredResearchData: JsonList<TechRequiredResearchData>, TierToUnlock: integer, TechTreePosition: Vector2, MysteryTech: boolean }
 
 ---Represents research conditions required to unlock a technology node, including experiment, location, and report type.
 ---Leave ExperimentID nil or empty to match any experiment.
@@ -232,3 +234,11 @@ function ScienceLuaModule:AddPartsToTechNode(nodeName, ...) end
 ---@field Longitude? number Gets the longitude of Coordinates in decimal degrees, east positive, or zero when no coordinates are set.
 
 ---@alias TechRequiredResearchData _TechRequiredResearchData | { ExperimentID: string, ResearchLocationID: string?, ResearchReportType: ScienceReportType?, Coordinates: JsonList<number>, HasCoordinates: boolean?, Latitude: number?, Longitude: number? }
+
+---A part variant a tech node unlocks, named by its part, its variant set and its own ID.
+---@class _TechUnlockedVariant : _JsonUserDataBase
+---@field PartName string The name of the part the variant belongs to.
+---@field VariantSetId string The ID of the variant set the variant is in.
+---@field VariantId string The variant's ID within its set.
+
+---@alias TechUnlockedVariant _TechUnlockedVariant | { PartName: string, VariantSetId: string, VariantId: string }

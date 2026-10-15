@@ -230,10 +230,9 @@ function AttachNodeAdderUserData:Add(id, callback) end
 ---@class _Variant : _JsonUserDataBase
 ---@field VariantId string The variant's identifier. Also used as the localization-key fallback.
 ---@field VariantLocalizationKey string The variant's localization key. Defaults to `VariantId` when empty.
----@field VariantTechs JsonList<string> Technology IDs that must be unlocked for this variant to be selectable.
 ---@field Transformers JsonList<ITransformer> The transformers applied to the part when this variant is active.
 
----@alias Variant _Variant | { VariantId: string, VariantLocalizationKey: string, VariantTechs: JsonList<string>, Transformers: JsonList<ITransformer> }
+---@alias Variant _Variant | { VariantId: string, VariantLocalizationKey: string, Transformers: JsonList<ITransformer> }
 
 ---Interface for V-SwiFT transformers, the per-variant operations that mutate a part when a variant is active.
 ---@alias ITransformer table | AttachNodeAdder | AttachNodeMover | DefaultEngineModesVisualizer | DefaultMassVisualizer | DefaultScalarVisualizer | EngineModeSwapper | MassModifier | MaterialSwapper | ModuleDefinitionTransformer | PartScalarTransformer | ResourceContainerAdder | ResourceContainerRemover | TextVisualizer | TransformActivator

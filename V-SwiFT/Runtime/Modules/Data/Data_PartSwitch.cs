@@ -4,6 +4,7 @@ using System.Linq;
 using Redux;
 using I2.Loc;
 using KSP.Game;
+using KSP.Game.Science;
 using KSP.Sim;
 using KSP.Sim.Definitions;
 using Newtonsoft.Json.Linq;
@@ -81,26 +82,32 @@ namespace VSwift.Modules.Data
                 )
             ).ToList();
 
-        private static List<OABPartData.PartInfoModuleSubEntry> GetVariantEntries(OABPartData.OABSituationStats stats,
-            VariantSet variantSet) => variantSet.Variants.Select(GetVariantEntry).ToList();
+        private List<OABPartData.PartInfoModuleSubEntry> GetVariantEntries(OABPartData.OABSituationStats stats,
+            VariantSet variantSet) => variantSet.Variants.Select(variant => GetVariantEntry(variantSet, variant)).ToList();
 
-        private static OABPartData.PartInfoModuleSubEntry GetVariantEntry(Variant variant) =>
-            variant.VariantTechs.Count == 0
-                ? new OABPartData.PartInfoModuleSubEntry(
-                    LocalizationManager.GetTranslation(
-                        variant.VariantLocalizationKey.IsNullOrEmpty()
-                            ? variant.VariantId
-                            : variant.VariantLocalizationKey)
-                )
-                : new OABPartData.PartInfoModuleSubEntry(
-                    LocalizationManager.GetTranslation(
-                        variant.VariantLocalizationKey.IsNullOrEmpty()
-                            ? variant.VariantId
-                            : variant.VariantLocalizationKey),
-                    variant.VariantTechs.Select(tech =>
-                        new OABPartData.PartInfoModuleSubEntry(LocalizationManager.GetTranslation(GameManager.Instance.Game
-                            .ScienceManager.TechNodeDataStore.AvailableData[tech]?.NameLocKey ?? ""))).ToList()
-                );
+        // A variant a tech node unlocks lists that node under its name
+        private OABPartData.PartInfoModuleSubEntry GetVariantEntry(VariantSet variantSet, Variant variant)
+        {
+            string name = LocalizationManager.GetTranslation(variant.DisplayNameKey);
+            TechNodeDataStore techNodes = GameManager.Instance.Game.ScienceManager.TechNodeDataStore;
+            if (OwningPartData == null ||
+                !techNodes.VariantLookup.TryGetValue(
+                    (OwningPartData.partName, variantSet.VariantSetId, variant.VariantId),
+                    out string techNodeID
+                ) ||
+                !techNodes.AvailableData.TryGetValue(techNodeID, out TechNodeData techNode))
+            {
+                return new OABPartData.PartInfoModuleSubEntry(name);
+            }
+
+            return new OABPartData.PartInfoModuleSubEntry(
+                name,
+                new List<OABPartData.PartInfoModuleSubEntry>
+                {
+                    new(LocalizationManager.GetTranslation(techNode.NameLocKey)),
+                }
+            );
+        }
 
         /// <summary>
         /// Returns the per-variant transformer-saved data, indexed by variant-set position and transformer position.
