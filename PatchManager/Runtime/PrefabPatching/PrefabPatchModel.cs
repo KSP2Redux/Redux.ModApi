@@ -642,6 +642,8 @@ namespace PatchManager.PrefabPatching
         public string[] OrderedPatchIds = Array.Empty<string>();
         /// <summary>The validated flattened operation stream.</summary>
         public List<PrefabPatchOperation> Operations = new();
+        /// <summary>The owner of each operation, retained in cached plans without adding ownership to manifests.</summary>
+        public string[] OperationPatchIds = Array.Empty<string>();
         /// <summary>Diagnostics produced while resolving the plan.</summary>
         public List<PrefabPatchDiagnostic> Diagnostics = new();
         /// <summary>Whether the plan can be composed.</summary>

@@ -122,7 +122,10 @@ namespace PatchManager.PrefabPatching
             );
             plan.SourceFingerprint = sourceFingerprint;
             if (plan.IsValid)
+            {
+                plan.OperationPatchIds = plan.Operations.Select(operation => operation.PatchId).ToArray();
                 AtomicWrite(path, PrefabPatchJson.Serialize(plan));
+            }
             stopwatch.Stop();
             return new Result
             {
@@ -215,15 +218,26 @@ namespace PatchManager.PrefabPatching
                 plan = PrefabPatchJson.Deserialize<PrefabPatchResolvedPlan>(
                     ReadCompressed(path)
                 );
-                return plan != null
-                    && plan.SchemaVersion == PrefabPatchSchema.Version
-                    && plan.ComposerVersion == PrefabPatchSchema.ComposerVersion
-                    && plan.IsValid
-                    && string.Equals(
+                if (plan == null
+                    || plan.SchemaVersion != PrefabPatchSchema.Version
+                    || plan.ComposerVersion != PrefabPatchSchema.ComposerVersion
+                    || !plan.IsValid
+                    || !string.Equals(
                         plan.SourceFingerprint,
                         sourceFingerprint,
                         StringComparison.Ordinal
-                    );
+                    )
+                    || plan.OperationPatchIds == null
+                    || plan.OperationPatchIds.Length != plan.Operations.Count
+                    || plan.OperationPatchIds.Any(string.IsNullOrWhiteSpace))
+                    return false;
+
+                // Operation ownership is runtime-only in manifests. Old caches without it must be rebuilt.
+                for (int index = 0; index < plan.Operations.Count; index++)
+                {
+                    plan.Operations[index].PatchId = plan.OperationPatchIds[index];
+                }
+                return true;
             }
             catch
             {
