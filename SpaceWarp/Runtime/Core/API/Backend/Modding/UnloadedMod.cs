@@ -46,6 +46,10 @@ internal class UnloadedMod : ISpaceWarpMod
 
     public void OnPostInitialized() { }
 
+    public void OnCampaignLoaded() { }
+
+    public void OnCampaignUnloading() { }
+
     public ILogger SWLogger { get; set; }
     public IConfigFile SWConfiguration { get; set; }
     public SpaceWarpPluginDescriptor SWMetadata { get; set; }

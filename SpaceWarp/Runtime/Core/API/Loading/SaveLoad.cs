@@ -6,6 +6,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using KSP.Game.Flow;
 using SpaceWarp2.API.Features;
+using SpaceWarp2.API.Mods;
 using UnityEngine;
 
 namespace SpaceWarp2.API.Loading
@@ -164,7 +165,7 @@ namespace SpaceWarp2.API.Loading
         /// <param name="modId">The plugin's mod.</param>
         /// <param name="name">The plugin's name.</param>
         /// <param name="plugin">The plugin.</param>
-        internal static void AddCampaignLifecycle(string modId, string name, ICampaignLifecycle plugin) =>
+        internal static void AddCampaignLifecycle(string modId, string name, ISpaceWarpMod plugin) =>
             Register(TriggerOf(CampaignPhase.Loaded), LifecycleAction(modId, name, plugin));
 
         /// <summary>
@@ -174,7 +175,7 @@ namespace SpaceWarp2.API.Loading
         /// <param name="name">The plugin's name.</param>
         /// <param name="plugin">The plugin.</param>
         /// <returns>The action.</returns>
-        internal static FeatureGatedAction LifecycleAction(string modId, string name, ICampaignLifecycle plugin) =>
+        internal static FeatureGatedAction LifecycleAction(string modId, string name, ISpaceWarpMod plugin) =>
             new(modId, $"{name}: campaign state", done =>
             {
                 plugin.OnCampaignLoaded();
@@ -282,22 +283,5 @@ namespace SpaceWarp2.API.Loading
         /// Saving a campaign.
         /// </summary>
         CampaignSave
-    }
-
-    /// <summary>
-    /// Implemented by a mod's plugin to hear when a campaign it is enabled in loads and unloads.
-    /// </summary>
-    [PublicAPI]
-    public interface ICampaignLifecycle
-    {
-        /// <summary>
-        /// Called once a campaign the mod is enabled in has loaded.
-        /// </summary>
-        void OnCampaignLoaded();
-
-        /// <summary>
-        /// Called before that campaign unloads, to undo what <see cref="OnCampaignLoaded" /> set up.
-        /// </summary>
-        void OnCampaignUnloading();
     }
 }

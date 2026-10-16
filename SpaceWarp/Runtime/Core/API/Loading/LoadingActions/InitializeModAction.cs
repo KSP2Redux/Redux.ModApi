@@ -2,6 +2,7 @@
 
 using KSP.Game.Flow;
 using System;
+using SpaceWarp2.API.Backend.Modding;
 using SpaceWarp2.API.Loading;
 using SpaceWarp2.API.Mods;
 
@@ -43,9 +44,10 @@ namespace SpaceWarp2.Patching.LoadingActions
                     _plugin.Plugin?.OnInitialized();
                 }
 
-                if (_plugin.Plugin is ICampaignLifecycle lifecycle)
+                // An asset-only mod has no plugin code to hear the campaign
+                if (_plugin.Plugin is { } plugin and not AssetOnlyMod)
                 {
-                    SaveLoad.AddCampaignLifecycle(_plugin.Guid, _plugin.Name, lifecycle);
+                    SaveLoad.AddCampaignLifecycle(_plugin.Guid, _plugin.Name, plugin);
                 }
 
                 resolve();

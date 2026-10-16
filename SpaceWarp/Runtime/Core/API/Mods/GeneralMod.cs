@@ -3,11 +3,10 @@
 using HarmonyLib;
 using SpaceWarp2.API.Configuration;
 using SpaceWarp2.API.Logging;
-using SpaceWarp2.API.Loading;
 
 namespace SpaceWarp2.API.Mods;
 
-public abstract class GeneralMod : ISpaceWarpMod, ICampaignLifecycle
+public abstract class GeneralMod : ISpaceWarpMod
 {
     public virtual void OnPreInitialized()
     {

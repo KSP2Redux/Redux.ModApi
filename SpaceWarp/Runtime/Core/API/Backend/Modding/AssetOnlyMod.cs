@@ -25,6 +25,14 @@ internal class AssetOnlyMod : ISpaceWarpMod
     {
     }
 
+    public void OnCampaignLoaded()
+    {
+    }
+
+    public void OnCampaignUnloading()
+    {
+    }
+
     public ILogger SWLogger { get; set; }
     public IConfigFile SWConfiguration { get; set; } = new EmptyConfigFile();
 

@@ -2,13 +2,12 @@
 
 using HarmonyLib;
 using SpaceWarp2.API.Configuration;
-using SpaceWarp2.API.Loading;
 using UnityEngine;
 using ILogger = SpaceWarp2.API.Logging.ILogger;
 
 namespace SpaceWarp2.API.Mods
 {
-    public abstract class MonoBehaviourMod : MonoBehaviour, ISpaceWarpMod, ICampaignLifecycle
+    public abstract class MonoBehaviourMod : MonoBehaviour, ISpaceWarpMod
     {
         public virtual void OnPreInitialized()
         {

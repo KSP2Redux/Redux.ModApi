@@ -32,6 +32,16 @@ public interface ISpaceWarpMod
     public void OnPostInitialized();
 
     /// <summary>
+    /// Called once a campaign this mod is enabled in has loaded.
+    /// </summary>
+    public void OnCampaignLoaded();
+
+    /// <summary>
+    /// Called before that campaign unloads, to undo what <see cref="OnCampaignLoaded" /> set up.
+    /// </summary>
+    public void OnCampaignUnloading();
+
+    /// <summary>
     /// Gets the logger for this mod
     /// </summary>
     public ILogger SWLogger { get; set; }
