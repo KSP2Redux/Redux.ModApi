@@ -214,6 +214,8 @@ namespace PatchManager.PrefabPatching
             public bool Failed;
             public Exception Failure;
             public int RequestCount;
+            // ResourceManager counts caller handles. This counts distinct provider operations sharing the template.
+            public int ProviderCount;
         }
 
         private class ManifestLocation
@@ -651,25 +653,22 @@ namespace PatchManager.PrefabPatching
         }
 
         internal static bool TryProvide(
-            string address,
+            Entry entry,
             out GameObject prefab,
             out Exception failure
         )
         {
             prefab = null;
             failure = null;
-            if (!Entries.TryGetValue(address, out var entry))
-            {
-                failure = new KeyNotFoundException(
-                    $"No resolved prefab patch plan exists for '{address}'."
-                );
-                return false;
-            }
-
+            string address = entry.Plan.TargetPrefab.Address;
             var stopwatch = Stopwatch.StartNew();
             entry.RequestCount++;
             if (TryUseCompletedEntry(entry, stopwatch, out prefab, out failure))
+            {
+                if (failure == null)
+                    entry.ProviderCount++;
                 return failure == null;
+            }
 
             try
             {
@@ -679,10 +678,12 @@ namespace PatchManager.PrefabPatching
                 entry.EffectivePrefab = effectivePrefab;
                 RecordCompositionMetrics(stopwatch);
                 prefab = effectivePrefab;
+                entry.ProviderCount++;
                 return true;
             }
             catch (Exception exception)
             {
+                ReleaseEntryResources(entry);
                 RecordCompositionFailure(address, entry, stopwatch, exception);
                 failure = exception;
                 return false;
@@ -791,28 +792,40 @@ namespace PatchManager.PrefabPatching
         private static GameObject ComposeEffectivePrefab(GameObject stock, Entry entry)
         {
             var effectivePrefab = CreateEffectivePrefab(stock);
-            var result = PrefabPatchComposer.ApplySynchronously(
-                effectivePrefab,
-                entry.Plan,
-                entry.References
-            );
-            if (result.Success)
-                return effectivePrefab;
+            try
+            {
+                var result = PrefabPatchComposer.ApplySynchronously(
+                    effectivePrefab,
+                    entry.Plan,
+                    entry.References
+                );
+                if (result.Success)
+                    return effectivePrefab;
 
-            Object.DestroyImmediate(effectivePrefab);
-            throw new InvalidOperationException(result.Failure);
+                throw new InvalidOperationException(result.Failure);
+            }
+            catch
+            {
+                Object.DestroyImmediate(effectivePrefab);
+                throw;
+            }
         }
 
         private static void RecordCompositionMetrics(Stopwatch stopwatch)
         {
             stopwatch.Stop();
             CurrentMetrics.FirstCompositionMilliseconds += stopwatch.ElapsedMilliseconds;
+            UpdateRetainedHandleCount();
+            CurrentMetrics.MemoryAfterBytes = Profiler.GetTotalAllocatedMemoryLong();
+        }
+
+        private static void UpdateRetainedHandleCount()
+        {
             CurrentMetrics.RetainedAddressablesHandles = Entries.Values.Sum(
                 value =>
                     (value.StockHandle.IsValid() ? 1 : 0)
                     + value.ReferenceHandles.Count(handle => handle.IsValid())
             );
-            CurrentMetrics.MemoryAfterBytes = Profiler.GetTotalAllocatedMemoryLong();
         }
 
         private static void RecordCompositionFailure(
@@ -845,7 +858,7 @@ namespace PatchManager.PrefabPatching
 
             // AssetBundle assets are read-only native objects. Patching them in
             // place is not stable: Unity can restore removed components before a
-            // later instantiation. Keep an inactive, session-owned template
+            // later instantiation. Keep an inactive, provider-owned template
             // instead. Parenting under an inactive root prevents prefab
             // MonoBehaviours from initializing while the patch is composed.
             var effectivePrefab = Object.Instantiate(
@@ -1028,26 +1041,43 @@ namespace PatchManager.PrefabPatching
         {
             foreach (var entry in Entries.Values)
             {
-                if (entry.EffectivePrefab != null)
-                    Object.DestroyImmediate(entry.EffectivePrefab);
-                entry.EffectivePrefab = null;
-
-                foreach (var handle in entry.ReferenceHandles)
-                {
-                    if (handle.IsValid())
-                        handle.Release();
-                }
-
-                entry.ReferenceHandles.Clear();
-                entry.References.Clear();
-                if (entry.StockHandle.IsValid())
-                    entry.StockHandle.Release();
-                entry.StockHandle = default;
+                ReleaseEntryResources(entry);
+                entry.ProviderCount = 0;
             }
 
             if (_effectivePrefabRoot != null)
                 Object.DestroyImmediate(_effectivePrefabRoot);
             _effectivePrefabRoot = null;
+        }
+
+        internal static void ReleaseProvider(Entry entry)
+        {
+            if (entry.ProviderCount == 0)
+                return;
+
+            entry.ProviderCount--;
+            if (entry.ProviderCount == 0)
+                ReleaseEntryResources(entry);
+        }
+
+        private static void ReleaseEntryResources(Entry entry)
+        {
+            if (entry.EffectivePrefab != null)
+                Object.DestroyImmediate(entry.EffectivePrefab);
+            entry.EffectivePrefab = null;
+
+            foreach (var handle in entry.ReferenceHandles)
+            {
+                if (handle.IsValid())
+                    handle.Release();
+            }
+
+            entry.ReferenceHandles.Clear();
+            entry.References.Clear();
+            if (entry.StockHandle.IsValid())
+                entry.StockHandle.Release();
+            entry.StockHandle = default;
+            UpdateRetainedHandleCount();
         }
     }
 
@@ -1060,7 +1090,7 @@ namespace PatchManager.PrefabPatching
             IReadOnlyDictionary<string, PrefabPatchRuntime.Entry> entries
         )
         {
-            _entries = entries;
+            _entries = entries.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
         }
 
         public string LocatorId => GetType().FullName;
@@ -1143,14 +1173,14 @@ namespace PatchManager.PrefabPatching
             return replacedAny;
         }
 
-        private static IResourceLocation CreatePatchLocation(string address)
+        private IResourceLocation CreatePatchLocation(string address)
         {
             return new ResourceLocationBase(
                 "prefab-patch:" + address,
-                address,
+                address + "#" + _entries[address].Plan.SourceFingerprint,
                 typeof(PrefabPatchResourceProvider).FullName,
                 typeof(GameObject)
-            );
+            ) { Data = _entries[address] };
         }
 
         private static string GetLocationIdentity(IResourceLocation location)
@@ -1190,7 +1220,7 @@ namespace PatchManager.PrefabPatching
         {
             if (
                 PrefabPatchRuntime.TryProvide(
-                    provideHandle.Location.InternalId,
+                    (PrefabPatchRuntime.Entry)provideHandle.Location.Data,
                     out var prefab,
                     out var failure
                 )
@@ -1209,8 +1239,8 @@ namespace PatchManager.PrefabPatching
 
         public override void Release(IResourceLocation location, object obj)
         {
-            // Effective prefabs and their stock/mod Addressables handles are retained
-            // for the game session. They are cleared by SubsystemRegistration.
+            if (obj is GameObject)
+                PrefabPatchRuntime.ReleaseProvider((PrefabPatchRuntime.Entry)location.Data);
         }
     }
 }
