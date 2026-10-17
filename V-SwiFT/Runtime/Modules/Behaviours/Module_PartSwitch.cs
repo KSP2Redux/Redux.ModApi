@@ -414,7 +414,7 @@ namespace VSwift.Modules.Behaviours
 
         private string EnsureActiveVariant(int index, VariantSet variantSet)
         {
-            string defaultVariant = GetDefaultVariant(index, variantSet);
+            string defaultVariant = _dataPartSwitch!.GetDefaultVariant(index);
             while (_dataPartSwitch!.ActiveVariants.Count <= index)
             {
                 _dataPartSwitch.ActiveVariants.Add(defaultVariant);
@@ -426,18 +426,6 @@ namespace VSwift.Modules.Behaviours
             }
 
             return _dataPartSwitch.ActiveVariants[index];
-        }
-
-        private string GetDefaultVariant(int index, VariantSet variantSet)
-        {
-            if (_dataPartSwitch!.DefaultActiveVariants.Count > index)
-            {
-                string defaultVariant = _dataPartSwitch.DefaultActiveVariants[index];
-                if (variantSet.Variants.Any(variant => variant.VariantId == defaultVariant))
-                    return defaultVariant;
-            }
-
-            return variantSet.Variants.First().VariantId;
         }
 
         private void MarkOabDirty()
