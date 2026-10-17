@@ -53,9 +53,7 @@ namespace VSwift.Modules.Data
         {
             base.SyncAllSymmetricalData(sourceModuleData);
             if (sourceModuleData is not Data_PartSwitch source)
-            {
                 return;
-            }
 
             ActiveVariants = new List<string>(source.ActiveVariants);
             MassModifier = source.MassModifier;
@@ -107,6 +105,20 @@ namespace VSwift.Modules.Data
                     new(LocalizationManager.GetTranslation(techNode.NameLocKey)),
                 }
             );
+        }
+
+        /// <summary>
+        /// Returns the ID of the variant a newly placed part starts with in a variant set.
+        /// </summary>
+        /// <param name="index">The set's position in <see cref="VariantSets" />.</param>
+        /// <returns>The set's entry in <see cref="DefaultActiveVariants" /> when it names one of the set's variants, the set's first variant otherwise.</returns>
+        public string GetDefaultVariant(int index)
+        {
+            VariantSet variantSet = VariantSets[index];
+            string? defaultVariant = DefaultActiveVariants.Count > index ? DefaultActiveVariants[index] : null;
+            return variantSet.Variants.Any(variant => variant.VariantId == defaultVariant)
+                ? defaultVariant!
+                : variantSet.Variants.First().VariantId;
         }
 
         /// <summary>
