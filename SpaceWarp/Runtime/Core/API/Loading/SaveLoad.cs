@@ -184,6 +184,35 @@ namespace SpaceWarp2.API.Loading
             });
 
         /// <summary>
+        /// Registers an integration to hear when each campaign both its mods are enabled in loads.
+        /// </summary>
+        /// <param name="integration">The integration.</param>
+        internal static void AddIntegrationLifecycle(ModIntegration integration) =>
+            Register(TriggerOf(CampaignPhase.Loaded), IntegrationLifecycleAction(integration));
+
+        /// <summary>
+        /// Builds the action that tells an integration its campaign has loaded, and owes it the matching unload.
+        /// </summary>
+        /// <remarks>
+        /// The action belongs to the integration's own mod, so the feature gate covers that one, and the integrated
+        /// mod is checked when it runs.
+        /// </remarks>
+        /// <param name="integration">The integration.</param>
+        /// <returns>The action.</returns>
+        internal static FeatureGatedAction IntegrationLifecycleAction(ModIntegration integration) =>
+            new(integration.CurrentMod.Guid,
+                $"{integration.CurrentMod.Name}: campaign state for {integration.IntegratedMod.Name}", done =>
+                {
+                    if (integration.IsActive && integration.IntegratedMod.Enabled &&
+                        integration.TryRun("campaign load", loaded => loaded.OnCampaignLoaded()))
+                    {
+                        OnCampaignUnload(() => integration.TryRun("campaign unload", unloading => unloading.OnCampaignUnloading()));
+                    }
+
+                    done();
+                });
+
+        /// <summary>
         /// Registers work a mod loads per feature set.
         /// </summary>
         /// <param name="action">The action, whose reset clears what an earlier set loaded.</param>

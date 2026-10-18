@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 
 using System;
 using System.Collections.Generic;
@@ -243,37 +243,11 @@ namespace SpaceWarp2.API.Backend.Modding
 
                 if (swinfoData.MainAssembly != null && !ModList.DisabledPluginGuids.Contains(swinfoData.ModID))
                 {
-                    Assembly asm = null;
-                    if (Application.isEditor)
-                    {
-                        // The mod assembly may be compiled by unity and should already be in the loaded app domain.
-                        var shortName = Path.GetFileNameWithoutExtension(swinfoData.MainAssembly);
-                        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-                        {
-                            var thisShortName = assembly.GetName().Name;
-                            if (shortName == thisShortName)
-                            {
-                                asm = assembly;
-                                break;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        var dll = Path.Combine(swinfo.Directory!.FullName, swinfoData.MainAssembly);
-                        if (!File.Exists(dll))
-                        {
-                            Logger.LogError(
-                                $"Main assembly {swinfoData.MainAssembly} for {swinfoData.Name} could not be found, this mod will be ignored");
-                            return;
-                        }
-
-                        asm = Assembly.LoadFile(dll);
-                    }
-
+                    Assembly? asm = FindModAssembly(swinfo.Directory!, swinfoData.MainAssembly);
                     if (asm is null)
                     {
-                        Debug.LogWarning($"Can't find main assembly {swinfoData.MainAssembly} for mod {swinfoData.Name}");
+                        Logger.LogError(
+                            $"Main assembly {swinfoData.MainAssembly} for {swinfoData.Name} could not be found, this mod will be ignored");
                         return;
                     }
 
@@ -334,16 +308,123 @@ namespace SpaceWarp2.API.Backend.Modding
             return null;
         }
 
-        // Records a mod whose assemblies failed to load as errored instead of registering it, and hides whatever of
-        // it did load from the domain scans, since a loaded assembly cannot be unloaded.
-        private static void RejectMod(ModInfo swinfoData, DirectoryInfo folder, List<Assembly> modAssemblies, Exception exception)
+        // In the editor a mod's assemblies are compiled by Unity and already loaded, so they are found by name
+        private static Assembly? FindModAssembly(DirectoryInfo folder, string relativePath)
+        {
+            if (Application.isEditor)
+            {
+                string shortName = Path.GetFileNameWithoutExtension(relativePath);
+                return AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly => assembly.GetName().Name == shortName);
+            }
+
+            string path = Path.Combine(folder.FullName, relativePath);
+            return File.Exists(path) ? Assembly.LoadFile(path) : null;
+        }
+
+        private static string LoadErrorsOf(Exception exception)
         {
             IEnumerable<string> reasons = exception is ReflectionTypeLoadException typeLoadException
                 ? typeLoadException.LoaderExceptions.OfType<Exception>().Select(loaderException => loaderException.Message).Distinct()
                 : new[] { exception.Message };
+            return string.Join("\n", reasons);
+        }
+
+        /// <summary>
+        /// Creates the integrations of every loaded mod whose integrated mod is loaded too, loading each integration's
+        /// assembly only then.
+        /// </summary>
+        internal static void LoadIntegrations()
+        {
+            foreach (SpaceWarpPluginDescriptor descriptor in PluginList.AllLoadedPlugins)
+            {
+                foreach (ModIntegrationInfo info in descriptor.SWInfo.Integrations)
+                {
+                    SpaceWarpPluginDescriptor? integrated = PluginList.AllLoadedPlugins.FirstOrDefault(other =>
+                        string.Equals(other.Guid, info.ModID, StringComparison.OrdinalIgnoreCase));
+                    if (integrated == null || integrated == descriptor)
+                        continue;
+
+                    Assembly? assembly;
+                    try
+                    {
+                        assembly = FindModAssembly(descriptor.Folder, info.Assembly);
+                    }
+                    catch (Exception exception) when (exception is BadImageFormatException or FileLoadException)
+                    {
+                        descriptor.Logger.LogError(
+                            $"Integration with {info.ModID} was not loaded because its assembly failed to load.\n{exception.Message}");
+                        continue;
+                    }
+
+                    if (assembly == null)
+                    {
+                        descriptor.Logger.LogError($"Integration assembly {info.Assembly} for {info.ModID} could not be found");
+                        continue;
+                    }
+
+                    CreateIntegration(descriptor, integrated, assembly);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates the integration an assembly holds and adds it to its mod, or logs why it cannot.
+        /// </summary>
+        /// <param name="current">The mod the integration belongs to.</param>
+        /// <param name="integrated">The mod it integrates with.</param>
+        /// <param name="assembly">The integration's assembly.</param>
+        internal static void CreateIntegration(SpaceWarpPluginDescriptor current, SpaceWarpPluginDescriptor integrated,
+            Assembly assembly)
+        {
+            Type[] integrationTypes;
+            try
+            {
+                integrationTypes = assembly.GetTypes()
+                    .Where(type => typeof(ModIntegration).IsAssignableFrom(type) && !type.IsAbstract)
+                    .ToArray();
+            }
+            catch (ReflectionTypeLoadException exception)
+            {
+                // The integrated mod is present, so a type that cannot load means one of the two changed its API
+                current.Logger.LogError(
+                    $"Integration with {integrated.Guid} was not loaded because its assembly failed to load. " +
+                    $"It was likely built for a different version of either mod.\n{LoadErrorsOf(exception)}");
+                assembly.Reject();
+                return;
+            }
+
+            if (integrationTypes.Length != 1)
+            {
+                current.Logger.LogError(
+                    $"Integration assembly {assembly.GetName().Name} for {integrated.Guid} must hold exactly one " +
+                    $"{nameof(ModIntegration)} subclass, but holds {integrationTypes.Length}");
+                return;
+            }
+
+            ModIntegration integration;
+            try
+            {
+                integration = (ModIntegration)Activator.CreateInstance(integrationTypes[0]);
+            }
+            catch (Exception exception)
+            {
+                current.Logger.LogError($"Integration with {integrated.Guid} could not be created: {exception}");
+                return;
+            }
+
+            integration.CurrentMod = current;
+            integration.IntegratedMod = integrated;
+            current.AddIntegration(integration);
+            current.Assemblies.Add(assembly);
+        }
+
+        // Records a mod whose assemblies failed to load as errored instead of registering it, and hides whatever of
+        // it did load from the domain scans, since a loaded assembly cannot be unloaded.
+        private static void RejectMod(ModInfo swinfoData, DirectoryInfo folder, List<Assembly> modAssemblies, Exception exception)
+        {
             Logger.LogError(
                 $"Mod {swinfoData.Name} ({swinfoData.ModID}) was not loaded because its assemblies failed to load. " +
-                $"It was likely built for a different game version.\n{string.Join("\n", reasons)}");
+                $"It was likely built for a different game version.\n{LoadErrorsOf(exception)}");
 
             foreach (Assembly assembly in modAssemblies)
             {

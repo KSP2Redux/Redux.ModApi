@@ -67,6 +67,11 @@ namespace SpaceWarp2.API.Features
                 {
                     BindFeatureFields(descriptor.Plugin, descriptor.Guid);
                 }
+
+                foreach (ModIntegration integration in descriptor.Integrations.Values)
+                {
+                    BindFeatureFields(integration, descriptor.Guid);
+                }
             }
 
             ModScriptRuntime.RefreshFeatureEnvironments();

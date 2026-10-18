@@ -17,6 +17,9 @@ namespace SpaceWarp2.API.Mods
     [PublicAPI]
     public static class PluginList
     {
+        // Its own logger rather than SpaceWarpPlugin's, which is null until the plugin boots
+        private static readonly Logging.ILogger Logger = Logging.LogManager.GetLogger("Space Warp");
+
         #region Reading Plugins
 
         /// <summary>
@@ -140,10 +143,10 @@ namespace SpaceWarp2.API.Mods
         {
             if (AllPlugins.Any(x => x.Guid == plugin.Guid))
             {
-                SpaceWarpPlugin.Logger.LogError($"Attempting to register a mod with a duplicate GUID: {plugin.Guid}");
+                Logger.LogError($"Attempting to register a mod with a duplicate GUID: {plugin.Guid}");
             }
 
-            SpaceWarpPlugin.Logger.LogInfo($"Registered plugin: {plugin.Guid}");
+            Logger.LogInfo($"Registered plugin: {plugin.Guid}");
             _allLoadedPlugins.Add(plugin);
         }
 
@@ -290,7 +293,7 @@ namespace SpaceWarp2.API.Mods
             for (var i = _allLoadedPlugins.Count - 1; i >= 0; i--)
             {
                 var info = _allLoadedPlugins[i];
-                SpaceWarpPlugin.Logger.LogError($"Missing dependency for mod: {info.Name}, this mod will not be loaded");
+                Logger.LogError($"Missing dependency for mod: {info.Name}, this mod will not be loaded");
                 var error = GetErrorDescriptor(info);
                 error.MissingDependencies = info.SWInfo
                     .Dependencies

@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -84,6 +85,7 @@ namespace SpaceWarp2
             PluginList.ResolveDependenciesAndLoadOrder();
             FeatureRegistry.AddLoadedMods(PluginList.AllLoadedPlugins.Select(plugin => plugin.SWInfo));
             PluginList.LoadAllMods();
+            PluginRegister.LoadIntegrations();
             SetupBeforeGameLoadActions();
             SetupAfterGameLoadActions();
     #if UNITY_EDITOR
@@ -91,17 +93,21 @@ namespace SpaceWarp2
     #endif
         }
 
-        private static void SetupBeforeGameLoadActions()
+        internal static void SetupBeforeGameLoadActions()
         {
             foreach (var plugin in PluginList.AllLoadedPlugins)
             {
-                if (plugin.IsKsp1)
-                    continue;
+                if (!plugin.IsKsp1)
+                {
+                    BeforeGameLoadActions.Add(new PreInitializeModAction(plugin));
+                }
 
-                BeforeGameLoadActions.Add(new PreInitializeModAction(plugin));
+                AddIntegrationActions(BeforeGameLoadActions, plugin, "pre-initialization",
+                    integration => integration.OnPreInitialized());
             }
         }
-        private static void SetupAfterGameLoadActions()
+
+        internal static void SetupAfterGameLoadActions()
         {
 
             foreach (var plugin in PluginList.AllLoadedPlugins)
@@ -130,18 +136,53 @@ namespace SpaceWarp2
 
             foreach (var plugin in PluginList.AllLoadedPlugins)
             {
-                if (plugin.IsKsp1)
-                    continue;
+                if (!plugin.IsKsp1)
+                {
+                    AfterGameLoadActions.Add(new InitializeModAction(plugin));
+                }
 
-                AfterGameLoadActions.Add(new InitializeModAction(plugin));
+                AddIntegrationActions(AfterGameLoadActions, plugin, "initialization", integration =>
+                {
+                    integration.OnInitialized();
+                    SaveLoad.AddIntegrationLifecycle(integration);
+                });
             }
 
             foreach (var plugin in PluginList.AllLoadedPlugins)
             {
-                if (plugin.IsKsp1)
-                    continue;
+                if (!plugin.IsKsp1)
+                {
+                    AfterGameLoadActions.Add(new PostInitializeModAction(plugin));
+                }
 
-                AfterGameLoadActions.Add(new PostInitializeModAction(plugin));
+                AddIntegrationActions(AfterGameLoadActions, plugin, "post-initialization",
+                    integration => integration.OnPostInitialized());
+            }
+        }
+
+        // An integration's phase runs once both its mods have finished theirs, so right after the later of the two
+        private static void AddIntegrationActions(List<FlowAction> actions, SpaceWarpPluginDescriptor plugin,
+            string phase, Action<ModIntegration> callback)
+        {
+            List<SpaceWarpPluginDescriptor> order = PluginList.AllLoadedPlugins.ToList();
+            int pluginIndex = order.IndexOf(plugin);
+            List<ModIntegration> finishedHere = order
+                .SelectMany(descriptor => descriptor.Integrations.Values)
+                .Where(integration =>
+                    Math.Max(order.IndexOf(integration.CurrentMod), order.IndexOf(integration.IntegratedMod)) == pluginIndex)
+                .ToList();
+            foreach (ModIntegration integration in finishedHere)
+            {
+                string name = $"{integration.CurrentMod.Name} {phase} for {integration.IntegratedMod.Name}";
+                actions.Add(new GenericFlowAction(name, (resolve, _) =>
+                {
+                    if (integration.IsActive && integration.CurrentMod.DoLoadingActions && integration.IntegratedMod.DoLoadingActions)
+                    {
+                        integration.TryRun(phase, callback);
+                    }
+
+                    resolve();
+                }));
             }
         }
 
