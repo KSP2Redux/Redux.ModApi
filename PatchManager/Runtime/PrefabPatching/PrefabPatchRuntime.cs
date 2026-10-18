@@ -1090,7 +1090,10 @@ namespace PatchManager.PrefabPatching
             IReadOnlyDictionary<string, PrefabPatchRuntime.Entry> entries
         )
         {
-            _entries = entries.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+            // Live view, not a copy. The locator is registered once at startup, and a
+            // feature set switch re-resolves the plans into the same dictionary.
+            // Each location carries its own Entry in Data, so earlier handles keep theirs.
+            _entries = entries;
         }
 
         public string LocatorId => GetType().FullName;
