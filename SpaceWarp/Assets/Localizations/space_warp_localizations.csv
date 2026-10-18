@@ -23,6 +23,7 @@ SpaceWarp/ModList/disabled,Text,,(disabled),(desativado),(désactivé),(disabili
 SpaceWarp/ModList/mismatched,Text,,(mismatched),(não corresponde com o swinfo),(non concordant),(non corrispondente),（不匹配）,(no coincidente),(nicht übereinstimmend)
 SpaceWarp/ModList/baddirectory,Text,,(bad directory),(problemas no diretorio),(mauvais dossier),(cartella errata),（目录错误）,(directorio incorrecto),(fehlerhaftes Verzeichnis)
 SpaceWarp/ModList/missingswinfo,Text,,(missing SW Info),(não possui um swinfo),(SW Info manquant),(mancanza di informazioni SW),（缺少SW信息）,(falta información de SW),(fehlende SW-Info)
+SpaceWarp/ModList/badassembly,Text,,(bad assembly),,,,,,
 SpaceWarp/ModList/OpenModSettings,Text,,Mod Settings,Configurações dos mods,Paramètres des mods,Impostazioni Mod,模组设置,Configuraciones del Mod,Mod-Einstellungen
 SpaceWarp/ModList/OpenModsFolder,Text,,Open Mods Folder,Abrir pasta de mods,Ouvrir le dossier des mods,Apri Cartella Mod,打开模组文件夹,Abrir Carpeta de Mods,Mods-Ordner öffnen
 SpaceWarp/ModList/MissingDependency,Text,,Dependency is missing,Esta dependência não está presente,Cette dépendance est manquante,Mancanza di una dipendenza,缺少依赖项,Falta dependencia,Abhängigkeit fehlt

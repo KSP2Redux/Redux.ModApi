@@ -76,6 +76,7 @@ namespace SpaceWarp2.UI.ModList
         private VisualElement _missingInfoWarning;
         private VisualElement _mismatchedVersionWarning;
         private VisualElement _badDirectoryWarning;
+        private VisualElement _badAssemblyWarning;
         private Foldout _detailsFoldout;
         private Foldout _detailsDependenciesFoldout;
         private Foldout _detailsConflictFoldout;
@@ -237,6 +238,7 @@ namespace SpaceWarp2.UI.ModList
             _missingInfoWarning = _container.Q<VisualElement>("details-missing-info-error");
             _mismatchedVersionWarning = _container.Q<VisualElement>("details-mismatched-error");
             _badDirectoryWarning = _container.Q<VisualElement>("details-bad-directory-error");
+            _badAssemblyWarning = _container.Q<VisualElement>("details-bad-assembly-error");
 
             _detailsFoldout = _container.Q<Foldout>("details-details-foldout");
             _detailsDependenciesFoldout = _container.Q<Foldout>("details-dependencies-foldout");
@@ -565,6 +567,7 @@ namespace SpaceWarp2.UI.ModList
                 data.MissingSWInfo,
                 data.BadDirectory,
                 data.HasMismatchedVersion,
+                data.HasBadAssembly,
                 data.MissingDependencies,
                 data.ErroredDependencies,
                 data.UnsupportedDependencies,
@@ -692,6 +695,7 @@ namespace SpaceWarp2.UI.ModList
             bool isMissingSWInfo = false,
             bool isBadDirectory = false,
             bool isMismatchedVersion = false,
+            bool isBadAssembly = false,
             List<string> missingDependencies = null,
             List<string> erroredDependencies = null,
             List<string> unsupportedDependencies = null,
@@ -777,7 +781,8 @@ namespace SpaceWarp2.UI.ModList
                 isMismatchedID,
                 isMissingSWInfo,
                 isBadDirectory,
-                isMismatchedVersion);
+                isMismatchedVersion,
+                isBadAssembly);
             // Now time to do conflicts
             _detailsConflictFoldout.style.display = conflicts.Any() ? DisplayStyle.Flex : DisplayStyle.None;
             _detailsConflictList.Clear();
@@ -853,7 +858,8 @@ namespace SpaceWarp2.UI.ModList
             bool isMismatchedID,
             bool isMissingSWInfo,
             bool isBadDirectory,
-            bool isMismatchedVersion)
+            bool isMismatchedVersion,
+            bool isBadAssembly)
         {
             _detailsOutdatedWarning.style.display = isOutdated ? DisplayStyle.Flex : DisplayStyle.None;
             _detailsUnsupportedWarning.style.display = isUnsupported ? DisplayStyle.Flex : DisplayStyle.None;
@@ -862,6 +868,7 @@ namespace SpaceWarp2.UI.ModList
             _missingInfoWarning.style.display = isMissingSWInfo ? DisplayStyle.Flex : DisplayStyle.None;
             _badDirectoryWarning.style.display = isBadDirectory ? DisplayStyle.Flex : DisplayStyle.None;
             _mismatchedVersionWarning.style.display = isMismatchedVersion ? DisplayStyle.Flex : DisplayStyle.None;
+            _badAssemblyWarning.style.display = isBadAssembly ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private void ClearSelected()

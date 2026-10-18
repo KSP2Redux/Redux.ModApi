@@ -11,6 +11,7 @@ using SpaceWarp2.API.Configuration;
 using SpaceWarp2.API.Logging;
 using SpaceWarp2.API.Mods;
 using SpaceWarp2.API.Mods.JSON;
+using SpaceWarp2.API.Reflection;
 using UnityEngine;
 using ReduxManager = Redux.ReduxManager;
 namespace SpaceWarp2.API.Backend.Modding
@@ -117,7 +118,7 @@ namespace SpaceWarp2.API.Backend.Modding
         }
 
 
-        private static readonly SpaceWarp2.API.Logging.ILogger Logger = SpaceWarpPlugin.Logger;
+        private static readonly SpaceWarp2.API.Logging.ILogger Logger = LogManager.GetLogger("Space Warp");
 
         private static bool AssertFolderPath(ISpaceWarpMod plugin, string folderPath)
         {
@@ -196,28 +197,40 @@ namespace SpaceWarp2.API.Backend.Modding
             }
             foreach (var swinfo in pluginPath.GetFiles("swinfo.json", SearchOption.AllDirectories))
             {
-                ModInfo swinfoData;
-                try
-                {
-                    swinfoData = JsonConvert.DeserializeObject<ModInfo>(File.ReadAllText(swinfo.FullName));
-                }
-                catch
-                {
-                    Logger.LogError($"Error reading metadata file: {swinfo.FullName}, this mod will be ignored");
-                    continue;
-                }
+                RegisterMod(swinfo);
+            }
+        }
 
-                if (swinfoData.Spec < SpecVersion.V1_3)
-                {
-                    Logger.LogWarning(
-                        $"Found swinfo information for: {swinfoData.Name}, but its spec is less than 1.3, as such this " +
-                        $"mod will be ignored"
-                    );
-                    continue;
-                }
+        /// <summary>
+        /// Registers the mod described by one swinfo.json, or records it as errored when its assemblies do not load.
+        /// </summary>
+        /// <param name="swinfo">The mod's swinfo.json.</param>
+        internal static void RegisterMod(FileInfo swinfo)
+        {
+            ModInfo swinfoData;
+            try
+            {
+                swinfoData = JsonConvert.DeserializeObject<ModInfo>(File.ReadAllText(swinfo.FullName));
+            }
+            catch
+            {
+                Logger.LogError($"Error reading metadata file: {swinfo.FullName}, this mod will be ignored");
+                return;
+            }
 
-                var modAssemblies = new List<Assembly>();
+            if (swinfoData.Spec < SpecVersion.V1_3)
+            {
+                Logger.LogWarning(
+                    $"Found swinfo information for: {swinfoData.Name}, but its spec is less than 1.3, as such this " +
+                    $"mod will be ignored"
+                );
+                return;
+            }
 
+            var modAssemblies = new List<Assembly>();
+            ISpaceWarpMod swMod = new AssetOnlyMod(swinfoData.Name);
+            try
+            {
                 // Load the libraries as we get them
                 if (Directory.Exists(Path.Combine(swinfo.Directory!.FullName, "lib")) && !ModList.DisabledPluginGuids.Contains(swinfoData.ModID))
                 {
@@ -228,7 +241,6 @@ namespace SpaceWarp2.API.Backend.Modding
                     }
                 }
 
-                ISpaceWarpMod swMod = new AssetOnlyMod(swinfoData.Name);
                 if (swinfoData.MainAssembly != null && !ModList.DisabledPluginGuids.Contains(swinfoData.ModID))
                 {
                     Assembly asm = null;
@@ -251,10 +263,9 @@ namespace SpaceWarp2.API.Backend.Modding
                         var dll = Path.Combine(swinfo.Directory!.FullName, swinfoData.MainAssembly);
                         if (!File.Exists(dll))
                         {
-                            // TODO: Add a bad assembly error to the mods list
                             Logger.LogError(
                                 $"Main assembly {swinfoData.MainAssembly} for {swinfoData.Name} could not be found, this mod will be ignored");
-                            continue;
+                            return;
                         }
 
                         asm = Assembly.LoadFile(dll);
@@ -263,51 +274,84 @@ namespace SpaceWarp2.API.Backend.Modding
                     if (asm is null)
                     {
                         Debug.LogWarning($"Can't find main assembly {swinfoData.MainAssembly} for mod {swinfoData.Name}");
-                        continue;
+                        return;
                     }
 
                     modAssemblies.Add(asm);
 
-                    foreach (var type in asm.GetTypes())
-                    {
-                        if (!typeof(ISpaceWarpMod).IsAssignableFrom(type) || type.IsAbstract)
-                            continue;
-
-                        swMod = new UnloadedMod(type);
-                        break;
-                    }
+                    Type? modType = FindModType(asm);
+                    if (modType != null)
+                        swMod = new UnloadedMod(modType);
                 }
-
-                swMod.SWConfiguration =
-                    new JsonConfigFile(Path.Combine(swinfo.Directory.FullName, swinfoData.ModID + "-config.json"));
-
-                var descriptor = new SpaceWarpPluginDescriptor(
-                    swMod,
-                    swinfoData.ModID,
-                    swinfoData.Name,
-                    swinfoData, swinfo.Directory,
-                    true,
-                    swMod.SWConfiguration
-                );
-                swMod.SWMetadata = descriptor;
-                swMod.SWLogger = descriptor.Logger;
-                descriptor.Assemblies.AddRange(modAssemblies);
-                descriptor.ScriptFiles.AddRange(Directory
-                    .GetFiles(swinfo.Directory!.FullName, "*.lua", SearchOption.AllDirectories)
-                    .Where(f => !Path.GetFileName(f).StartsWith("_")));
-
-                Logger.LogInfo($"Attempting to register mod: {swinfoData.ModID}, {swinfoData.Name}");
-
-                if (PluginList.AllPlugins.Any(
-                        x => string.Equals(x.Guid, swinfoData.ModID, StringComparison.InvariantCultureIgnoreCase)
-                    ))
-                {
-                    continue;
-                }
-
-                // Now we can just add it to our plugin list
-                PluginList.RegisterPlugin(descriptor);
             }
+            catch (Exception exception) when (exception is ReflectionTypeLoadException or BadImageFormatException or FileLoadException)
+            {
+                RejectMod(swinfoData, swinfo.Directory!, modAssemblies, exception);
+                return;
+            }
+
+            swMod.SWConfiguration =
+                new JsonConfigFile(Path.Combine(swinfo.Directory.FullName, swinfoData.ModID + "-config.json"));
+
+            var descriptor = new SpaceWarpPluginDescriptor(
+                swMod,
+                swinfoData.ModID,
+                swinfoData.Name,
+                swinfoData, swinfo.Directory,
+                true,
+                swMod.SWConfiguration
+            );
+            swMod.SWMetadata = descriptor;
+            swMod.SWLogger = descriptor.Logger;
+            descriptor.Assemblies.AddRange(modAssemblies);
+            descriptor.ScriptFiles.AddRange(Directory
+                .GetFiles(swinfo.Directory!.FullName, "*.lua", SearchOption.AllDirectories)
+                .Where(f => !Path.GetFileName(f).StartsWith("_")));
+
+            Logger.LogInfo($"Attempting to register mod: {swinfoData.ModID}, {swinfoData.Name}");
+
+            if (PluginList.AllPlugins.Any(
+                    x => string.Equals(x.Guid, swinfoData.ModID, StringComparison.InvariantCultureIgnoreCase)
+                ))
+            {
+                return;
+            }
+
+            // Now we can just add it to our plugin list
+            PluginList.RegisterPlugin(descriptor);
+        }
+
+        // Throws ReflectionTypeLoadException when any type in the assembly fails to load, which is how a mod built
+        // against types this game version no longer has shows up.
+        private static Type? FindModType(Assembly assembly)
+        {
+            foreach (Type type in assembly.GetTypes())
+            {
+                if (typeof(ISpaceWarpMod).IsAssignableFrom(type) && !type.IsAbstract)
+                    return type;
+            }
+
+            return null;
+        }
+
+        // Records a mod whose assemblies failed to load as errored instead of registering it, and hides whatever of
+        // it did load from the domain scans, since a loaded assembly cannot be unloaded.
+        private static void RejectMod(ModInfo swinfoData, DirectoryInfo folder, List<Assembly> modAssemblies, Exception exception)
+        {
+            IEnumerable<string> reasons = exception is ReflectionTypeLoadException typeLoadException
+                ? typeLoadException.LoaderExceptions.OfType<Exception>().Select(loaderException => loaderException.Message).Distinct()
+                : new[] { exception.Message };
+            Logger.LogError(
+                $"Mod {swinfoData.Name} ({swinfoData.ModID}) was not loaded because its assemblies failed to load. " +
+                $"It was likely built for a different game version.\n{string.Join("\n", reasons)}");
+
+            foreach (Assembly assembly in modAssemblies)
+            {
+                assembly.Reject();
+            }
+
+            PluginList.NoteBadAssemblyError(new SpaceWarpPluginDescriptor(new AssetOnlyMod(swinfoData.Name),
+                swinfoData.ModID, swinfoData.Name, swinfoData, folder));
         }
 
         private static void DisableMods()

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
+using UnityEngine;
 
 namespace SpaceWarp2.API.Reflection
 {
@@ -18,6 +19,28 @@ namespace SpaceWarp2.API.Reflection
         // count always means new types.
         private static int _scannedAssemblyCount = -1;
         private static Type[] _scannedTypes = Array.Empty<Type>();
+
+        // Assemblies of mods rejected at load. Mono cannot unload an assembly, so they stay in the domain and the
+        // scans have to skip them instead.
+        private static readonly HashSet<Assembly> _rejectedAssemblies = new();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        internal static void ResetStaticState()
+        {
+            _rejectedAssemblies.Clear();
+            _scannedAssemblyCount = -1;
+        }
+
+        /// <summary>
+        /// Hides an assembly from the domain scans, so registries that discover their entries by scanning never see
+        /// its types.
+        /// </summary>
+        /// <param name="assembly">The assembly of a mod that was rejected at load.</param>
+        internal static void Reject(this Assembly assembly)
+        {
+            _rejectedAssemblies.Add(assembly);
+            _scannedAssemblyCount = -1;
+        }
 
         /// <summary>
         /// Returns the types in an assembly, tolerating one that is only partially loadable.
@@ -49,7 +72,8 @@ namespace SpaceWarp2.API.Reflection
         /// The scan is cached until the domain loads another assembly, so the registries that each scan at boot share
         /// one. Dynamic assemblies are skipped. A runtime evaluator such as the CLI's C# REPL leaves them behind with
         /// unfinished types, which make <see cref="Assembly.GetTypes" /> throw, and nothing in them belongs in a
-        /// registry. Partially loadable assemblies are handled as in <see cref="GetLoadableTypes(Assembly)" />.
+        /// registry. Partially loadable assemblies are handled as in <see cref="GetLoadableTypes(Assembly)" />, and
+        /// the assemblies of mods rejected at load are skipped.
         /// </remarks>
         /// <param name="domain">The domain to scan, usually <see cref="AppDomain.CurrentDomain" />.</param>
         /// <returns>Every type that loaded successfully from a static assembly.</returns>
@@ -60,7 +84,7 @@ namespace SpaceWarp2.API.Reflection
                 return _scannedTypes;
 
             _scannedTypes = assemblies
-                .Where(assembly => !assembly.IsDynamic)
+                .Where(assembly => !assembly.IsDynamic && !_rejectedAssemblies.Contains(assembly))
                 .SelectMany(assembly => assembly.GetLoadableTypes())
                 .ToArray();
             _scannedAssemblyCount = assemblies.Length;
@@ -81,11 +105,14 @@ namespace SpaceWarp2.API.Reflection
                 return null;
 
             Type? type = Type.GetType(name, false);
-            if (type != null)
+            if (type != null && !_rejectedAssemblies.Contains(type.Assembly))
                 return type;
 
             foreach (Assembly assembly in domain.GetAssemblies())
             {
+                if (_rejectedAssemblies.Contains(assembly))
+                    continue;
+
                 type = assembly.GetType(name, false);
                 if (type != null)
                     return type;

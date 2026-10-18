@@ -103,7 +103,7 @@ namespace SpaceWarp2.API.Mods
         private static List<SpaceWarpErrorDescription> _allErroredPlugins = new() { };
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStaticState()
+        internal static void ResetStaticState()
         {
             _allLoadedPlugins = new() { };
             _allDisabledPlugins = new() { };
@@ -201,6 +201,12 @@ namespace SpaceWarp2.API.Mods
         {
             var errorDescriptor = GetErrorDescriptor(plugin);
             errorDescriptor.MismatchedVersion = true;
+        }
+
+        internal static void NoteBadAssemblyError(SpaceWarpPluginDescriptor plugin)
+        {
+            var errorDescriptor = GetErrorDescriptor(plugin);
+            errorDescriptor.BadAssembly = true;
         }
 
         internal static void NoteUnspecifiedDependencyError(SpaceWarpPluginDescriptor plugin, string dependency)

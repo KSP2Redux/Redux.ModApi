@@ -3,46 +3,48 @@
 using SpaceWarp2.API.Mods;
 using SpaceWarp2.UI.ModList;
 
-namespace SpaceWarp2.UI.Backend.Extensions;
-
-internal static class ErrorDescriptionExtensions
+namespace SpaceWarp2.UI.Backend.Extensions
 {
-    internal static void Apply(this SpaceWarpErrorDescription instance, ModListItemController controller)
+    internal static class ErrorDescriptionExtensions
     {
-        controller.SetInfo(instance.Plugin);
-        controller.SetIsErrored();
-        if (instance.MissingSwinfo) controller.SetMissingSWInfo();
-        if (instance.BadDirectory) controller.SetBadDirectory();
-        if (instance.BadID) controller.SetBadID();
-        if (instance.MismatchedVersion) controller.SetMismatchedVersion();
-        foreach (var disabledDependency in instance.DisabledDependencies)
+        internal static void Apply(this SpaceWarpErrorDescription instance, ModListItemController controller)
         {
-            controller.SetIsDependencyDisabled(disabledDependency);
-        }
+            controller.SetInfo(instance.Plugin);
+            controller.SetIsErrored();
+            if (instance.MissingSwinfo) controller.SetMissingSWInfo();
+            if (instance.BadDirectory) controller.SetBadDirectory();
+            if (instance.BadID) controller.SetBadID();
+            if (instance.MismatchedVersion) controller.SetMismatchedVersion();
+            if (instance.BadAssembly) controller.SetBadAssembly();
+            foreach (var disabledDependency in instance.DisabledDependencies)
+            {
+                controller.SetIsDependencyDisabled(disabledDependency);
+            }
 
-        foreach (var erroredDependency in instance.ErroredDependencies)
-        {
-            controller.SetIsDependencyErrored(erroredDependency);
-        }
+            foreach (var erroredDependency in instance.ErroredDependencies)
+            {
+                controller.SetIsDependencyErrored(erroredDependency);
+            }
 
-        foreach (var missingDependency in instance.MissingDependencies)
-        {
-            controller.SetIsDependencyMissing(missingDependency);
-        }
+            foreach (var missingDependency in instance.MissingDependencies)
+            {
+                controller.SetIsDependencyMissing(missingDependency);
+            }
 
-        foreach (var unsupportedDependency in instance.UnsupportedDependencies)
-        {
-            controller.SetIsDependencyUnsupported(unsupportedDependency);
-        }
+            foreach (var unsupportedDependency in instance.UnsupportedDependencies)
+            {
+                controller.SetIsDependencyUnsupported(unsupportedDependency);
+            }
 
-        foreach (var unspecifiedDependency in instance.UnspecifiedDependencies)
-        {
-            controller.SetIsDependencyUnspecified(unspecifiedDependency);
-        }
+            foreach (var unspecifiedDependency in instance.UnspecifiedDependencies)
+            {
+                controller.SetIsDependencyUnspecified(unspecifiedDependency);
+            }
 
-        foreach (var conflict in instance.Incompatibilities)
-        {
-            controller.SetIsConflicting(conflict);
+            foreach (var conflict in instance.Incompatibilities)
+            {
+                controller.SetIsConflicting(conflict);
+            }
         }
     }
 }

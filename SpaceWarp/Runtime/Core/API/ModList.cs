@@ -16,7 +16,7 @@ namespace SpaceWarp2.API
         /// <summary>
         /// The list of all disabled plugin GUIDs.
         /// </summary>
-        internal static string[] DisabledPluginGuids { get; private set; }
+        internal static string[] DisabledPluginGuids { get; set; }
 
         /// <summary>
         /// Whether the mod list changed since the last run.
