@@ -38,6 +38,10 @@ namespace VSwift.Modules.Behaviours
         [SerializeField] private Data_PartSwitch? _dataPartSwitch;
         private StoredState? _storedState;
 
+        // The Parts Manager dropdown of each non-popout variant set, by variant set index
+        private readonly Dictionary<int, ModuleProperty<string>> _variantSetDropdowns = new();
+        private bool _isSyncingDropdown;
+
         /// <summary>
         /// Gets the <see cref="Data_PartSwitch" /> module data this behaviour drives.
         /// </summary>
@@ -127,8 +131,12 @@ namespace VSwift.Modules.Behaviours
                 variantSetDropdown
             );
             variantSetDropdown.SetValue(_dataPartSwitch.ActiveVariants[j]);
+            _variantSetDropdowns[j] = variantSetDropdown;
             variantSetDropdown.OnChangedValue += newVariant =>
             {
+                if (_isSyncingDropdown)
+                    return;
+
                 VSwiftPlugin.Logger.LogInfo($"{OABPart.Name} switched variant to {newVariant}");
                 try
                 {
@@ -409,6 +417,25 @@ namespace VSwift.Modules.Behaviours
                 partSwitch.EnsureActiveVariant(variantSetIndex, symmetryVariantSet);
                 partSwitch.DataPartSwitch.ActiveVariants[variantSetIndex] = variantId;
                 partSwitch.ApplyInOab(false, symmetryVariantSet);
+                partSwitch.SyncVariantSetDropdown(variantSetIndex, variantId);
+            }
+        }
+
+        // A partner's dropdown would otherwise keep showing, and later re-apply, its old variant (#2030).
+        // The guard stops the change from being treated as a new selection that fans out again.
+        private void SyncVariantSetDropdown(int variantSetIndex, string variantId)
+        {
+            if (!_variantSetDropdowns.TryGetValue(variantSetIndex, out ModuleProperty<string> dropdown))
+                return;
+
+            _isSyncingDropdown = true;
+            try
+            {
+                dropdown.SetValue(variantId);
+            }
+            finally
+            {
+                _isSyncingDropdown = false;
             }
         }
 
