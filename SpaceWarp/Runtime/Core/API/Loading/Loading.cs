@@ -28,16 +28,26 @@ namespace SpaceWarp2.API.Loading
 
         public static List<Func<FlowAction>> GeneralLoadingActions = new();
 
+        /// <summary>
+        /// Gets the addressables labels loaded through <see cref="AddSetLoadingAction{T}" />, whose assets are
+        /// content the active feature set gates.
+        /// </summary>
+        internal static ISet<string> SetLabels { get; } = new HashSet<string>(StringComparer.Ordinal);
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
             DescriptorLoadingActionGenerators = new();
             GeneralLoadingActions = new();
+            SetLabels.Clear();
         }
 
         /// <summary>
-        /// Registers a per mod loading action (but more general). Should be added either on Awake() or Start().
+        /// Registers a loading action run once for each mod.
         /// </summary>
+        /// <remarks>
+        /// Register it in <c>OnPreInitialized</c> at the latest. The actions are built when boot reaches them.
+        /// </remarks>
         /// <param name="name">The name of the action</param>
         /// <param name="action">The action</param>
         public static void AddDescriptorLoadingAction(string name, Action<SpaceWarpPluginDescriptor> action)
@@ -46,8 +56,11 @@ namespace SpaceWarp2.API.Loading
         }
 
         /// <summary>
-        /// Registers a general loading action. Should be added either on Awake() or Start().
+        /// Registers a general loading action.
         /// </summary>
+        /// <remarks>
+        /// Register it in <c>OnPreInitialized</c> at the latest. The actions are built when boot reaches them.
+        /// </remarks>
         /// <param name="actionGenerator">The action generator</param>
         public static void AddGeneralLoadingAction(Func<FlowAction> actionGenerator)
         {
@@ -55,8 +68,11 @@ namespace SpaceWarp2.API.Loading
         }
 
         /// <summary>
-        /// Registers an action to be done on addressables after addressables have been loaded. Should be added either on Awake() or Start().
+        /// Registers an action to be done on addressables after addressables have been loaded.
         /// </summary>
+        /// <remarks>
+        /// Register it in <c>OnPreInitialized</c> at the latest. The actions are built when boot reaches them.
+        /// </remarks>
         /// <param name="name">The name of the action</param>
         /// <param name="label">The addressables label to hook into</param>
         /// <param name="action">The action to be done on each addressables asset</param>
@@ -68,9 +84,12 @@ namespace SpaceWarp2.API.Loading
         }
 
         /// <summary>
-        /// Registers an action to be done on addressables after addressables have been loaded. Should be added either on Awake() or Start().
-        /// Allows to keep asset in memory after loading them. This is useful for textures or UXML templates, for example.
+        /// Registers an action to be done on addressables after addressables have been loaded, optionally keeping the
+        /// assets in memory, as textures and UXML templates need.
         /// </summary>
+        /// <remarks>
+        /// Register it in <c>OnPreInitialized</c> at the latest. The actions are built when boot reaches them.
+        /// </remarks>
         /// <param name="name">The name of the action</param>
         /// <param name="label">The addressables label to hook into</param>
         /// <param name="keepAssets">Indicates if assets should be kept in memory after loading them.</param>
@@ -102,6 +121,9 @@ namespace SpaceWarp2.API.Loading
         /// Registers an addressables label a mod loads for the active feature set, so its patched and gated assets
         /// are read again whenever the set changes.
         /// </summary>
+        /// <remarks>
+        /// The label counts as content from then on, so a mod's untagged assets in it load only while that mod is on.
+        /// </remarks>
         /// <typeparam name="T">The asset type.</typeparam>
         /// <param name="modId">The mod the data belongs to.</param>
         /// <param name="name">The name shown while it loads.</param>
@@ -115,8 +137,10 @@ namespace SpaceWarp2.API.Loading
             string label,
             Action<T> onAsset,
             Action reset
-        ) where T : UnityObject =>
-            AddSetAction(
+        ) where T : UnityObject
+        {
+            SetLabels.Add(label);
+            return AddSetAction(
                 modId,
                 name,
                 reset,
@@ -145,5 +169,6 @@ namespace SpaceWarp2.API.Loading
                 );
                 }
             );
+        }
     }
 }

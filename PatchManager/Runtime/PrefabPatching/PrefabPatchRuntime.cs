@@ -313,7 +313,7 @@ namespace PatchManager.PrefabPatching
                 // A manifest asset tagged with feature labels only takes part while one of its features is on
                 var allLocations = FindManifestLocations(manifestSources);
                 var allowed = new HashSet<string>(
-                    FeatureAssetIndex.Filter(allLocations.Select(source => source.Location), null)
+                    FeatureAssetIndex.FilterContent(allLocations.Select(source => source.Location), null)
                         .Select(FeatureAssetIndex.KeyOf),
                     StringComparer.Ordinal
                 );

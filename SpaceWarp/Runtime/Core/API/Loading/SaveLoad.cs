@@ -30,12 +30,16 @@ namespace SpaceWarp2.API.Loading
         // Teardown owed for the campaign loaded now, run latest first when it unloads
         private static readonly List<Action> OwedUnloads = new();
 
+        // Steps of the boot flow that have finished. It runs once, so a step registered to follow one of them never runs
+        private static readonly HashSet<string> FinishedGameLoadSteps = new(StringComparer.Ordinal);
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
             // A play session that ended without unloading leaves nothing for the next one to tear down
             Actions.Clear();
             OwedUnloads.Clear();
+            FinishedGameLoadSteps.Clear();
         }
 
         /// <summary>
@@ -60,7 +64,9 @@ namespace SpaceWarp2.API.Loading
         /// </summary>
         /// <remarks>
         /// A step can follow another mod's step too, by its name. A step added to the campaign load or save flow
-        /// runs on every load or save.
+        /// runs on every load or save. A step joins its flow when the step it follows finishes, so it can be registered
+        /// any time before then. The game load flow runs once, so a step whose anchor there has already finished never
+        /// runs, and registering one logs a warning.
         /// </remarks>
         /// <param name="modId">The mod the step belongs to.</param>
         /// <param name="name">The step's name, which other steps can follow.</param>
@@ -75,7 +81,18 @@ namespace SpaceWarp2.API.Loading
             StockFlow flow,
             string afterStep,
             Action<Action, Action<string>> work
-        ) => Register(TriggerAfter(flow, afterStep), new FeatureGatedAction(modId, name, work));
+        )
+        {
+            if (flow == StockFlow.GameLoad && FinishedGameLoadSteps.Contains(afterStep))
+            {
+                Debug.LogWarning(
+                    $"[SpaceWarp] {modId} added '{name}' after the game load step '{afterStep}', which has already " +
+                    "finished, so it never runs. Register it in OnPreInitialized at the latest."
+                );
+            }
+
+            return Register(TriggerAfter(flow, afterStep), new FeatureGatedAction(modId, name, work));
+        }
 
         /// <summary>
         /// Registers teardown for something set up for the campaign loaded now, run when the campaign unloads.
@@ -122,10 +139,21 @@ namespace SpaceWarp2.API.Loading
         /// Lists the steps that follow a named step of one of the game's own flows.
         /// </summary>
         /// <param name="flow">The flow.</param>
-        /// <param name="stepName">The name of the step just added to it.</param>
+        /// <param name="stepName">The name of the step that just finished.</param>
         /// <returns>The steps, in registration order.</returns>
         public static List<GenericFlowAction> StepsAfter(StockFlow flow, string stepName) =>
             StepsFor(TriggerAfter(flow, stepName));
+
+        /// <summary>
+        /// Lists the steps that follow a step of the game load flow that just finished, and records that it finished.
+        /// </summary>
+        /// <param name="stepName">The name of the step that just finished.</param>
+        /// <returns>The steps, in registration order.</returns>
+        internal static List<GenericFlowAction> GameLoadStepsAfter(string stepName)
+        {
+            FinishedGameLoadSteps.Add(stepName);
+            return StepsAfter(StockFlow.GameLoad, stepName);
+        }
 
         /// <summary>
         /// Lists the steps that load mods' per-set data: every action's clearing first, then each load that applies.

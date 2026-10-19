@@ -795,9 +795,10 @@ namespace PatchManager.Core.Assets
                 UpdateLoadingBarData();
                 yield return null;
             }
-            // Only the locations the feature set lets in reach the patch run, so the archive holds nothing else
+            // Only the locations the feature set lets in reach the patch run, so the archive holds nothing else.
+            // Patch input is content whatever its label, so a mod that is off adds nothing to it.
             var locations = locHandle.Status == AsyncOperationStatus.Succeeded && locHandle.Result != null
-                ? FeatureAssetIndex.Filter(locHandle.Result, label)
+                ? FeatureAssetIndex.FilterContent(locHandle.Result, label)
                 : new List<IResourceLocation>();
             Addressables.Release(locHandle);
 
@@ -824,7 +825,7 @@ namespace PatchManager.Core.Assets
                 foreach (var key in members)
                 {
                     // A member can have a same-named twin in another feature, so the gate picks which one loads
-                    if (FeatureAssetIndex.TryResolveKey(key, typeof(TextAsset), label, out var memberLocation) && memberLocation == null)
+                    if (FeatureAssetIndex.TryResolveKey(key, typeof(TextAsset), label, true, out var memberLocation) && memberLocation == null)
                         continue;
 
                     var memberHandle = memberLocation != null

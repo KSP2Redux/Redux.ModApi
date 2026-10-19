@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using KSP.Game;
 using KSP.Game.Flow;
 using SpaceWarp2.API;
 using SpaceWarp2.API.Backend.Modding;
@@ -87,7 +88,7 @@ namespace SpaceWarp2
             PluginList.LoadAllMods();
             PluginRegister.LoadIntegrations();
             SetupBeforeGameLoadActions();
-            SetupAfterGameLoadActions();
+            SetupAfterGameLoadActions(() => GameManager.Instance.LoadingFlow);
     #if UNITY_EDITOR
             AddressablesFixes.Install();
     #endif
@@ -107,9 +108,8 @@ namespace SpaceWarp2
             }
         }
 
-        internal static void SetupAfterGameLoadActions()
+        internal static void SetupAfterGameLoadActions(Func<SequentialFlow> runningFlow)
         {
-
             foreach (var plugin in PluginList.AllLoadedPlugins)
             {
                 if (plugin.IsKsp1)
@@ -120,19 +120,19 @@ namespace SpaceWarp2
                     AfterGameLoadActions.Add(new LoadAddressablesAction(plugin));
 
                 AfterGameLoadActions.Add(new LoadLocalizationAction(plugin));
-
-                foreach (var action in Loading.DescriptorLoadingActionGenerators)
-                {
-                    AfterGameLoadActions.Add(action(plugin));
-                }
-
+                AfterGameLoadActions.Add(SpliceStep(
+                    $"Loading actions for {plugin.SWInfo.Name}",
+                    runningFlow,
+                    () => Loading.DescriptorLoadingActionGenerators.Select(generator => generator(plugin))
+                ));
                 AfterGameLoadActions.Add(new RunModScriptsAction(plugin));
             }
 
-            foreach (var actionGenerator in Loading.GeneralLoadingActions)
-            {
-                AfterGameLoadActions.Add(actionGenerator());
-            }
+            AfterGameLoadActions.Add(SpliceStep(
+                "General loading actions",
+                runningFlow,
+                () => Loading.GeneralLoadingActions.Select(generator => generator())
+            ));
 
             foreach (var plugin in PluginList.AllLoadedPlugins)
             {
@@ -185,6 +185,17 @@ namespace SpaceWarp2
                 }));
             }
         }
+
+        // Builds its actions only once the flow reaches it, so a mod can still register them from OnPreInitialized,
+        // which runs inside the flow long after this list was set up
+        private static GenericFlowAction SpliceStep(string name, Func<SequentialFlow> runningFlow,
+            Func<IEnumerable<FlowAction>> buildActions) =>
+            new(name, (resolve, _) =>
+            {
+                SequentialFlow flow = runningFlow();
+                flow.FlowActions.InsertRange(flow.flowIndex + 1, buildActions());
+                resolve();
+            });
 
         public SpaceWarpPlugin()
         {
