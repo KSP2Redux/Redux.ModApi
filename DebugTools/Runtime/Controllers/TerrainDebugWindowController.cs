@@ -152,7 +152,7 @@ namespace DebugTools.Runtime.Controllers
 
             if (_selectQuadForDebugging && Input.GetMouseButtonDown(0))
             {
-                var pqsRenderer = FindObjectOfType<PQSRenderer>();
+                var pqsRenderer = FindAnyObjectByType<PQSRenderer>();
                 pqsRenderer?.DebugColliderWithRaycast();
                 _selectQuadForDebugging = false;
             }
