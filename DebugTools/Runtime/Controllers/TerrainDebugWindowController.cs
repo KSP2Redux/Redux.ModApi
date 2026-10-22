@@ -17,7 +17,6 @@ namespace DebugTools.Runtime.Controllers
     {
         private const string PhysXBubbleMaterialAddress = "Assets/Modules/DebugTools/Assets/UI/PhysXBubbleMat.mat";
 
-        private Toggle _enableMeshBucketing;
         private Toggle _showBiomeColors;
         private Toggle _boostTriplanarContrast;
         private Toggle _renderWireframe;
@@ -45,9 +44,6 @@ namespace DebugTools.Runtime.Controllers
         private void OnEnable()
         {
             Enable();
-
-            _enableMeshBucketing = RootElement.Q<Toggle>("enable-mesh-bucketing");
-            _enableMeshBucketing.RegisterValueChangedCallback(EnableMeshBucketing);
 
             _showBiomeColors = RootElement.Q<Toggle>("show-biome-colors");
             _showBiomeColors.RegisterValueChangedCallback(ShowBiomeColors);
@@ -96,11 +92,6 @@ namespace DebugTools.Runtime.Controllers
                 _flightCamera = Game.CameraManager.GetCameraRenderStack(CameraID.Flight, RenderSpaceType.PhysicsSpace)
                     .GetMainRenderCamera().gameObject;
             }
-        }
-
-        private static void EnableMeshBucketing(ChangeEvent<bool> evt)
-        {
-            PQSRenderer.ShaderRefactorState = evt.newValue ? ShaderRefactorState.Standard : ShaderRefactorState.SwapOld;
         }
 
         private static void ShowBiomeColors(ChangeEvent<bool> evt)
@@ -157,7 +148,6 @@ namespace DebugTools.Runtime.Controllers
                 _selectQuadForDebugging = false;
             }
 
-            _enableMeshBucketing.value = PQSRenderer.ShaderRefactorState == ShaderRefactorState.Standard;
             _showBiomeColors.value = PQSRenderer.DebugShowBiomeColor;
             _boostTriplanarContrast.value = PQSRenderer.DebugBoostTriplanarContrast;
 
