@@ -6,7 +6,6 @@
             <ui:Button text="×" name="close-button" />
         </ui:VisualElement>
         <ui:VisualElement name="controls" class="controls">
-            <ui:Toggle label="Enable Mesh Bucketing" name="enable-mesh-bucketing" class="toggle terrain-toggle" />
             <ui:Toggle label="Show Biome Colors" name="show-biome-colors" class="toggle terrain-toggle" />
             <ui:Toggle label="Boost Triplanar Contrast" name="boost-triplanar-contrast" class="toggle terrain-toggle" />
             <ui:Toggle label="Render Wireframe" name="render-wireframe" class="toggle terrain-toggle" />
