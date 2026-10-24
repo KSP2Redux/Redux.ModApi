@@ -804,19 +804,24 @@ namespace PatchManager.Core.Assets
 
             if (locations.Count > 0)
             {
-                var stateRef = state;
-                var handle = Addressables.LoadAssetsAsync<TextAsset>(locations, asset =>
-                {
-                    if (string.IsNullOrEmpty(asset.text))
-                        return;
-                    AddRawText(stateRef, asset.name, asset.text);
-                });
+                var handle = Addressables.LoadAssetsAsync<TextAsset>(locations, null);
                 state.LoadHandle = handle;
 
                 while (!handle.IsDone)
                 {
                     UpdateLoadingBarData();
                     yield return null;
+                }
+
+                // The results follow the locations, so which of two same-named assets wins is catalog order rather
+                // than whichever finished loading first
+                if (handle.Status == AsyncOperationStatus.Succeeded && handle.Result != null)
+                {
+                    foreach (TextAsset asset in handle.Result)
+                    {
+                        if (asset != null && !string.IsNullOrEmpty(asset.text))
+                            AddRawText(state, asset.name, asset.text);
+                    }
                 }
             }
 
@@ -841,8 +846,8 @@ namespace PatchManager.Core.Assets
                     if (memberHandle.Status == AsyncOperationStatus.Succeeded && memberHandle.Result != null
                         && !string.IsNullOrEmpty(memberHandle.Result.text))
                     {
-                        AddRawText(state, memberHandle.Result.name, memberHandle.Result.text);
-                        state.PrimaryKeyMap[memberHandle.Result.name] = key;
+                        if (AddRawText(state, memberHandle.Result.name, memberHandle.Result.text))
+                            state.PrimaryKeyMap[memberHandle.Result.name] = key;
                     }
 
                     Addressables.Release(memberHandle);
@@ -1116,18 +1121,37 @@ namespace PatchManager.Core.Assets
             public AsyncOperationHandle<IList<TextAsset>> LoadHandle;
         }
 
-        // Patch input is keyed by asset name, so a second asset with the same name replaces the first. Two packs
-        // adding a body of the same name end here before anything else can notice, so the replacement is reported.
-        private static void AddRawText(LabelRebuildState state, string name, string text)
+        private static bool AddRawText(LabelRebuildState state, string name, string text) =>
+            AddRawText(state.RawTexts, state.Label, name, text);
+
+        /// <summary>
+        /// Adds one asset's text to a label's patch input, keeping the first of two different assets with the same name.
+        /// </summary>
+        /// <remarks>
+        /// Patch input is keyed by asset name, and two packs adding a body of the same name meet here before anything
+        /// else can notice. The first in catalog order is kept and the clash reported, as the game does for bodies and
+        /// parts. The same asset reached twice, once through the label and once as a member, is not a clash.
+        /// </remarks>
+        /// <param name="rawTexts">The label's patch input so far, by asset name.</param>
+        /// <param name="label">The label, for the report.</param>
+        /// <param name="name">The asset's name.</param>
+        /// <param name="text">The asset's text.</param>
+        /// <returns>True if the input now holds this text under the name, false if a different asset already did.</returns>
+        internal static bool AddRawText(Dictionary<string, string> rawTexts, string label, string name, string text)
         {
-            if (state.RawTexts.TryGetValue(name, out string existing) && existing != text)
+            if (!rawTexts.TryGetValue(name, out string existing))
             {
-                PatchManager.Logger.LogWarning(
-                    $"Two {state.Label} assets are named {name}. The last one loaded replaces the other."
-                );
+                rawTexts[name] = text;
+                return true;
             }
 
-            state.RawTexts[name] = text;
+            if (existing == text)
+                return true;
+
+            PatchManager.Logger.LogError(
+                $"Two {label} assets are named {name}, so the first is kept. The features that provide them should conflict."
+            );
+            return false;
         }
 
         private static void UpdateLoadingBarData()
