@@ -9,8 +9,7 @@ using Redux.CliIntegration;
 namespace SpaceWarp2.UI.Console
 {
     /// <summary>
-    /// The console's side of the CLI integration: the shared C# evaluator, and the activity log, which only builds
-    /// where the integration does.
+    /// The console's side of the CLI integration: the shared C# evaluator and the activity log.
     /// </summary>
     internal static class SpaceWarpConsoleCliIntegrationBridge
     {
@@ -18,31 +17,21 @@ namespace SpaceWarp2.UI.Console
 
         public static IReadOnlyList<SpaceWarpConsoleCliActivityEntryViewModel> GetActivityEntries()
         {
-#if UNITY_EDITOR || REDUX_CLI_INTEGRATION
             return CliIntegrationActivityLog.Snapshot()
                 .Reverse()
                 .Select(ToActivityViewModel)
                 .ToList();
-#else
-            return Array.Empty<SpaceWarpConsoleCliActivityEntryViewModel>();
-#endif
         }
 
         public static object? AddActivity(string source, string kind, string command, string payload)
         {
-#if UNITY_EDITOR || REDUX_CLI_INTEGRATION
             return CliIntegrationActivityLog.AddStarted(source, kind, command, payload);
-#else
-            return null;
-#endif
         }
 
         public static void CompleteActivity(object? activity, bool success, string result)
         {
-#if UNITY_EDITOR || REDUX_CLI_INTEGRATION
             if (activity is CliIntegrationActivityEntry entry)
                 CliIntegrationActivityLog.Complete(entry, success, result);
-#endif
         }
 
         public static SpaceWarpConsoleCSharpResult EvaluateCSharp(string code, int depth)
@@ -72,7 +61,6 @@ namespace SpaceWarp2.UI.Console
             return result.Kind == "compile" ? "Compiled." : "Completed.";
         }
 
-#if UNITY_EDITOR || REDUX_CLI_INTEGRATION
         private static SpaceWarpConsoleCliActivityEntryViewModel ToActivityViewModel(CliIntegrationActivityEntry entry)
         {
             return new SpaceWarpConsoleCliActivityEntryViewModel(
@@ -89,7 +77,6 @@ namespace SpaceWarp2.UI.Console
 
         private static string Trim(string value) =>
             value.Length <= DISPLAY_LENGTH ? value : value[..DISPLAY_LENGTH] + "...";
-#endif
     }
 
     internal readonly struct SpaceWarpConsoleCSharpResult
