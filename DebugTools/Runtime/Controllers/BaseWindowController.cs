@@ -30,6 +30,10 @@ namespace DebugTools.Runtime.Controllers
                 _isWindowOpen = value;
                 // Set the display style of the root element to show or hide the window
                 RootElement.style.display = value ? DisplayStyle.Flex : DisplayStyle.None;
+                // Every panel is updated and repainted on every frame, shown or not, and the closed debug windows cost
+                // a third of a millisecond a frame between them. A closed window's renderer is switched off, which
+                // keeps its tree as it is.
+                Window.enabled = value;
             }
         }
 
