@@ -535,6 +535,29 @@ namespace PatchManager.Core.Assets
         }
 
         /// <summary>
+        /// Hashes one mod's addressables catalog into <paramref name="into" />.
+        /// </summary>
+        /// <remarks>
+        /// The cache holds patched copies of a mod's content assets, so a rebuilt mod has to invalidate it. The
+        /// manifest cannot be trusted for that, since authors rebuild without bumping its version. The catalog
+        /// names each bundle by its content hash and CRC, so any rebuild that changes content changes it.
+        /// </remarks>
+        /// <param name="modFolder">The mod's folder, or null when it has none.</param>
+        /// <param name="into">The patch hash set to record into.</param>
+        internal static void HashCatalogForMod(string modFolder, PatchHashes into)
+        {
+            if (string.IsNullOrEmpty(modFolder))
+                return;
+
+            // Keyed by path, so set scoping finds the owning mod by its folder as it does for Lua files
+            var catalogPath = Path.Combine(modFolder, "addressables", "catalog.json");
+            if (!File.Exists(catalogPath))
+                return;
+
+            into.Patches[catalogPath] = Hash.FromString(File.ReadAllText(catalogPath));
+        }
+
+        /// <summary>
         /// Collects what the runtime exposed per descriptor: every ran script's hash into the patch-cache
         /// checksum, and every script error into the patch summary.
         /// </summary>
@@ -559,8 +582,8 @@ namespace PatchManager.Core.Assets
         /// when it does not.
         /// </summary>
         /// <remarks>
-        /// Only scripts and mod manifests of mods in the set count, so changing a mod the set leaves out keeps
-        /// the set's cache.
+        /// Only scripts, mod manifests and addressables catalogs of mods in the set count, so changing a mod the
+        /// set leaves out keeps the set's cache.
         /// </remarks>
         /// <returns>True if the cache is valid, false if it was invalidated.</returns>
         public static bool InvalidateCacheIfNeeded()
@@ -569,9 +592,9 @@ namespace PatchManager.Core.Assets
             foreach (var descriptor in PluginList.AllLoadedPlugins)
             {
                 folderByMod[descriptor.Guid] = descriptor.Folder?.FullName;
-                // A mod's manifest stands in for its content assets, whose versions it names
                 CurrentPatchHashes.Patches[$"{descriptor.Guid}/<swinfo>"] =
                     Hash.FromString(JsonConvert.SerializeObject(descriptor.SWInfo));
+                HashCatalogForMod(descriptor.Folder?.FullName, CurrentPatchHashes);
             }
 
             // Every set scopes the same full hashes, so the full ones are kept for the next set's run
