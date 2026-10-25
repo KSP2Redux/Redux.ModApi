@@ -28,14 +28,15 @@ namespace DebugTools.Runtime.Controllers.VesselTools
         private static void FormatNodeData(ManeuverNodeRow row, ManeuverNodeData node)
         {
             row.NodeName.text = node.NodeName;
-            row.UniversalTime.text = node.Time.ToString("0.0");
+            row.UniversalTime.text = node.Time.ToSeconds().ToString("0.0");
             row.DeltaV.text = node.BurnVector.ToString("0.0");
             row.GUID.text = node.NodeID.ToString();
         }
 
         public void SyncTo(VesselComponent vessel)
         {
-            if (_itemsView == null || _rows == null) return;
+            if (_itemsView == null || _rows == null)
+                return;
 
             var nodes = vessel.SimulationObject.ManeuverPlan.GetNodes();
 
