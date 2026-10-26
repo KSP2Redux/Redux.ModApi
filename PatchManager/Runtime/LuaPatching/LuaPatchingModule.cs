@@ -39,10 +39,10 @@ namespace PatchManager.LuaPatching
 
             foreach (var type in AppDomain.CurrentDomain.GetLoadableTypes())
             {
-                var attributes = type.GetCustomAttributes(true);
-                if (attributes.OfType<PatchManagerModuleAttribute>().FirstOrDefault() is { } pmma)
+                if (type.IsDefined(typeof(PatchManagerModuleAttribute), true)
+                    && type.GetCustomAttributes(typeof(PatchManagerModuleAttribute), true).FirstOrDefault() is PatchManagerModuleAttribute pmma)
                 {
-                    if (!attributes.OfType<MoonSharpUserDataAttribute>().Any())
+                    if (!type.IsDefined(typeof(MoonSharpUserDataAttribute), true))
                     {
                         PatchManager.Logger.LogWarning($"LuaPatchingModule: found Patch Manager module {pmma.SubmoduleName} without MoonSharpUserData attribute, skipping!");
                         continue;
@@ -51,7 +51,8 @@ namespace PatchManager.LuaPatching
                     Universe.SubmoduleTypes[pmma.SubmoduleName] = type;
                 }
 
-                if (attributes.OfType<ConverterAttribute>().FirstOrDefault() is { } conv)
+                if (type.IsDefined(typeof(ConverterAttribute), true)
+                    && type.GetCustomAttributes(typeof(ConverterAttribute), true).FirstOrDefault() is ConverterAttribute conv)
                 {
                     if (!typeof(IConverter).IsAssignableFrom(type))
                     {
