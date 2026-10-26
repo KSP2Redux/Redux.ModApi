@@ -22,6 +22,7 @@ public class DocumentLocalization : MonoBehaviour
     private PanelRenderer? _renderer;
 
     private readonly Dictionary<VisualElement, string> _elementDictionary = new();
+    private readonly Dictionary<ITextEdition, string> _placeholderDictionary = new();
     private static readonly MethodInfo CreateBindingRequestsMethod = typeof(VisualElement).GetMethod(
         "CreateBindingRequests",
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
@@ -62,6 +63,7 @@ public class DocumentLocalization : MonoBehaviour
     /// <param name="element">The element to register.</param>
     public void RegisterElement(VisualElement element)
     {
+        RegisterPlaceholder(element);
         PropertyInfo? textProperty = element?.GetType().GetProperty("text");
         if (textProperty?.GetValue(element) is not string key || !IsLocalizationKey(key))
         {
@@ -71,6 +73,32 @@ public class DocumentLocalization : MonoBehaviour
         string? trimmedKey = key.TrimStart('#');
         _elementDictionary[element] = trimmedKey;
         UpdateElementLocalization(element, trimmedKey);
+    }
+
+    // A text field's placeholder is not its "text", so a placeholder given as a key is localized on its own.
+    private void RegisterPlaceholder(VisualElement? element)
+    {
+        if (element?.GetType().GetProperty("textEdition")?.GetValue(element) is not ITextEdition edition ||
+            edition.placeholder is not { } key || !IsLocalizationKey(key))
+        {
+            return;
+        }
+
+        string trimmedKey = key.TrimStart('#');
+        _placeholderDictionary[edition] = trimmedKey;
+        UpdatePlaceholderLocalization(edition, trimmedKey);
+    }
+
+    private static void UpdatePlaceholderLocalization(ITextEdition edition, string localizationKey)
+    {
+        string? localization = ILocalizer.Instance.GetTranslation(localizationKey);
+        if (localization == null)
+        {
+            UitkForKsp2Plugin.Logger.LogError($"Localization key '{localizationKey}' not found");
+            return;
+        }
+
+        edition.placeholder = localization;
     }
 
     /// <summary>
@@ -204,6 +232,11 @@ public class DocumentLocalization : MonoBehaviour
         foreach ((VisualElement key, string value) in _elementDictionary)
         {
             UpdateElementLocalization(key, value);
+        }
+
+        foreach ((ITextEdition edition, string value) in _placeholderDictionary)
+        {
+            UpdatePlaceholderLocalization(edition, value);
         }
 
         RefreshConverterBindings();
