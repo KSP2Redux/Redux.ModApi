@@ -32,6 +32,9 @@ namespace PatchManager.CSharpPatching
 
             foreach (var type in AppDomain.CurrentDomain.GetLoadableTypes())
             {
+                if (!type.IsDefined(typeof(PMPatchAttribute), true))
+                    continue;
+
                 var pmPatch = type.GetCustomAttribute<PMPatchAttribute>();
                 if (pmPatch == null)
                     continue;

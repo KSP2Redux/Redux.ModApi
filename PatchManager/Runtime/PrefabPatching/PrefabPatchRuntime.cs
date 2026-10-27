@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
+using System.Threading.Tasks;
 using Redux.Features;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -352,19 +354,75 @@ namespace PatchManager.PrefabPatching
                 .OrderBy(value => value, StringComparer.Ordinal)
                 .ToArray();
 
-        private static IEnumerable<PrefabPatchManifest> LoadAddressableManifests(
-            IEnumerable<ManifestLocation> locations
+        /// <summary>
+        /// Loads every manifest's text on the main thread, then parses and binds the manifests in parallel.
+        /// </summary>
+        /// <remarks>
+        /// Parsing and binding are pure CPU work on objects owned by one manifest each, so they run on worker threads.
+        /// The result keeps location order, and when several manifests fail, the one reported is the first failure in
+        /// that order, which is the one a sequential load would have stopped on.
+        /// </remarks>
+        /// <param name="locations">The manifest locations, in discovery order.</param>
+        /// <returns>The bound manifests, in the same order as <paramref name="locations" />.</returns>
+        /// <exception cref="InvalidDataException">Thrown when a manifest could not be loaded, parsed or bound.</exception>
+        private static PrefabPatchManifest[] LoadAddressableManifests(
+            IReadOnlyList<ManifestLocation> locations
         )
         {
-            foreach (var source in locations)
-    {
-                    yield return LoadAddressableManifest(source);
-    }
+            var texts = new string[locations.Count];
+            var failures = new Exception[locations.Count];
+            for (var index = 0; index < locations.Count; index++)
+            {
+                try
+                {
+                    texts[index] = LoadManifestText(locations[index]);
+                }
+                catch (Exception exception)
+                {
+                    failures[index] = exception;
+                }
+            }
+
+            var manifests = new PrefabPatchManifest[locations.Count];
+            Parallel.For(
+                0,
+                locations.Count,
+                index =>
+                {
+                    if (failures[index] != null)
+                        return;
+
+                    try
+                    {
+                        var manifest = PrefabPatchJson.Deserialize<PrefabPatchManifest>(texts[index]);
+                        manifests[index] = PrefabPatchOwnership.Bind(manifest, locations[index].OwnerModId);
+                    }
+                    catch (Exception exception)
+                    {
+                        failures[index] = exception;
+                    }
+                }
+            );
+
+            for (var index = 0; index < locations.Count; index++)
+            {
+                if (failures[index] != null)
+                {
+                    var source = locations[index];
+                    throw new InvalidDataException(
+                        $"Could not load prefab patch manifest "
+                            + $"'{source.Location.PrimaryKey}' from label "
+                            + $"'{source.Label}' owned by '{source.OwnerModId}' in "
+                            + $"catalog '{source.LocatorId}'.",
+                        failures[index]
+                    );
+                }
+            }
+
+            return manifests;
         }
 
-        private static PrefabPatchManifest LoadAddressableManifest(
-            ManifestLocation source
-        )
+        private static string LoadManifestText(ManifestLocation source)
         {
             AsyncOperationHandle<TextAsset> manifestHandle = default;
             try
@@ -382,20 +440,7 @@ namespace PatchManager.PrefabPatching
                         );
                 }
 
-                var manifest = PrefabPatchJson.Deserialize<PrefabPatchManifest>(
-                    asset.text
-                );
-                return PrefabPatchOwnership.Bind(manifest, source.OwnerModId);
-            }
-            catch (Exception exception)
-            {
-                throw new InvalidDataException(
-                    $"Could not load prefab patch manifest "
-                        + $"'{source.Location.PrimaryKey}' from label "
-                        + $"'{source.Label}' owned by '{source.OwnerModId}' in "
-                        + $"catalog '{source.LocatorId}'.",
-                    exception
-                );
+                return asset.text;
             }
             finally
             {
@@ -404,6 +449,18 @@ namespace PatchManager.PrefabPatching
             }
         }
 
+        /// <summary>
+        /// Resolves one plan per target prefab, taking it from the plan cache when the cached plan is current.
+        /// </summary>
+        /// <remarks>
+        /// A target's plan depends only on the manifests for that target, and each target has its own cache file, so
+        /// the targets resolve on worker threads. The results are then recorded in target order, and the first failure
+        /// in that order is rethrown, so metrics, entries and the reported error match a sequential pass.
+        /// </remarks>
+        /// <param name="manifests">Every discovered manifest.</param>
+        /// <param name="activeModIds">The active SpaceWarp mod IDs.</param>
+        /// <param name="stopwatch">Times the whole discovery for <see cref="CurrentMetrics" />.</param>
+        /// <param name="resolve">Called once every plan has been recorded.</param>
         private static void ResolveDiscoveredManifests(
             IReadOnlyCollection<PrefabPatchManifest> manifests,
             ISet<string> activeModIds,
@@ -415,22 +472,45 @@ namespace PatchManager.PrefabPatching
             var cache = new PrefabPatchPlanCache(Core.Cache.CacheManager.PlansDirectory);
             Entries.Clear();
             UsedPlanFiles.Clear();
-            foreach (
-                var group in manifests
-                    .Where(value => value?.TargetPrefab != null)
-                    .GroupBy(
-                        value => value.TargetPrefab.Address,
-                        StringComparer.Ordinal
-                    )
-                    .OrderBy(group => group.Key, StringComparer.Ordinal)
-            )
+            var groups = manifests
+                .Where(value => value?.TargetPrefab != null)
+                .GroupBy(
+                    value => value.TargetPrefab.Address,
+                    StringComparer.Ordinal
+                )
+                .OrderBy(group => group.Key, StringComparer.Ordinal)
+                .ToArray();
+            var unityVersion = Application.unityVersion;
+            var targetPlatform = Application.platform.ToString();
+            var results = new PrefabPatchPlanCache.Result[groups.Length];
+            var failures = new Exception[groups.Length];
+            Parallel.For(
+                0,
+                groups.Length,
+                index =>
+                {
+                    try
+                    {
+                        results[index] = cache.LoadOrResolve(
+                            groups[index],
+                            activeModIds,
+                            unityVersion,
+                            targetPlatform
+                        );
+                    }
+                    catch (Exception exception)
+                    {
+                        failures[index] = exception;
+                    }
+                }
+            );
+
+            for (var index = 0; index < groups.Length; index++)
             {
-                var result = cache.LoadOrResolve(
-                    group,
-                    activeModIds,
-                    Application.unityVersion,
-                    Application.platform.ToString()
-                );
+                if (failures[index] != null)
+                    ExceptionDispatchInfo.Capture(failures[index]).Throw();
+
+                var result = results[index];
                 if (result.CacheHit)
                     CurrentMetrics.CacheHitCount++;
                 else
