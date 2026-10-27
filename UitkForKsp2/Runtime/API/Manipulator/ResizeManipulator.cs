@@ -77,7 +77,9 @@ public class ResizeManipulator : IManipulator
         EnsureHandleIcon(_handle);
         if (_handle.parent == null)
         {
-            _target.Add(_handle);
+            // The hierarchy rather than the content container, so a control with a body of its own, such as an
+            // AppShell, gets the handle in its own corner rather than inside the body.
+            _target.hierarchy.Add(_handle);
         }
 
         if (_callbacksRegistered)
