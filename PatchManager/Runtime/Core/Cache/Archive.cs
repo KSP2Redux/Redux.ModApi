@@ -7,10 +7,19 @@ namespace PatchManager.Core.Cache
     /// <summary>
     /// Wrapper for <see cref="ZipArchive" /> for use with the caching system.
     /// </summary>
+    /// <remarks>
+    /// The archive lives in memory, and one <see cref="ZipArchive" /> is kept open over it for reads and one for
+    /// writes, rather than a new one per call. Opening an archive parses its whole central directory, and closing
+    /// one in update mode rewrites every entry, so a fresh archive per file made reading or writing a label of N
+    /// files cost N squared. Switching between reading and writing closes the open one first, so the stream always
+    /// holds a complete zip whenever the other mode or <see cref="Save" /> needs it.
+    /// </remarks>
     public class Archive : IDisposable
     {
         private readonly string _path;
         private readonly MemoryStream _stream;
+        private ZipArchive _reader;
+        private ZipArchive _writer;
         private bool _isDisposed;
 
         /// <summary>
@@ -37,6 +46,8 @@ namespace PatchManager.Core.Cache
         {
             if (_isDisposed)
                 return;
+            CloseReader();
+            CloseWriter();
             _stream.Dispose();
             _isDisposed = true;
 
@@ -52,9 +63,10 @@ namespace PatchManager.Core.Cache
         public string ReadFile(string filePath)
         {
             AssertNotDisposed();
+            CloseWriter();
 
-            using var archive = new ZipArchive(_stream, ZipArchiveMode.Read, true);
-            var entry = archive.GetEntry(filePath);
+            _reader ??= new ZipArchive(_stream, ZipArchiveMode.Read, true);
+            var entry = _reader.GetEntry(filePath);
             if (entry == null)
                 throw new FileNotFoundException($"File {filePath} does not exist in archive {_path}!");
 
@@ -72,13 +84,14 @@ namespace PatchManager.Core.Cache
         public void AddFile(string filePath, string content)
         {
             AssertNotDisposed();
+            CloseReader();
 
-            using var archive = new ZipArchive(_stream, ZipArchiveMode.Update, true);
+            _writer ??= new ZipArchive(_stream, ZipArchiveMode.Update, true);
 
-            if (archive.GetEntry(filePath) != null)
+            if (_writer.GetEntry(filePath) != null)
                 throw new ArgumentException($"File {filePath} already exists in archive {_path}!");
 
-            var entry = archive.CreateEntry(filePath);
+            var entry = _writer.CreateEntry(filePath);
             using var stream = entry.Open();
             using var writer = new StreamWriter(stream);
             writer.Write(content);
@@ -90,9 +103,22 @@ namespace PatchManager.Core.Cache
         public void Save()
         {
             AssertNotDisposed();
+            CloseWriter();
             using var fileStream = new FileStream(_path, FileMode.Create);
             _stream.Seek(0, SeekOrigin.Begin);
             _stream.CopyTo(fileStream);
+        }
+
+        private void CloseReader()
+        {
+            _reader?.Dispose();
+            _reader = null;
+        }
+
+        private void CloseWriter()
+        {
+            _writer?.Dispose();
+            _writer = null;
         }
 
         private void AssertNotDisposed()

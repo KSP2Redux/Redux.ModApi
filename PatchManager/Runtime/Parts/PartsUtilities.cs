@@ -26,6 +26,7 @@ namespace PatchManager.Parts
         internal static void GrabModuleDataAdapters()
         {
             var adapters = AppDomain.CurrentDomain.GetLoadableTypes()
+                .Where(type => type.IsDefined(typeof(ModuleDataAdapterAttribute), false))
                 .Select(type => (type, attr: (ModuleDataAdapterAttribute)type.GetCustomAttributes(typeof(ModuleDataAdapterAttribute), false).FirstOrDefault()))
                 .Where(adapter => adapter.attr != null);
             foreach (var adapter in adapters)
