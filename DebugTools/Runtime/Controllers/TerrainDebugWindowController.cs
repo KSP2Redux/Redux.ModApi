@@ -139,7 +139,8 @@ namespace DebugTools.Runtime.Controllers
 
         private void Update()
         {
-            if (!IsWindowOpen) return;
+            if (IsGameShuttingDown || !IsWindowOpen)
+                return;
 
             if (_selectQuadForDebugging && Input.GetMouseButtonDown(0))
             {
@@ -168,9 +169,12 @@ namespace DebugTools.Runtime.Controllers
                     $"{_secondsSinceTriplanarBasisUpdated}s since triplanar basis updated.";
             }
 
-            _pqsStats.text = "PQS Stats:" +
-                             $" Quads: {PQSRenderer.DebugVisiblePQSQuadCount} |" +
-                             $" Colliders: {PQSRenderer.DebugActivePQSColliderCount}";
+            PQS pqs = Game.GraphicsManager.GetSOIBodyPQS();
+            PQSRenderer terrainRenderer = pqs != null ? pqs.PQSRenderer : null;
+            int usedSlots = terrainRenderer != null ? terrainRenderer.UsedMeshSlotCount : 0;
+            int slotCount = terrainRenderer != null ? terrainRenderer.MeshSlotCount : 0;
+            _pqsStats.text =
+                $"PQS Stats: Quads: {PQSRenderer.DebugVisiblePQSQuadCount} | Slots: {usedSlots} / {slotCount} | Colliders: {PQSRenderer.DebugActivePQSColliderCount}";
 
             _debugQuadStatus.text = _selectQuadForDebugging
                 ? "Click on a piece of terrain"
