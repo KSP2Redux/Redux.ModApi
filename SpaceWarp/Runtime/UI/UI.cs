@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 
 using System.Collections.Generic;
 using JetBrains.Annotations;
@@ -150,7 +150,7 @@ namespace SpaceWarp2.UI
             // builds the ones the next campaign's features allow
             SaveLoad.AddCampaignLoadAction(ModIds.SPACE_WARP, "Clearing the flight app bar", CampaignPhase.Loaded, done =>
             {
-                SaveLoad.OnCampaignUnload(Appbar.RemoveFlightButtons);
+                SaveLoad.OnCampaignUnload(Appbar.UnloadCampaignButtons);
                 done();
             });
             Instance = this;

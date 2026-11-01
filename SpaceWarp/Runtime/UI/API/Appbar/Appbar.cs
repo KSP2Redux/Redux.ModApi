@@ -22,6 +22,19 @@ namespace SpaceWarp2.UI.API.Appbar
 
         private static readonly List<(string text, Sprite icon, string ID, Action action, string owner)> KscButtonsToBeLoaded = new();
 
+        // Whether the campaign loaded now has built its flight and space center bars. Each bar loads its buttons
+        // once per campaign, so a button registered after that goes straight onto the bar
+        private static bool _flightButtonsLoaded;
+        private static bool _kscButtonsLoaded;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            // The button lists persist across play sessions on purpose, but no bar has loaded in a new one yet
+            _flightButtonsLoaded = false;
+            _kscButtonsLoaded = false;
+        }
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void RegisterAppButton(string text, string id, Sprite icon, Action<bool> func) =>
             RegisterAppButton(PluginList.ModIdOf(Assembly.GetCallingAssembly()), text, id, icon, func);
@@ -42,6 +55,11 @@ namespace SpaceWarp2.UI.API.Appbar
             // buttons. Replacing the same-id entry also keeps the callback fresh (last registration wins).
             ButtonsToBeLoaded.RemoveAll(b => b.ID == id);
             ButtonsToBeLoaded.Add((text, icon, id, func, modId));
+            // Loading into flight can build the bar before OnCampaignLoaded runs
+            if (_flightButtonsLoaded && ShowsButtonOf(modId))
+            {
+                AppbarBackend.Instance.AddButton(text, icon, id, func);
+            }
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -96,6 +114,11 @@ namespace SpaceWarp2.UI.API.Appbar
             // Upsert by id. See RegisterAppButton (avoids duplicate buttons across Play Mode sessions).
             KscButtonsToBeLoaded.RemoveAll(b => b.ID == id);
             KscButtonsToBeLoaded.Add((text, icon, id, func, modId));
+            // Loading into the space center builds the bar before OnCampaignLoaded runs
+            if (_kscButtonsLoaded && ShowsButtonOf(modId))
+            {
+                AppbarBackend.Instance.AddKSCButton(text, icon, id, func);
+            }
         }
 
         // ReSharper disable once InconsistentNaming
@@ -140,10 +163,13 @@ namespace SpaceWarp2.UI.API.Appbar
 
         /// <summary>
         /// Removes every flight button, whose tray outlives the campaign, so the next flight builds the buttons the
-        /// next campaign's features allow.
+        /// next campaign's features allow, and holds registrations back from both bars until the next campaign
+        /// builds them.
         /// </summary>
-        internal static void RemoveFlightButtons()
+        internal static void UnloadCampaignButtons()
         {
+            _flightButtonsLoaded = false;
+            _kscButtonsLoaded = false;
             foreach (var button in ButtonsToBeLoaded)
             {
                 AppbarBackend.Instance?.RemoveButton(button.ID);
@@ -152,6 +178,7 @@ namespace SpaceWarp2.UI.API.Appbar
 
         internal static void LoadAllButtons()
         {
+            _flightButtonsLoaded = true;
             foreach (var button in ButtonsToBeLoaded.Where(button => ShowsButtonOf(button.owner)))
             {
                 AppbarBackend.Instance.AddButton(button.text, button.icon, button.ID, button.action);
@@ -170,6 +197,7 @@ namespace SpaceWarp2.UI.API.Appbar
         // ReSharper disable once InconsistentNaming
         internal static void LoadKSCButtons()
         {
+            _kscButtonsLoaded = true;
             foreach (var button in KscButtonsToBeLoaded.Where(button => ShowsButtonOf(button.owner)))
             {
                 AppbarBackend.Instance.AddKSCButton(button.text, button.icon, button.ID, button.action);
