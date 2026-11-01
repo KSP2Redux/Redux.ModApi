@@ -88,7 +88,8 @@ namespace SpaceWarp2.UI.API.Appbar
             OabButtonsToBeLoaded.RemoveAll(b => b.ID == id);
             OabButtonsToBeLoaded.Add((text, icon, id, func, modId));
             // Loading into the assembly building builds the bar before OnCampaignLoaded runs. Adding before the bar
-            // loads its own buttons is harmless, as both add paths replace a button with the same id
+            // loads its own buttons is harmless, as for a button with the same id both add paths let the latest
+            // registration win
             if (AppbarBackend.IsOABBarOpen && ShowsButtonOf(modId))
             {
                 AppbarBackend.Instance.AddOABButton(text, icon, id, func);
