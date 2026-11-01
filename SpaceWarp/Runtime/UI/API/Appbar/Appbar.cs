@@ -87,6 +87,12 @@ namespace SpaceWarp2.UI.API.Appbar
             // Upsert by id. See RegisterAppButton (avoids duplicate buttons across Play Mode sessions).
             OabButtonsToBeLoaded.RemoveAll(b => b.ID == id);
             OabButtonsToBeLoaded.Add((text, icon, id, func, modId));
+            // Loading into the assembly building builds the bar before OnCampaignLoaded runs. Adding before the bar
+            // loads its own buttons is harmless, as both add paths replace or keep a button with the same id
+            if (AppbarBackend.IsOABBarOpen && ShowsButtonOf(modId))
+            {
+                AppbarBackend.Instance.AddOABButton(text, icon, id, func);
+            }
         }
 
         // ReSharper disable once InconsistentNaming
