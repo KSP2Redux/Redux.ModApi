@@ -511,6 +511,13 @@ namespace PatchManager.PrefabPatching
                     ExceptionDispatchInfo.Capture(failures[index]).Throw();
 
                 var result = results[index];
+                if (result.CacheWriteFailure != null)
+                {
+                    PatchManager.Logger.LogWarning(
+                        $"Could not write prefab patch plan cache '{result.Path}', the plan is used without caching: "
+                            + result.CacheWriteFailure
+                    );
+                }
                 if (result.CacheHit)
                     CurrentMetrics.CacheHitCount++;
                 else
