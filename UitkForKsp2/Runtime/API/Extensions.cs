@@ -816,11 +816,44 @@ public static class Extensions
 
         void CheckFocusLockState()
         {
-            if (hasFocusLock &&
-                (!IsElementAvailableForFocusLock(element) || !IsElementOrDescendantFocused(element)))
+            bool isFocused = IsElementOrDescendantFocused(element);
+            if (!hasFocusLock && !isFocused)
+                return;
+
+            bool isAvailable = IsElementAvailableForFocusLock(element);
+            if (hasFocusLock && (!isAvailable || !isFocused))
             {
                 ReleaseFocusLock();
+                return;
             }
+
+            if (!isAvailable)
+                return;
+
+            // The lock follows the focus in both directions. A check that ran while the panel had no layout yet drops
+            // the lock while the element keeps focus, and no further focus event comes to take it again.
+            if (!hasFocusLock)
+            {
+                AcquireFocusLock();
+                return;
+            }
+
+            // An owner that was removed from outside leaves nothing to count the lock against, so the field takes the
+            // lock again with its owner registered. Applying suppressors without an owner would strand them.
+            if (!TextInputLockOwners.Contains(focusLockOwner))
+            {
+                hasFocusLock = false;
+                AcquireFocusLock();
+                return;
+            }
+
+            // A raw restore of the text input locks from outside the owner counting strips the game side suppressors
+            // while the owner stays registered, so a focused field applies them again. The call changes nothing
+            // when they are already in place.
+            if (!IInputManager.Instance.Ready)
+                return;
+
+            IInputManager.Instance.SetUitkTextInputLocks();
         }
 
         element.RegisterCallback<FocusInEvent>(_ =>
