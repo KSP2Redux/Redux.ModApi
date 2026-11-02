@@ -94,6 +94,8 @@ namespace DebugTools
             CreateDebugWindow<JointsToolsWindowController>("JointsToolsWindow", "Joints Tools");
             // Quick actions window
             CreateDebugWindow<QuickSwitchWindowController>("QuickSwitchWindow", "Quick Switch");
+            // Free flight window
+            CreateDebugWindow<FreeFlightWindowController>("FreeFlightWindow", "Free Flight");
             // Terrain debug window
             CreateDebugWindow<TerrainDebugWindowController>("TerrainDebugWindow", "Terrain Debug");
             // Science tools window
