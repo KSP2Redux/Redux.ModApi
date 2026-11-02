@@ -1,0 +1,19 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/FreeFlightWindow.uss?fileID=7433441132597879392&amp;guid=529f820d07054cd69d48c12e2f942e58&amp;type=3#FreeFlightWindow" />
+    <ui:VisualElement name="root" class="root">
+        <ui:VisualElement name="title-bar">
+            <ui:Label text="Free Flight" />
+            <ui:Button text="×" name="close-button" />
+        </ui:VisualElement>
+        <ui:VisualElement name="controls" class="controls">
+            <ui:DropdownField label="Celestial Body" index="-1" name="body-dropdown" />
+            <ui:Button text="Enable Free Flight" name="enable-button" />
+            <ui:Button text="Teleport to Body" name="teleport-button" />
+            <ui:Button text="Disable and Return to Vessel" name="return-vessel-button" />
+            <ui:Button text="Disable and Return to KSC" name="return-ksc-button" />
+            <ui:Label name="status-label" text="Free flight is off." />
+            <ui:Label name="simulation-note" text="Simulation continues while free flight is active." style="white-space: normal; margin-top: 4px;" />
+            <ui:Label text="WASD to move, Space/Ctrl for elevation, right mouse to look. Scroll to change speed." style="white-space: normal; margin-top: 4px;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
