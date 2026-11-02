@@ -818,28 +818,22 @@ public static class Extensions
         {
             bool isFocused = IsElementOrDescendantFocused(element);
             if (!hasFocusLock && !isFocused)
-            {
                 return;
-            }
 
             bool isAvailable = IsElementAvailableForFocusLock(element);
             if (hasFocusLock && (!isAvailable || !isFocused))
             {
-                Log($"\tReleasing the game input lock, available {isAvailable}, focused {isFocused}: {element.name}");
                 ReleaseFocusLock();
                 return;
             }
 
             if (!isAvailable)
-            {
                 return;
-            }
 
             // The lock follows the focus in both directions. A check that ran while the panel had no layout yet drops
             // the lock while the element keeps focus, and no further focus event comes to take it again.
             if (!hasFocusLock)
             {
-                Log($"\tTaking the game input lock again: {element.GetType().Name} {element.name}");
                 AcquireFocusLock();
                 return;
             }
@@ -848,7 +842,6 @@ public static class Extensions
             // lock again with its owner registered. Applying suppressors without an owner would strand them.
             if (!TextInputLockOwners.Contains(focusLockOwner))
             {
-                Log($"\tThe game input lock lost its owner, taking it again: {element.name}");
                 hasFocusLock = false;
                 AcquireFocusLock();
                 return;
@@ -857,10 +850,10 @@ public static class Extensions
             // A raw restore of the text input locks from outside the owner counting strips the game side suppressors
             // while the owner stays registered, so a focused field applies them again. The call changes nothing
             // when they are already in place.
-            if (IInputManager.Instance.Ready)
-            {
-                IInputManager.Instance.SetUitkTextInputLocks();
-            }
+            if (!IInputManager.Instance.Ready)
+                return;
+
+            IInputManager.Instance.SetUitkTextInputLocks();
         }
 
         element.RegisterCallback<FocusInEvent>(_ =>
