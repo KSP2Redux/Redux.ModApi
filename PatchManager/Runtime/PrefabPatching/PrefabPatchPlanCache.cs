@@ -30,6 +30,13 @@ namespace PatchManager.PrefabPatching
             public long ElapsedMilliseconds;
             /// <summary>Cache file path, when a target produced one.</summary>
             public string Path;
+            /// <summary>
+            /// Why the plan could not be stored in the cache, or <c>null</c> when it was stored or needed no write.
+            /// </summary>
+            /// <remarks>
+            /// Plans resolve on worker threads, where logging is not safe, so the caller reports it.
+            /// </remarks>
+            public Exception CacheWriteFailure;
         }
 
         private readonly string _directory;
@@ -79,7 +86,6 @@ namespace PatchManager.PrefabPatching
                 };
             }
 
-            Directory.CreateDirectory(_directory);
             var sourceFingerprint = CalculateSourceFingerprint(
                 manifests,
                 activeModIds,
@@ -102,7 +108,7 @@ namespace PatchManager.PrefabPatching
             var backupPath = path + ".bak";
             if (TryRead(backupPath, sourceFingerprint, out cached))
             {
-                AtomicWrite(path, PrefabPatchJson.Serialize(cached));
+                var restoreFailure = TryWrite(path, PrefabPatchJson.Serialize(cached));
                 stopwatch.Stop();
                 return new Result
                 {
@@ -110,7 +116,8 @@ namespace PatchManager.PrefabPatching
                     CacheHit = true,
                     RecoveredBackup = true,
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
-                    Path = path
+                    Path = path,
+                    CacheWriteFailure = restoreFailure
                 };
             }
 
@@ -121,10 +128,11 @@ namespace PatchManager.PrefabPatching
                 targetPlatform
             );
             plan.SourceFingerprint = sourceFingerprint;
+            Exception writeFailure = null;
             if (plan.IsValid)
             {
                 plan.OperationPatchIds = plan.Operations.Select(operation => operation.PatchId).ToArray();
-                AtomicWrite(path, PrefabPatchJson.Serialize(plan));
+                writeFailure = TryWrite(path, PrefabPatchJson.Serialize(plan));
             }
             stopwatch.Stop();
             return new Result
@@ -132,7 +140,8 @@ namespace PatchManager.PrefabPatching
                 Plan = plan,
                 CacheHit = false,
                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
-                Path = path
+                Path = path,
+                CacheWriteFailure = writeFailure
             };
         }
 
@@ -301,10 +310,19 @@ namespace PatchManager.PrefabPatching
                     {
                         File.Replace(tempPath, path, backupPath, true);
                     }
-                    catch (PlatformNotSupportedException)
+                    catch (Exception exception) when (IsWriteFailure(exception))
                     {
-                        File.Copy(path, backupPath, true);
-                        File.Delete(path);
+                        // Some file systems and compatibility layers reject the replace outright, so fall back to
+                        // separate steps. The reader validates every file, so an interrupted fallback is only a miss.
+                        // When the replacement already landed before the error was reported, nothing is left to redo.
+                        if (!File.Exists(tempPath))
+                            return;
+
+                        if (File.Exists(path))
+                        {
+                            File.Copy(path, backupPath, true);
+                            File.Delete(path);
+                        }
                         File.Move(tempPath, path);
                     }
                 }
@@ -319,5 +337,31 @@ namespace PatchManager.PrefabPatching
                     File.Delete(tempPath);
             }
         }
+
+        /// <summary>
+        /// Stores a resolved plan, keeping the plan usable in memory when the file cannot be written.
+        /// </summary>
+        /// <remarks>
+        /// The cache only saves resolve time on a later start, so a write failure costs a miss next time and must
+        /// not fail discovery.
+        /// </remarks>
+        /// <param name="path">The plan-cache path.</param>
+        /// <param name="contents">The serialized plan.</param>
+        /// <returns>The write failure, or <c>null</c> when the plan was stored.</returns>
+        private static Exception TryWrite(string path, string contents)
+        {
+            try
+            {
+                AtomicWrite(path, contents);
+                return null;
+            }
+            catch (Exception exception) when (IsWriteFailure(exception))
+            {
+                return exception;
+            }
+        }
+
+        private static bool IsWriteFailure(Exception exception) =>
+            exception is IOException or UnauthorizedAccessException or PlatformNotSupportedException;
     }
 }
