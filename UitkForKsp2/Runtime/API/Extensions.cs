@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -883,6 +883,11 @@ public static class Extensions
             SubscribeToHiddenElements();
             StartFocusLockStateCheck();
         });
+
+        // An unattached control can be discarded without receiving a detach event.
+        // Start global subscriptions only while a panel owns the control.
+        if (element.panel == null)
+            return;
 
         SubscribeToHiddenElements();
         StartFocusLockStateCheck();

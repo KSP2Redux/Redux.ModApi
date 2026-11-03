@@ -53,6 +53,10 @@ public class GameInputBlockManipulator : IManipulator
         _target.RegisterCallback<ClickEvent>(OnClick);
         _target.RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
         _target.RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
+        // An unattached target can be discarded without receiving a detach event.
+        if (_target.panel == null)
+            return;
+
         Extensions.ElementHidden += OnElementHidden;
         StartStateCheck();
     }
@@ -193,12 +197,17 @@ public class GameInputBlockManipulator : IManipulator
 
     private void OnAttachToPanel(AttachToPanelEvent evt)
     {
+        Extensions.ElementHidden -= OnElementHidden;
+        Extensions.ElementHidden += OnElementHidden;
         StartStateCheck();
         CheckPointerState();
     }
 
     private void OnDetachFromPanel(DetachFromPanelEvent evt)
     {
+        Extensions.ElementHidden -= OnElementHidden;
+        _stateCheck?.Pause();
+        _stateCheck = null;
         ResetInteractionState();
     }
 
