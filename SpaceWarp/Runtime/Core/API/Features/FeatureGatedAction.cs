@@ -66,6 +66,14 @@ namespace SpaceWarp2.API.Features
         public string Name { get; }
 
         /// <summary>
+        /// Gets or sets how many seconds the action may run before its flow gives up on it, or 0 for the flow's default.
+        /// </summary>
+        /// <remarks>
+        /// Work that grows with what the player installed, as importing KSP1 mods does, can need more than the default.
+        /// </remarks>
+        public int Timeout { get; set; }
+
+        /// <summary>
         /// Gets the work that runs whether or not the action applies, or null.
         /// </summary>
         [MoonSharpHidden]

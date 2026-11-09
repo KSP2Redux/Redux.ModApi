@@ -54,7 +54,9 @@ namespace PatchManager.Parts.Patchers
                     for (var i = part.PartModulesState.Count - 1; i >= 0; i--)
                     {
                         var i2 = i;
-                        if (def.data.serializedPartModules.All(x => x.Name != part.PartModulesState[i2].Name))
+                        // The KSP1 code host holds state for mods that may be gone. Putting the mod back has to find that state again
+                        if (part.PartModulesState[i2].Name != nameof(Redux.Ksp1Import.Modules.PartComponentModule_Ksp1CodeHost) &&
+                            def.data.serializedPartModules.All(x => x.Name != part.PartModulesState[i2].Name))
                         {
                             part.PartModulesState.RemoveAt(i);
                         }

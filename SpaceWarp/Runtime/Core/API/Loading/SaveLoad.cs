@@ -254,8 +254,9 @@ namespace SpaceWarp2.API.Loading
         /// <param name="action">The action.</param>
         /// <param name="name">The step's name, the action's own when null.</param>
         /// <returns>The step.</returns>
-        internal static GenericFlowAction StepFor(FeatureGatedAction action, string? name = null) =>
-            new(name ?? action.Name, (resolve, reject) =>
+        internal static GenericFlowAction StepFor(FeatureGatedAction action, string? name = null)
+        {
+            var step = new GenericFlowAction(name ?? action.Name, (resolve, reject) =>
             {
                 if (!action.Applies())
                 {
@@ -273,6 +274,13 @@ namespace SpaceWarp2.API.Loading
                     resolve();
                 }
             });
+            if (action.Timeout > 0)
+            {
+                step.Timeout = action.Timeout;
+            }
+
+            return step;
+        }
 
         private static FeatureGatedAction Register(string trigger, FeatureGatedAction action)
         {

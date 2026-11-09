@@ -24,10 +24,30 @@ namespace SpaceWarp2.API.Reflection
         // scans have to skip them instead.
         private static readonly HashSet<Assembly> _rejectedAssemblies = new();
 
+        // Assemblies that load into the domain but belong to no registry, as KSP1 plugins run through the compatibility
+        // layer. Their types can still be found by name.
+        private static readonly HashSet<Assembly> _unscannedAssemblies = new();
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         internal static void ResetStaticState()
         {
             _rejectedAssemblies.Clear();
+            _unscannedAssemblies.Clear();
+            _scannedAssemblyCount = -1;
+        }
+
+        /// <summary>
+        /// Leaves an assembly out of the domain scans while its types can still be found by name.
+        /// </summary>
+        /// <remarks>
+        /// For assemblies whose types are never entries of a registry, as KSP1 plugins are. Such a plugin can ship a type
+        /// that fails to load once looked into, as an optional bridge to a mod that is not installed, and every registry
+        /// that scans would hit it.
+        /// </remarks>
+        /// <param name="assembly">The assembly.</param>
+        public static void ExcludeFromScans(this Assembly assembly)
+        {
+            _unscannedAssemblies.Add(assembly);
             _scannedAssemblyCount = -1;
         }
 
@@ -84,7 +104,7 @@ namespace SpaceWarp2.API.Reflection
                 return _scannedTypes;
 
             _scannedTypes = assemblies
-                .Where(assembly => !assembly.IsDynamic && !_rejectedAssemblies.Contains(assembly))
+                .Where(assembly => !assembly.IsDynamic && !_rejectedAssemblies.Contains(assembly) && !_unscannedAssemblies.Contains(assembly))
                 .SelectMany(assembly => assembly.GetLoadableTypes())
                 .ToArray();
             _scannedAssemblyCount = assemblies.Length;

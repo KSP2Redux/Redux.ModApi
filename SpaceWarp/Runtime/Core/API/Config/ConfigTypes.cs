@@ -27,10 +27,21 @@ namespace SpaceWarp2.API.Config
         {
             foreach (var type in AppDomain.CurrentDomain.GetLoadableTypes())
             {
-                if (type.IsAbstract || type.IsInterface || !typeof(IConfigType).IsAssignableFrom(type))
-                    continue;
+                // A type can list as loadable and still fail to load once looked into, as one whose field type comes from an
+                // assembly that is not installed. It belongs to no registry, and one such type must not stop the scan
+                ConfigTypeAttribute attribute;
+                try
+                {
+                    if (type.IsAbstract || type.IsInterface || !typeof(IConfigType).IsAssignableFrom(type))
+                        continue;
 
-                var attribute = type.GetCustomAttribute<ConfigTypeAttribute>();
+                    attribute = type.GetCustomAttribute<ConfigTypeAttribute>();
+                }
+                catch (TypeLoadException)
+                {
+                    continue;
+                }
+
                 if (attribute == null)
                     continue;
 
