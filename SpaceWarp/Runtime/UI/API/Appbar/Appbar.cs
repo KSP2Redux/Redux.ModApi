@@ -1,0 +1,214 @@
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using JetBrains.Annotations;
+using Redux.UI.AppBar;
+using SpaceWarp2.API.Features;
+using SpaceWarp2.API.Mods;
+using UnityEngine;
+
+namespace SpaceWarp2.UI.API.Appbar
+{
+    [PublicAPI]
+    public static class Appbar
+    {
+        private static readonly List<(string text, Sprite icon, string ID, Action<bool> action, string owner)> ButtonsToBeLoaded = new();
+
+        private static readonly List<(string text, Sprite icon, string ID, Action<bool> action, string owner)> OabButtonsToBeLoaded = new();
+
+        private static readonly List<(string text, Sprite icon, string ID, Action action, string owner)> KscButtonsToBeLoaded = new();
+
+        // Whether the campaign loaded now has built its flight and space center bars. Each bar loads its buttons
+        // once per campaign, so a button registered after that goes straight onto the bar
+        private static bool _flightButtonsLoaded;
+        private static bool _kscButtonsLoaded;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            // The button lists persist across play sessions on purpose, but no bar has loaded in a new one yet
+            _flightButtonsLoaded = false;
+            _kscButtonsLoaded = false;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void RegisterAppButton(string text, string id, Sprite icon, Action<bool> func) =>
+            RegisterAppButton(PluginList.ModIdOf(Assembly.GetCallingAssembly()), text, id, icon, func);
+
+        /// <summary>
+        /// Registers a flight app bar button that shows only while its mod is enabled in the active feature set.
+        /// </summary>
+        /// <param name="modId">The mod the button belongs to.</param>
+        /// <param name="text">The button's text.</param>
+        /// <param name="id">The button's id, which a later registration with the same id replaces.</param>
+        /// <param name="icon">The button's icon.</param>
+        /// <param name="func">Called with the button's new toggle state.</param>
+        public static void RegisterAppButton(string modId, string text, string id, Sprite icon, Action<bool> func)
+        {
+            SpaceWarpPlugin.Instance.SWLogger.LogInfo($"RegisterAppButton: {text}, {id}");
+            // Upsert by id: registration re-runs on every Play Mode enter and this static list persists
+            // across sessions when Domain Reload is disabled, so a plain Add would create duplicate appbar
+            // buttons. Replacing the same-id entry also keeps the callback fresh (last registration wins).
+            ButtonsToBeLoaded.RemoveAll(b => b.ID == id);
+            ButtonsToBeLoaded.Add((text, icon, id, func, modId));
+            // Loading into flight can build the bar before OnCampaignLoaded runs
+            if (_flightButtonsLoaded && ShowsButtonOf(modId))
+            {
+                AppbarBackend.Instance.AddButton(text, icon, id, func);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void RegisterAppButton(string text, string id, Texture2D icon, Action<bool> func) =>
+            RegisterAppButton(PluginList.ModIdOf(Assembly.GetCallingAssembly()), text, id, GetAppBarIconFromTexture(icon), func);
+
+        // ReSharper disable once InconsistentNaming
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void RegisterOABAppButton(string text, string id, Sprite icon, Action<bool> func) =>
+            RegisterOABAppButton(PluginList.ModIdOf(Assembly.GetCallingAssembly()), text, id, icon, func);
+
+        /// <summary>
+        /// Registers an assembly building app bar button that shows only while its mod is enabled in the active
+        /// feature set.
+        /// </summary>
+        /// <param name="modId">The mod the button belongs to.</param>
+        /// <param name="text">The button's text.</param>
+        /// <param name="id">The button's id, which a later registration with the same id replaces.</param>
+        /// <param name="icon">The button's icon.</param>
+        /// <param name="func">Called with the button's new toggle state.</param>
+        // ReSharper disable once InconsistentNaming
+        public static void RegisterOABAppButton(string modId, string text, string id, Sprite icon, Action<bool> func)
+        {
+            SpaceWarpPlugin.Instance.SWLogger.LogInfo($"RegisterOABAppButton: {text}, {id}");
+            // Upsert by id. See RegisterAppButton (avoids duplicate buttons across Play Mode sessions).
+            OabButtonsToBeLoaded.RemoveAll(b => b.ID == id);
+            OabButtonsToBeLoaded.Add((text, icon, id, func, modId));
+            // Loading into the assembly building builds the bar before OnCampaignLoaded runs. Adding before the bar
+            // loads its own buttons is harmless, as for a button with the same id both add paths let the latest
+            // registration win
+            if (AppbarBackend.IsOABBarOpen && ShowsButtonOf(modId))
+            {
+                AppbarBackend.Instance.AddOABButton(text, icon, id, func);
+            }
+        }
+
+        // ReSharper disable once InconsistentNaming
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void RegisterOABAppButton(string text, string id, Texture2D icon, Action<bool> func) =>
+            RegisterOABAppButton(PluginList.ModIdOf(Assembly.GetCallingAssembly()), text, id, GetAppBarIconFromTexture(icon), func);
+
+        // ReSharper disable once InconsistentNaming
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void RegisterKSCAppButton(string text, string id, Sprite icon, Action func) =>
+            RegisterKSCAppButton(PluginList.ModIdOf(Assembly.GetCallingAssembly()), text, id, icon, func);
+
+        /// <summary>
+        /// Registers a space center app bar button that shows only while its mod is enabled in the active feature
+        /// set.
+        /// </summary>
+        /// <param name="modId">The mod the button belongs to.</param>
+        /// <param name="text">The button's text.</param>
+        /// <param name="id">The button's id, which a later registration with the same id replaces.</param>
+        /// <param name="icon">The button's icon.</param>
+        /// <param name="func">Called when the button is clicked.</param>
+        // ReSharper disable once InconsistentNaming
+        public static void RegisterKSCAppButton(string modId, string text, string id, Sprite icon, Action func)
+        {
+            // Upsert by id. See RegisterAppButton (avoids duplicate buttons across Play Mode sessions).
+            KscButtonsToBeLoaded.RemoveAll(b => b.ID == id);
+            KscButtonsToBeLoaded.Add((text, icon, id, func, modId));
+            // Loading into the space center builds the bar before OnCampaignLoaded runs
+            if (_kscButtonsLoaded && ShowsButtonOf(modId))
+            {
+                AppbarBackend.Instance.AddKSCButton(text, icon, id, func);
+            }
+        }
+
+        // ReSharper disable once InconsistentNaming
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void RegisterKSCAppButton(string text, string id, Texture2D icon, Action func) =>
+            RegisterKSCAppButton(PluginList.ModIdOf(Assembly.GetCallingAssembly()), text, id, GetAppBarIconFromTexture(icon), func);
+
+        /// <summary>
+        /// Removes a button from every app bar, for a button registered for one campaign only.
+        /// </summary>
+        /// <param name="id">The button's id.</param>
+        public static void Unregister(string id)
+        {
+            ButtonsToBeLoaded.RemoveAll(b => b.ID == id);
+            OabButtonsToBeLoaded.RemoveAll(b => b.ID == id);
+            KscButtonsToBeLoaded.RemoveAll(b => b.ID == id);
+            AppbarBackend.Instance?.RemoveButton(id);
+        }
+
+        /// <summary>
+        /// Checks whether a button its owner registered shows in the active feature set.
+        /// </summary>
+        /// <param name="ownerModId">The mod that registered the button, or null when no mod could be told.</param>
+        /// <returns>True if the button shows.</returns>
+        public static bool ShowsButtonOf(string ownerModId) =>
+            ownerModId == null || ActiveFeatures.IsModEnabled(ownerModId);
+
+        public static Sprite GetAppBarIconFromTexture(Texture2D texture, int width = 0, int height = 0)
+        {
+            if (width == 0)
+            {
+                width = texture.width;
+            }
+
+            if (height == 0)
+            {
+                height = texture.height;
+            }
+
+            return Sprite.Create(texture, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f));
+        }
+
+        /// <summary>
+        /// Removes every flight button, whose tray outlives the campaign, so the next flight builds the buttons the
+        /// next campaign's features allow, and holds registrations back from both bars until the next campaign
+        /// builds them.
+        /// </summary>
+        internal static void UnloadCampaignButtons()
+        {
+            _flightButtonsLoaded = false;
+            _kscButtonsLoaded = false;
+            foreach (var button in ButtonsToBeLoaded)
+            {
+                AppbarBackend.Instance?.RemoveButton(button.ID);
+            }
+        }
+
+        internal static void LoadAllButtons()
+        {
+            _flightButtonsLoaded = true;
+            foreach (var button in ButtonsToBeLoaded.Where(button => ShowsButtonOf(button.owner)))
+            {
+                AppbarBackend.Instance.AddButton(button.text, button.icon, button.ID, button.action);
+            }
+        }
+
+        // ReSharper disable once InconsistentNaming
+        internal static void LoadOABButtons()
+        {
+            foreach (var button in OabButtonsToBeLoaded.Where(button => ShowsButtonOf(button.owner)))
+            {
+                AppbarBackend.Instance.AddOABButton(button.text, button.icon, button.ID, button.action);
+            }
+        }
+
+        // ReSharper disable once InconsistentNaming
+        internal static void LoadKSCButtons()
+        {
+            _kscButtonsLoaded = true;
+            foreach (var button in KscButtonsToBeLoaded.Where(button => ShowsButtonOf(button.owner)))
+            {
+                AppbarBackend.Instance.AddKSCButton(button.text, button.icon, button.ID, button.action);
+            }
+        }
+    }
+}

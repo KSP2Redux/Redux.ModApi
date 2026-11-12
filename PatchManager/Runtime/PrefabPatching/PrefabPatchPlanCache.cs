@@ -1,0 +1,367 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Text;
+using Redux.IO;
+
+namespace PatchManager.PrefabPatching
+{
+    /// <summary>
+    /// Atomic, recoverable, per-prefab resolved-plan cache. A cache hit avoids
+    /// dependency ordering, target validation, and conflict analysis.
+    /// </summary>
+    public class PrefabPatchPlanCache
+    {
+        /// <summary>
+        /// Describes the resolved plan and how it was obtained.
+        /// </summary>
+        public class Result
+        {
+            /// <summary>The resolved prefab patch plan.</summary>
+            public PrefabPatchResolvedPlan Plan;
+            /// <summary>Whether the plan came from a valid cache entry.</summary>
+            public bool CacheHit;
+            /// <summary>Whether a backup cache entry was restored.</summary>
+            public bool RecoveredBackup;
+            /// <summary>Total cache lookup or resolve time in milliseconds.</summary>
+            public long ElapsedMilliseconds;
+            /// <summary>Cache file path, when a target produced one.</summary>
+            public string Path;
+            /// <summary>
+            /// Why the plan could not be stored in the cache, or <c>null</c> when it was stored or needed no write.
+            /// </summary>
+            /// <remarks>
+            /// Plans resolve on worker threads, where logging is not safe, so the caller reports it.
+            /// </remarks>
+            public Exception CacheWriteFailure;
+        }
+
+        private readonly string _directory;
+
+        /// <summary>
+        /// Creates a cache rooted at the specified directory.
+        /// </summary>
+        /// <param name="directory">Directory for per-prefab plan files.</param>
+        public PrefabPatchPlanCache(string directory)
+        {
+            _directory = Path.GetFullPath(directory);
+        }
+
+        /// <summary>
+        /// Loads a compatible cached plan or resolves and atomically stores a new one.
+        /// </summary>
+        /// <param name="source">Manifests targeting one prefab.</param>
+        /// <param name="activeModIds">IDs of mods active in the current session.</param>
+        /// <param name="unityVersion">Unity version used by the running game.</param>
+        /// <param name="targetPlatform">Current runtime platform identifier.</param>
+        /// <returns>The resolved plan and cache outcome.</returns>
+        public Result LoadOrResolve(
+            IEnumerable<PrefabPatchManifest> source,
+            ISet<string> activeModIds,
+            string unityVersion,
+            string targetPlatform
+        )
+        {
+            var stopwatch = Stopwatch.StartNew();
+            var manifests = source
+                .Where(value => value != null)
+                .OrderBy(value => value.PatchId, StringComparer.Ordinal)
+                .ToList();
+            if (manifests.Count == 0)
+            {
+                var empty = PrefabPatchResolver.Resolve(
+                    manifests,
+                    activeModIds,
+                    unityVersion,
+                    targetPlatform
+                );
+                stopwatch.Stop();
+                return new Result
+                {
+                    Plan = empty,
+                    ElapsedMilliseconds = stopwatch.ElapsedMilliseconds
+                };
+            }
+
+            var sourceFingerprint = CalculateSourceFingerprint(
+                manifests,
+                activeModIds,
+                unityVersion,
+                targetPlatform
+            );
+            var path = GetPath(manifests[0].TargetPrefab, sourceFingerprint);
+            if (TryRead(path, sourceFingerprint, out var cached))
+            {
+                stopwatch.Stop();
+                return new Result
+                {
+                    Plan = cached,
+                    CacheHit = true,
+                    ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
+                    Path = path
+                };
+            }
+
+            var backupPath = path + ".bak";
+            if (TryRead(backupPath, sourceFingerprint, out cached))
+            {
+                var restoreFailure = TryWrite(path, PrefabPatchJson.Serialize(cached));
+                stopwatch.Stop();
+                return new Result
+                {
+                    Plan = cached,
+                    CacheHit = true,
+                    RecoveredBackup = true,
+                    ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
+                    Path = path,
+                    CacheWriteFailure = restoreFailure
+                };
+            }
+
+            var plan = PrefabPatchResolver.Resolve(
+                manifests,
+                activeModIds,
+                unityVersion,
+                targetPlatform
+            );
+            plan.SourceFingerprint = sourceFingerprint;
+            Exception writeFailure = null;
+            if (plan.IsValid)
+            {
+                plan.OperationPatchIds = plan.Operations.Select(operation => operation.PatchId).ToArray();
+                writeFailure = TryWrite(path, PrefabPatchJson.Serialize(plan));
+            }
+            stopwatch.Stop();
+            return new Result
+            {
+                Plan = plan,
+                CacheHit = false,
+                ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
+                Path = path,
+                CacheWriteFailure = writeFailure
+            };
+        }
+
+        /// <summary>
+        /// Gets the cache file path for a target prefab identity resolved from one set of inputs.
+        /// </summary>
+        /// <remarks>
+        /// The inputs are part of the name, so feature sets that patch one prefab differently keep a plan each.
+        /// </remarks>
+        /// <param name="target">Target prefab identity.</param>
+        /// <param name="sourceFingerprint">The fingerprint of the inputs the plan is resolved from.</param>
+        /// <returns>The absolute plan-cache path.</returns>
+        public string GetPath(PrefabPatchPrefabIdentity target, string sourceFingerprint)
+        {
+            var identity = target?.Address ?? target?.CanonicalKey ?? "invalid";
+            return Path.Combine(
+                _directory,
+                $"{Sha256.OfString(identity)}.{Sha256.OfString(sourceFingerprint).Substring(0, 16)}.plan.gz"
+            );
+        }
+
+        /// <summary>
+        /// Calculates the fingerprint used to invalidate resolved plans.
+        /// </summary>
+        /// <param name="manifests">Manifests targeting one prefab.</param>
+        /// <param name="activeModIds">IDs of active mods.</param>
+        /// <param name="unityVersion">Current Unity version.</param>
+        /// <param name="targetPlatform">Current runtime platform.</param>
+        /// <returns>A canonical source fingerprint.</returns>
+        public static string CalculateSourceFingerprint(
+            IEnumerable<PrefabPatchManifest> manifests,
+            ISet<string> activeModIds,
+            string unityVersion,
+            string targetPlatform
+        )
+        {
+            var ordered = manifests
+                .Where(value => value != null)
+                .OrderBy(value => value.PatchId, StringComparer.Ordinal)
+                .ToList();
+            foreach (var manifest in ordered)
+            {
+                foreach (var operation in manifest.Operations)
+    {
+                        operation.PatchId = manifest.PatchId;
+    }
+                manifest.ManifestHash = PrefabPatchJson.CalculateManifestHash(manifest);
+            }
+            var value = new
+            {
+                UnityVersion = unityVersion,
+                TargetPlatform = targetPlatform,
+                SchemaVersion = PrefabPatchSchema.Version,
+                ComposerVersion = PrefabPatchSchema.ComposerVersion,
+                Target = ordered.FirstOrDefault()?.TargetPrefab,
+                ActiveMods = activeModIds.OrderBy(
+                    id => id,
+                    StringComparer.Ordinal
+                ),
+                Manifests = ordered.Select(
+                    manifest => new
+                    {
+                        manifest.PatchId,
+                        manifest.ManifestHash,
+                        manifest.ConfigurationInputs
+                    }
+                )
+            };
+            return Sha256.OfString(PrefabPatchJson.Serialize(value));
+        }
+
+        private static bool TryRead(
+            string path,
+            string sourceFingerprint,
+            out PrefabPatchResolvedPlan plan
+        )
+        {
+            plan = null;
+            if (!File.Exists(path))
+                return false;
+            try
+            {
+                plan = PrefabPatchJson.Deserialize<PrefabPatchResolvedPlan>(
+                    ReadCompressed(path)
+                );
+                if (plan == null
+                    || plan.SchemaVersion != PrefabPatchSchema.Version
+                    || plan.ComposerVersion != PrefabPatchSchema.ComposerVersion
+                    || !plan.IsValid
+                    || !string.Equals(
+                        plan.SourceFingerprint,
+                        sourceFingerprint,
+                        StringComparison.Ordinal
+                    )
+                    || plan.OperationPatchIds == null
+                    || plan.OperationPatchIds.Length != plan.Operations.Count
+                    || plan.OperationPatchIds.Any(string.IsNullOrWhiteSpace))
+                    return false;
+
+                // Operation ownership is runtime-only in manifests. Old caches without it must be rebuilt.
+                for (int index = 0; index < plan.Operations.Count; index++)
+                {
+                    plan.Operations[index].PatchId = plan.OperationPatchIds[index];
+                }
+                return true;
+            }
+            catch
+            {
+                plan = null;
+                return false;
+            }
+        }
+
+        private static string ReadCompressed(string path)
+        {
+            using var file = File.OpenRead(path);
+            using var gzip = new GZipStream(file, CompressionMode.Decompress);
+            using var reader = new StreamReader(gzip, Encoding.UTF8);
+            return reader.ReadToEnd();
+        }
+
+        // Plans are mostly repeated property paths, so they compress many times over
+        private static byte[] Compress(string contents)
+        {
+            using var buffer = new MemoryStream();
+            using (var gzip = new GZipStream(buffer, CompressionLevel.Optimal, true))
+            {
+                var bytes = Encoding.UTF8.GetBytes(contents);
+                gzip.Write(bytes, 0, bytes.Length);
+            }
+
+            return buffer.ToArray();
+        }
+
+        private static void AtomicWrite(string path, string contents)
+        {
+            var directory = Path.GetDirectoryName(path);
+            if (string.IsNullOrWhiteSpace(directory))
+                throw new InvalidOperationException(
+                    $"Cache path '{path}' has no directory."
+                );
+            Directory.CreateDirectory(directory);
+            var tempPath = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            var backupPath = path + ".bak";
+            try
+            {
+                var bytes = Compress(contents);
+                using (
+                    var stream = new FileStream(
+                        tempPath,
+                        FileMode.CreateNew,
+                        FileAccess.Write,
+                        FileShare.None,
+                        4096,
+                        FileOptions.WriteThrough
+                    )
+                )
+                {
+                    stream.Write(bytes, 0, bytes.Length);
+                    stream.Flush(true);
+                }
+
+                if (File.Exists(path))
+                {
+                    try
+                    {
+                        File.Replace(tempPath, path, backupPath, true);
+                    }
+                    catch (Exception exception) when (IsWriteFailure(exception))
+                    {
+                        // Some file systems and compatibility layers reject the replace outright, so fall back to
+                        // separate steps. The reader validates every file, so an interrupted fallback is only a miss.
+                        // When the replacement already landed before the error was reported, nothing is left to redo.
+                        if (!File.Exists(tempPath))
+                            return;
+
+                        if (File.Exists(path))
+                        {
+                            File.Copy(path, backupPath, true);
+                            File.Delete(path);
+                        }
+                        File.Move(tempPath, path);
+                    }
+                }
+                else
+                {
+                    File.Move(tempPath, path);
+                }
+            }
+            finally
+            {
+                if (File.Exists(tempPath))
+                    File.Delete(tempPath);
+            }
+        }
+
+        /// <summary>
+        /// Stores a resolved plan, keeping the plan usable in memory when the file cannot be written.
+        /// </summary>
+        /// <remarks>
+        /// The cache only saves resolve time on a later start, so a write failure costs a miss next time and must
+        /// not fail discovery.
+        /// </remarks>
+        /// <param name="path">The plan-cache path.</param>
+        /// <param name="contents">The serialized plan.</param>
+        /// <returns>The write failure, or <c>null</c> when the plan was stored.</returns>
+        private static Exception TryWrite(string path, string contents)
+        {
+            try
+            {
+                AtomicWrite(path, contents);
+                return null;
+            }
+            catch (Exception exception) when (IsWriteFailure(exception))
+            {
+                return exception;
+            }
+        }
+
+        private static bool IsWriteFailure(Exception exception) =>
+            exception is IOException or UnauthorizedAccessException or PlatformNotSupportedException;
+    }
+}

@@ -1,0 +1,13 @@
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+dist/
+DebugTools.sln.DotSettings.user
+.idea/
+ProjectSettings/
+Temp/
+UserSettings/
+Library/
+Logs/

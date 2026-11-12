@@ -1,0 +1,119 @@
+using System;
+using System.Linq;
+using System.Reflection;
+using MoonSharp.Interpreter;
+using PatchManager.Core.Assets;
+using PatchManager.CSharpPatching.Attributes;
+using PatchManager.LuaPatching;
+using PatchManager.Shared;
+using PatchManager.Shared.Modules;
+using SpaceWarp2.API.Mods;
+using SpaceWarp2.API.Reflection;
+
+namespace PatchManager.CSharpPatching
+{
+    /// <summary>
+    /// Discovers C# [PMPatch] classes across loaded assemblies and registers their patch methods with the universe.
+    /// </summary>
+    /// <remarks>
+    /// Mirrors how Lua patch scripts register through PM. Runs in PreLoad, after CoreModule has created the universe.
+    /// </remarks>
+    public class CSharpPatchingModule : BaseModule
+    {
+        /// <inheritdoc />
+        public override void PreLoad()
+        {
+            var universe = PatchingManager.Universe;
+            if (universe == null)
+            {
+                PatchManager.Logger.LogWarning("CSharpPatchingModule: universe not created, skipping C# patch discovery");
+                return;
+            }
+
+            foreach (var type in AppDomain.CurrentDomain.GetLoadableTypes())
+            {
+                if (!type.IsDefined(typeof(PMPatchAttribute), true))
+                    continue;
+
+                var pmPatch = type.GetCustomAttribute<PMPatchAttribute>();
+                if (pmPatch == null)
+                    continue;
+
+                object owner;
+                try
+                {
+                    owner = Activator.CreateInstance(type);
+                }
+                catch (Exception ex)
+                {
+                    PatchManager.Logger.LogError($"CSharpPatchingModule: failed to construct [PMPatch] class {type.FullName}: {ex.Message}");
+                    continue;
+                }
+
+                var modId = string.IsNullOrEmpty(pmPatch.ModId) ? PluginList.ModIdOf(type.Assembly) : pmPatch.ModId;
+                if (modId == null)
+                {
+                    PatchManager.Logger.LogError(
+                        $"CSharpPatchingModule: [PMPatch] class {type.FullName} names no ModId, and no single mod loaded its assembly");
+                    continue;
+                }
+
+                var methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+                foreach (var method in methods)
+                {
+                    var target = method.GetCustomAttribute<PatchAttribute>();
+                    if (target == null)
+                        continue;
+                    RegisterPatch(universe, owner, method, target, modId);
+                }
+            }
+        }
+
+        private static void RegisterPatch(Universe universe, object owner, MethodInfo method, PatchAttribute target,
+            string modId)
+        {
+            if (!Universe.Converters.TryGetValue(target.Converter, out var converter))
+            {
+                PatchManager.Logger.LogError(
+                    $"CSharpPatchingModule: patch {method.DeclaringType?.Name}.{method.Name} uses unknown converter '{target.Converter}'");
+                return;
+            }
+
+            var patch = new PatchDefinition
+            {
+                ConverterInstance = converter,
+                Label = target.Label,
+                Name = modId + ':' + method.Name,
+                PatchModId = modId
+            };
+
+            if (target.Names != null)
+            {
+                patch.Named(target.Names);
+            }
+
+            foreach (var modifier in method.GetCustomAttributes().OfType<IPatchModifier>())
+            {
+                modifier.Apply(patch, owner);
+            }
+
+            patch.Do(BuildPatchMethod(owner, method));
+            universe.AddPatch(patch);
+            PatchManager.Logger.LogInfo(
+                $"CSharpPatchingModule: registered C# patch {patch.Name} ({target.Converter}/{target.Label})");
+        }
+
+        // Wraps the C# method into the PatchDefinition's Func<DynValue, string> apply callback. The asset wrapper
+        // produced by the converter is unwrapped from the DynValue and handed to the method.
+        private static Func<DynValue, string> BuildPatchMethod(object owner, MethodInfo method)
+        {
+            var instance = method.IsStatic ? null : owner;
+            return dv =>
+            {
+                var asset = dv.UserData?.Object;
+                var result = method.Invoke(instance, new[] { asset });
+                return result is PatchResult.Remove ? "remove" : null;
+            };
+        }
+    }
+}

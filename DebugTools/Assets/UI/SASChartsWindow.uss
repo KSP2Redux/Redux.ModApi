@@ -1,0 +1,14 @@
+
+
+.root {
+    max-height: 800px;
+    width: 600px;
+}
+
+
+
+#title-bar {
+    justify-content: space-between;
+    margin-bottom: 6px;
+    margin-top: 0;
+}

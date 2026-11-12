@@ -1,0 +1,67 @@
+using System;
+using System.Linq;
+using MoonSharp.Interpreter;
+using PatchManager.LuaPatching.Attributes;
+using PatchManager.LuaPatching.Utility;
+using PatchManager.Shared;
+using PatchManager.Shared.Modules;
+using SpaceWarp2.API.Lifecycle;
+using SpaceWarp2.API.Reflection;
+
+namespace PatchManager.LuaPatching
+{
+    /// <summary>
+    /// IModule that performs the late assembly scan for the Lua patching universe, registering Lua-exposed types,
+    /// PatchManager submodules, and converters with MoonSharp once all mod assemblies are loaded.
+    /// </summary>
+    public class LuaPatchingModule : BaseModule
+    {
+        /// <summary>
+        /// Walks every loaded assembly to register Lua-exposed types with MoonSharp and to populate
+        /// <see cref="Universe.SubmoduleTypes" /> and <see cref="Universe.Converters" />.
+        /// </summary>
+        public override void Init()
+        {
+            // Mod assemblies have loaded by now, so this registers their Lua types beside the game's
+            LuaRegistration.RegisterLoadedAssemblies();
+
+            // PatchManager contributes PM/J into each mod env the SpaceWarp runtime forks.
+            if (!ModRuntime.Contributors.OfType<Builtin.PatchManagerEnvContributor>().Any())
+            {
+                ModRuntime.Contributors.Add(new Builtin.PatchManagerEnvContributor());
+            }
+
+            // Bridge Lua's 1-based array indices to the 0-based LuaIndex used by the C#-facing position members.
+            // Only fires when a CLR method parameter is typed LuaIndex, so it is inert until the wrappers adopt it.
+            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(
+                DataType.Number, typeof(LuaIndex),
+                dv => new LuaIndex((int)dv.Number - 1));
+
+            foreach (var type in AppDomain.CurrentDomain.GetLoadableTypes())
+            {
+                if (type.IsDefined(typeof(PatchManagerModuleAttribute), true)
+                    && type.GetCustomAttributes(typeof(PatchManagerModuleAttribute), true).FirstOrDefault() is PatchManagerModuleAttribute pmma)
+                {
+                    if (!type.IsDefined(typeof(MoonSharpUserDataAttribute), true))
+                    {
+                        PatchManager.Logger.LogWarning($"LuaPatchingModule: found Patch Manager module {pmma.SubmoduleName} without MoonSharpUserData attribute, skipping!");
+                        continue;
+                    }
+
+                    Universe.SubmoduleTypes[pmma.SubmoduleName] = type;
+                }
+
+                if (type.IsDefined(typeof(ConverterAttribute), true)
+                    && type.GetCustomAttributes(typeof(ConverterAttribute), true).FirstOrDefault() is ConverterAttribute conv)
+                {
+                    if (!typeof(IConverter).IsAssignableFrom(type))
+                    {
+                        PatchManager.Logger.LogWarning($"LuaPatchingModule: found Patch Manager converter {conv.Name} that does not implement IConverter, skipping");
+                        continue;
+                    }
+                    Universe.Converters[conv.Name] = (IConverter)Activator.CreateInstance(type);
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,140 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Newtonsoft.Json;
+using PatchManager.Core.Assets;
+using PatchManager.Shared;
+using UniLinq;
+
+namespace PatchManager.Core.Cache.Json
+{
+    /// <summary>
+    /// Catalog of all patched labels and their respective archives, persisted to disk between runs.
+    /// </summary>
+    [JsonObject(MemberSerialization.OptIn)]
+    public class Inventory
+    {
+        /// <summary>
+        /// Dictionary of all patched labels and their respective archives and assets.
+        /// </summary>
+        [JsonProperty("cache", Required = Required.Always)]
+        public Dictionary<string, CacheEntry> CacheEntries { get; internal set; }
+
+        /// <summary>
+        /// Checksum hash of the patch_hashes field.
+        /// </summary>
+        [JsonProperty("checksum")]
+        public string Checksum { get; internal set; }
+
+        /// <summary>
+        /// Dictionary of all patches and their hashes.
+        /// </summary>
+        [JsonProperty("patch_hashes")]
+        public PatchHashes Patches { get; internal set; }
+
+        /// <summary>
+        /// Total number of patches applied during the most recent rebuild.
+        /// </summary>
+        [JsonProperty("patch_count")] public int PatchCount { get; internal set; }
+
+        /// <summary>
+        /// Total number of patch errors during the most recent rebuild.
+        /// </summary>
+        [JsonProperty("error_count")] public int ErrorCount { get; internal set; }
+
+        /// <summary>
+        /// Total number of distinct asset definitions touched by patches during the most recent rebuild.
+        /// </summary>
+        [JsonProperty("definition_count")] public int DefinitionCount { get; internal set; }
+
+        /// <summary>
+        /// Total number of new assets created during the most recent rebuild.
+        /// </summary>
+        [JsonProperty("new_asset_count")] public int NewAssetCount { get; internal set; }
+
+        /// <summary>
+        /// When the set this inventory belongs to was last patched for or loaded, in UTC ticks.
+        /// </summary>
+        [JsonProperty("last_used")] public long LastUsedTicks { get; internal set; }
+
+        /// <summary>
+        /// The prefab patch plan files this set resolved to, relative to the plan directory.
+        /// </summary>
+        [JsonProperty("plans")] public List<string> PlanFiles { get; internal set; } = new();
+
+        /// <summary>
+        /// Gets a <see cref="CacheEntry" /> by its label.
+        /// </summary>
+        /// <param name="label">Asset label to get the entry for.</param>
+        /// <returns>A pair of asset label and instance of <see cref="CacheEntry" /> if found, otherwise the default pair.</returns>
+        public KeyValuePair<string, CacheEntry> GetByLabel(string label)
+        {
+            return CacheEntries.FirstOrDefault(
+                entry => entry.Key == label
+            );
+        }
+
+        /// <summary>
+        /// Gets a <see cref="CacheEntry" /> by its archive's name.
+        /// </summary>
+        /// <param name="archiveFilename">Archive filename to get the entry for.</param>
+        /// <returns>A pair of asset label and instance of <see cref="CacheEntry" /> if found, otherwise the default pair.</returns>
+        public KeyValuePair<string, CacheEntry> GetByArchive(string archiveFilename)
+        {
+            return CacheEntries.FirstOrDefault(
+                entry => entry.Value.ArchiveFilename == archiveFilename
+            );
+        }
+
+        /// <summary>
+        /// Creates a fresh empty inventory.
+        /// </summary>
+        /// <returns>A new inventory with no cache entries.</returns>
+        internal static Inventory Create()
+        {
+            return new Inventory
+            {
+                CacheEntries = new Dictionary<string, CacheEntry>()
+            };
+        }
+
+        /// <summary>
+        /// Loads an inventory from the given path, creating a fresh one if the file is missing or corrupt.
+        /// </summary>
+        /// <param name="path">Path to the inventory JSON file.</param>
+        /// <returns>The loaded inventory, or a fresh one on error.</returns>
+        internal static Inventory Load(string path)
+        {
+            if (!File.Exists(path))
+            {
+                PatchManager.Logger.LogDebug("Inventory file does not exist, creating new inventory.");
+                return Create();
+            }
+
+            try
+            {
+                var inventoryText = File.ReadAllText(path);
+                var inventory = JsonConvert.DeserializeObject<Inventory>(inventoryText);
+                PatchManager.Logger.LogDebug("Inventory file loaded successfully.");
+                return inventory;
+            }
+            catch (Exception e)
+            {
+                PatchManager.Logger.LogError($"Inventory file was corrupted: {e.Message}");
+                return Create();
+            }
+        }
+
+        /// <summary>
+        /// Persists this inventory to the given path as JSON.
+        /// </summary>
+        /// <param name="path">Path to write the inventory JSON file to.</param>
+        internal void Save(string path)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            var formatting = PatchingManager.UseIndentedOutput ? Formatting.Indented : Formatting.None;
+            var inventoryText = JsonConvert.SerializeObject(this, formatting);
+            File.WriteAllText(path, inventoryText);
+        }
+    }
+}
