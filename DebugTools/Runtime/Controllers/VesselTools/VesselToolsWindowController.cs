@@ -42,6 +42,7 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
         // Misc
         private Toggle? _showCoMMarkers;
+        private bool _isCoMShowing;
         private readonly List<DebugSphere> _comMarkers = new();
         private Slider? _markerSize;
 
@@ -115,8 +116,6 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
         private void OnEnable()
         {
-            Enable();
-
             // Flight axes
             _showControlPoints = RootElement.Q<Toggle>("show-control-points");
             _showControlPoints.RegisterValueChangedCallback(OnShowControlPointsChanged);
@@ -146,6 +145,7 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
             // Misc
             _showCoMMarkers = RootElement.Q<Toggle>("show-com-markers");
+            _showCoMMarkers.RegisterValueChangedCallback(OnShowCoMMarkersChanged);
 
             _markerSize = RootElement.Q<Slider>("com-markers-size");
 
@@ -163,10 +163,24 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
         private void LateUpdate()
         {
-            if (!IsWindowOpen)
+            // Not tied to IsWindowOpen. The spheres stay on screen while the hub is closed or the UI is hidden, so they
+            // have to keep following their vessels. With the markers off nothing runs.
+            if (!_isCoMShowing)
                 return;
 
             UpdateVesselsCoM();
+        }
+
+        private void OnShowCoMMarkersChanged(ChangeEvent<bool> evt)
+        {
+            _isCoMShowing = evt.newValue;
+            if (_isCoMShowing)
+                return;
+
+            foreach (DebugSphere marker in _comMarkers)
+            {
+                marker.Enabled = false;
+            }
         }
 
         private void OnShowControlPointsChanged(ChangeEvent<bool> evt)
@@ -575,6 +589,12 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
         private void CreateCoMMarkers()
         {
+            // The old spheres would stay on screen at their last position.
+            foreach (DebugSphere marker in _comMarkers)
+            {
+                marker.Destroy();
+            }
+
             _comMarkers.Clear();
 
             if (_view == null) return;

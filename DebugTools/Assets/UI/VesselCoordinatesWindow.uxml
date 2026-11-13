@@ -99,7 +99,7 @@
                     <ui:Label name="inclination" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
                 </ui:VisualElement>
                 <ui:VisualElement class="kui-stat">
-                    <ui:Label text="Long. Ascending Node" class="kui-stat__name"/>
+                    <ui:Label text="Long. Asc. Node" class="kui-stat__name"/>
                     <ui:Label name="long-asc-node" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
                 </ui:VisualElement>
                 <ui:VisualElement class="kui-stat">

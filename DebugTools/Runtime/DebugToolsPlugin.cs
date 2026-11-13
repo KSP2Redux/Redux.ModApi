@@ -144,7 +144,7 @@ namespace DebugTools
             RegisterWindow<VesselToolsWindowController>(hub, Section.Overlays, "Vessel", "VesselToolsWindow",
                 "Vessel Tools", ToolScene.Campaign,
                 "Vessel markers and marker size",
-                "com cot col markers size", mode: ToolMode.Inline);
+                "com markers size", mode: ToolMode.Inline);
             RegisterWindow<JointsToolsWindowController>(hub, Section.Inspect, "Structure", "JointsToolsWindow",
                 "Joints", ToolScene.Flight, keywords: "joint stress structural", mode: ToolMode.Window);
             RegisterWindow<FlightToolsWindowController>(hub, Section.Inspect, "Simulation", "FlightToolsWindow",

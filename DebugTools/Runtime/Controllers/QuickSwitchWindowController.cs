@@ -21,8 +21,6 @@ namespace DebugTools.Runtime.Controllers
         
         private void OnEnable()
         {
-            Enable();
-            
             _shipInVab = RootElement.Q<Button>("ship-in-vab");
             _shipInVab.clicked += HideOAB;
             _shipInVab.clicked += Game.OAB.VesselInVABNoLaunch;

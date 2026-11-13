@@ -104,7 +104,11 @@
                 <ui:DropdownField name="sort-mode" index="0" choices="MaxUtilization,TreeOrder" class="kui-field jt-dropdown" />
             </ui:VisualElement>
             <ui:VisualElement class="kui-row dt-row">
-                <ui:Label name="stat-selected" text="Selected: none" class="kui-row__label dt-row__text" />
+                <ui:VisualElement class="kui-stat jt-stat-inline">
+                    <ui:VisualElement class="kui-stat__icon" />
+                    <ui:Label text="Selected" class="kui-stat__name" />
+                    <ui:Label name="stat-selected" text="none" class="kui-stat__value" />
+                </ui:VisualElement>
                 <UitkForKsp2.Controls.OabButton text="Clear Selection" name="clear-selection" class="kui-button jt-button-wide" />
             </ui:VisualElement>
         </ui:VisualElement>
@@ -143,7 +147,11 @@
                 <ui:DropdownField name="extra-joints-mode" index="0" choices="Default" class="kui-field jt-dropdown" />
             </ui:VisualElement>
             <ui:VisualElement class="kui-row dt-row">
-                <ui:Label name="mode-value" text="RigidBody Mode: n/a" class="kui-row__label dt-row__text" />
+                <ui:VisualElement class="kui-stat jt-stat-inline">
+                    <ui:VisualElement class="kui-stat__icon" />
+                    <ui:Label text="RigidBody Mode" class="kui-stat__name" />
+                    <ui:Label name="mode-value" text="n/a" class="kui-stat__value" />
+                </ui:VisualElement>
                 <UitkForKsp2.Controls.OabButton text="Pack" name="set-packed" class="kui-button jt-button" />
                 <UitkForKsp2.Controls.OabButton text="Unpack" name="set-unpacked" class="kui-button jt-button" />
             </ui:VisualElement>

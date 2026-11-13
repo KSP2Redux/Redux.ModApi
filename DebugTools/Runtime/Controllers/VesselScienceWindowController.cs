@@ -68,8 +68,6 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnEnable()
         {
-            Enable();
-
             _vessel = RootElement.Q<DropdownField>("vessel");
             _useActive = RootElement.Q<Toggle>("use-active");
             _useActive.value = true;

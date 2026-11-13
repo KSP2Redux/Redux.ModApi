@@ -58,8 +58,6 @@ namespace DebugTools.Runtime.Controllers
         
         private void OnEnable()
         {
-            Enable();
-            
             _addRandomKerbal = RootElement.Q<Button>("add-random-kerbal");
             _addRandomKerbal.clicked += AddRandomKerbal;
             
@@ -113,7 +111,8 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnNeedRefresh(MessageCenterMessage msg)
         {
-            RefreshRoster();
+            // The table is rebuilt by Update, which runs only while the tool is shown.
+            _rosterInitialized = false;
         }
 
         private void AddRandomKerbal()

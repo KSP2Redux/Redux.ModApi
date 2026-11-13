@@ -76,8 +76,6 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
         private void OnEnable()
         {
-            Enable();
-
             _pitch = RootElement.Q<Label>("pitch");
             _yaw = RootElement.Q<Label>("yaw");
             _roll = RootElement.Q<Label>("roll");
@@ -150,10 +148,10 @@ namespace DebugTools.Runtime.Controllers.VesselTools
             {
                 _semiMajorAxis!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.SemiMajorAxis.ToString(FP6Places)} m";
                 _eccentricity!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.Eccentricity.ToString(FP6Places)}";
-                _inclination!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.Inclination.ToString(FP6Places)}";
-                _longitudeAscendingNode!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.LongitudeOfAscendingNode.ToString(FP6Places)}";
-                _periapsis!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.ArgumentOfPeriapsis.ToString(FP6Places)}";
-                _epoch!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.Epoch.ToString(FP6Places)}";
+                _inclination!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.Inclination.ToString(FP6Places)}°";
+                _longitudeAscendingNode!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.LongitudeOfAscendingNode.ToString(FP6Places)}°";
+                _periapsis!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.ArgumentOfPeriapsis.ToString(FP6Places)}°";
+                _epoch!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.Epoch.ToString(FP6Places)} s";
                 _meanAnomaly!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.MeanAnomalyAtEpoch.ToString(FP6Places)}";
             }
 

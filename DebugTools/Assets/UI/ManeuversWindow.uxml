@@ -3,32 +3,36 @@
     <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/ManeuversWindow.uss?fileID=7433441132597879392&amp;guid=223e4154c4466cf459c464373f941201&amp;type=3#ManeuversWindow"/>
     <ui:VisualElement name="root" class="dt-tool ManeuversWindow">
         <UitkForKsp2.Controls.InvertedCornerBox border-thickness="1" notch-size="5" border-color="#747680FF" background-color="#1B1E24FF" class="oab-window-body kui-panel">
-            <ui:ScrollView name="items-view" mode="VerticalAndHorizontal" class="dt-table vessel-table">
-                <ui:VisualElement class="maneuver-node dt-table__header">
-                    <ui:Label text="Name" class="dt-table__cell maneuver-node__name"/>
-                    <ui:Label text="UT (s)" class="dt-table__cell maneuver-node__item"/>
-                    <ui:Label text="Δv (m/s)" class="dt-table__cell maneuver-node__item dt-vector"/>
-                    <ui:Label text="GUID" class="dt-table__cell maneuver-node__item dt-guid dt-guid"/>
+            <ui:VisualElement class="dt-table dt-vtable">
+                <ui:VisualElement name="header-host" class="dt-vtable__header">
+                    <ui:VisualElement class="maneuver-node dt-table__header">
+                        <ui:Label text="Name" class="dt-table__cell maneuver-node__name"/>
+                        <ui:Label text="UT (s)" class="dt-table__cell maneuver-node__item"/>
+                        <ui:Label text="Δv (m/s)" class="dt-table__cell maneuver-node__item dt-vector"/>
+                        <ui:Label text="GUID" class="dt-table__cell maneuver-node__item dt-guid"/>
+                    </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement class="maneuver-node dt-table__row">
-                    <ui:Label text="Node 1" class="dt-table__cell maneuver-node__name"/>
-                    <ui:Label text="1234.5" class="dt-table__cell maneuver-node__item"/>
-                    <ui:Label text="(10.0, 0.0, 25.0)" class="dt-table__cell maneuver-node__item dt-vector"/>
-                    <ui:Label text="01234567-89ab-cdef-0123-456789abcdef" class="dt-table__cell maneuver-node__item dt-guid dt-guid"/>
-                </ui:VisualElement>
-                <ui:VisualElement class="maneuver-node dt-table__row">
-                    <ui:Label text="Node 1" class="dt-table__cell maneuver-node__name"/>
-                    <ui:Label text="1234.5" class="dt-table__cell maneuver-node__item"/>
-                    <ui:Label text="(10.0, 0.0, 25.0)" class="dt-table__cell maneuver-node__item dt-vector"/>
-                    <ui:Label text="01234567-89ab-cdef-0123-456789abcdef" class="dt-table__cell maneuver-node__item dt-guid dt-guid"/>
-                </ui:VisualElement>
-                <ui:VisualElement class="maneuver-node dt-table__row">
-                    <ui:Label text="Node 1" class="dt-table__cell maneuver-node__name"/>
-                    <ui:Label text="1234.5" class="dt-table__cell maneuver-node__item"/>
-                    <ui:Label text="(10.0, 0.0, 25.0)" class="dt-table__cell maneuver-node__item dt-vector"/>
-                    <ui:Label text="01234567-89ab-cdef-0123-456789abcdef" class="dt-table__cell maneuver-node__item dt-guid dt-guid"/>
-                </ui:VisualElement>
-            </ui:ScrollView>
+                <ui:ScrollView name="items-view" mode="VerticalAndHorizontal" class="dt-fit vessel-table">
+                    <ui:VisualElement class="maneuver-node dt-table__row">
+                        <ui:Label text="Node 1" class="dt-table__cell maneuver-node__name"/>
+                        <ui:Label text="1234.5" class="dt-table__cell maneuver-node__item"/>
+                        <ui:Label text="(10.0, 0.0, 25.0)" class="dt-table__cell maneuver-node__item dt-vector"/>
+                        <ui:Label text="01234567-89ab-cdef-0123-456789abcdef" class="dt-table__cell maneuver-node__item dt-guid"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="maneuver-node dt-table__row">
+                        <ui:Label text="Node 1" class="dt-table__cell maneuver-node__name"/>
+                        <ui:Label text="1234.5" class="dt-table__cell maneuver-node__item"/>
+                        <ui:Label text="(10.0, 0.0, 25.0)" class="dt-table__cell maneuver-node__item dt-vector"/>
+                        <ui:Label text="01234567-89ab-cdef-0123-456789abcdef" class="dt-table__cell maneuver-node__item dt-guid"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="maneuver-node dt-table__row">
+                        <ui:Label text="Node 1" class="dt-table__cell maneuver-node__name"/>
+                        <ui:Label text="1234.5" class="dt-table__cell maneuver-node__item"/>
+                        <ui:Label text="(10.0, 0.0, 25.0)" class="dt-table__cell maneuver-node__item dt-vector"/>
+                        <ui:Label text="01234567-89ab-cdef-0123-456789abcdef" class="dt-table__cell maneuver-node__item dt-guid"/>
+                    </ui:VisualElement>
+                </ui:ScrollView>
+            </ui:VisualElement>
         </UitkForKsp2.Controls.InvertedCornerBox>
     </ui:VisualElement>
 </ui:UXML>

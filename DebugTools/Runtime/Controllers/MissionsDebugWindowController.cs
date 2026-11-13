@@ -82,8 +82,6 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnEnable()
         {
-            Enable();
-
             _typeFilter = RootElement.Q<DropdownField>("type-filter");
             _typeFilter.choices = FilterChoices;
             _typeFilter.value = FilterAll;

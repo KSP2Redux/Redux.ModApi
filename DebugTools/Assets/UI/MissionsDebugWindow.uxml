@@ -21,7 +21,7 @@
                 <ui:Label text="State" class="dt-table__cell mission-row__state" />
                 <ui:Label text="Stage" class="dt-table__cell mission-row__stage-info" />
             </ui:VisualElement>
-            <ui:ScrollView name="missions-list" vertical-scroller-visibility="AlwaysVisible" class="dt-missions-list">
+            <ui:ScrollView name="missions-list" vertical-scroller-visibility="AlwaysVisible" class="dt-missions-list dt-fit">
                 <ui:VisualElement class="dt-table__row mission-row mission-row__state--active">
                     <ui:Label text="mission_id" class="dt-table__cell mission-row__id" />
                     <ui:Label text="Mission Name" class="dt-table__cell mission-row__name" />
@@ -98,7 +98,7 @@
             <ui:Label text="//" class="kui-section__slashes" />
             <ui:Label text="Stages" class="kui-section__title" />
         </ui:VisualElement>
-        <ui:ScrollView name="stages-list" class="dt-missions-list dt-missions-stages">
+        <ui:ScrollView name="stages-list" class="dt-missions-list dt-missions-stages dt-fit">
             <ui:VisualElement class="stage-row stage-row__completed">
                 <ui:Label text="#0" class="stage-row__index" />
                 <ui:Label text="Stage 0" class="stage-row__name" />

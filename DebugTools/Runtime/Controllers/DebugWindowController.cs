@@ -6,6 +6,7 @@ using KSP.Game;
 using KSP.Messages;
 using SpaceWarp2.API.Configuration;
 using UitkForKsp2.API;
+using UitkForKsp2.API.Manipulator;
 using UitkForKsp2.API.Order;
 using UitkForKsp2.Controls;
 using UnityEngine;
@@ -103,6 +104,7 @@ namespace DebugTools.Runtime.Controllers
         private const float CONFIRM_SECONDS = 3f;
         private const float TOOL_WINDOW_GAP = 12f;
         private const float TOOL_WINDOW_CASCADE = 48f;
+        private const string SIZED_FLAG = "s";
         private const string LOAD_A_CAMPAIGN = "Load a campaign first";
         private const string WAIT_FOR_LOADING = "Wait for loading to finish";
         private const string NOT_IN_THIS_CAMPAIGN = "Not available in this campaign";
@@ -149,8 +151,6 @@ namespace DebugTools.Runtime.Controllers
             public bool Detachable;
             public bool Collapsed;
             public bool Loading;
-            public bool OpenRequested;
-            public bool LegacyDetected;
             public bool PoppedOut;
             public bool PopoutOpen;
             public bool RestorePopout;
@@ -162,11 +162,13 @@ namespace DebugTools.Runtime.Controllers
             public VisualElement Slot;
             public Label ToolReason;
             public OabButton DetachButton;
+            public VisualElement PoppedLine;
+            public Label PoppedStatus;
+            public OabButton PoppedOpen;
             public AppShell Shell;
             public PanelRenderer Renderer;
-            public VisualElement LegacyRoot;
             public ConfigValue<string> Placement;
-            public Action<bool> Load;
+            public Action Load;
             public EntryRow SectionView;
             public EntryRow SearchView;
         }
@@ -324,61 +326,26 @@ namespace DebugTools.Runtime.Controllers
                 Placement = Configuration.BindToolWindowRect(windowName)
             };
             // Old |0 and |1 values retain their docked and popped-open meanings. |2 is popped-closed.
-            string host = entry.Placement.Value.Split('|')[^1];
-            entry.PoppedOut = mode == ToolMode.Window || host is "1" or "2";
-            entry.RestorePopout = mode == ToolMode.Inline && host == "1";
-            entry.IsActive = () => entry.PoppedOut && !entry.LegacyDetected
+            ParsePlacement(entry.Placement.Value, out _, out string host, out _);
+            entry.PoppedOut = mode == ToolMode.Window || (detachable && host is "1" or "2");
+            entry.RestorePopout = detachable && host == "1";
+            entry.IsActive = () => entry.PoppedOut
                 ? entry.PopoutOpen
                 : entry.Controller != null && entry.Controller.IsWindowOpen;
             entry.Toggle = () => OpenHostedTool(entry);
-            entry.Load = open =>
+            entry.Load = () =>
             {
-                if (GetUnavailableReason(entry) != null)
-                {
-                    entry.OpenRequested = false;
-                    return;
-                }
-                if (entry.Controller != null)
-                    return;
-
-                entry.OpenRequested |= open;
-                if (entry.Loading)
+                if (GetUnavailableReason(entry) != null || entry.Controller != null || entry.Loading)
                     return;
 
                 entry.Loading = true;
                 UITKHelper.LoadUxml(windowName, asset =>
                 {
                     entry.Loading = false;
-                    bool openRequested = entry.OpenRequested && GetUnavailableReason(entry) == null;
-                    entry.OpenRequested = false;
                     TemplateContainer container = asset.Instantiate();
-                    if (container.Q("title-bar") != null)
-                    {
-                        // Keep old controllers attached to their own renderer until their UXML is converted.
-                        entry.LegacyDetected = true;
-                        if (!openRequested)
-                            return;
 
-                        PanelRenderer legacy = UITKHelper.CreateWindowFromUxml(asset, windowName);
-                        entry.Controller = legacy.gameObject.AddComponent<T>();
-                        entry.LegacyRoot = legacy.GetWindowRoot();
-                        RestoreRect(entry.LegacyRoot, entry.Placement.Value.Split('|')[0], GetToolWindowPosition);
-                        entry.LegacyRoot.RegisterCallback<PointerUpEvent>(
-                            _ => entry.LegacyRoot.schedule.Execute(() => SaveToolPlacement(entry)), TrickleDown.TrickleDown);
-                        entry.Controller.CatchUpWithLoadedGame();
-                        if (entry.Controller.CloseButton != null)
-                        {
-                            entry.Controller.CloseButton.clicked += () =>
-                            {
-                                SaveToolPlacement(entry);
-                                entry.Controller.IsWindowOpen = false;
-                            };
-                        }
-                        entry.Controller.IsWindowOpen = true;
-                        return;
-                    }
-
-                    // A campaign reload destroys the old controller, and its container would stay in the slot or pop-out.
+                    // The tools sit under the DontDestroyOnLoad DebugTools object, so a scene change keeps them. If
+                    // something did destroy a controller, its old container is removed before the new one takes over.
                     entry.Container?.RemoveFromHierarchy();
                     entry.Container = container;
                     container.AddToClassList("dt-tool-template");
@@ -406,56 +373,34 @@ namespace DebugTools.Runtime.Controllers
 
         private void OpenHostedTool(HubEntry entry)
         {
-            if (entry.LegacyDetected)
-            {
-                if (entry.Controller == null)
-                {
-                    entry.Load(true);
-                }
-                else
-                {
-                    SaveToolPlacement(entry);
-                    entry.Controller.IsWindowOpen = !entry.Controller.IsWindowOpen;
-                }
-                return;
-            }
-
             if (entry.Mode == ToolMode.Inline && !entry.PoppedOut)
             {
                 SelectSection(entry.Section);
                 entry.SectionGroup.value = true;
                 entry.ToolGroup.value = true;
-                if (GetUnavailableReason(entry) == null)
-                {
-                    entry.Load(true);
-                }
+                entry.Load();
                 _content.schedule.Execute(() => _content.ScrollTo(entry.ToolGroup));
+                return;
             }
-            else
-            {
-                if (!entry.PopoutOpen && GetUnavailableReason(entry) != null)
-                    return;
 
-                entry.PoppedOut = true;
-                entry.PopoutOpen = !entry.PopoutOpen;
-                if (entry.PopoutOpen)
+            if (!entry.PopoutOpen && GetUnavailableReason(entry) != null)
+                return;
+
+            entry.PoppedOut = true;
+            entry.PopoutOpen = !entry.PopoutOpen;
+            if (entry.PopoutOpen)
+            {
+                if (entry.Controller == null)
                 {
-                    if (entry.Controller == null)
-                    {
-                        entry.Load(true);
-                    }
-                    else
-                    {
-                        ShowPopout(entry);
-                    }
+                    entry.Load();
                 }
                 else
                 {
-                    entry.OpenRequested = false;
+                    ShowPopout(entry);
                 }
-                SaveToolPlacement(entry);
-                RefreshToolVisibility();
             }
+            SaveToolPlacement(entry);
+            RefreshToolVisibility();
         }
 
         private void ShowPopout(HubEntry entry)
@@ -495,7 +440,8 @@ namespace DebugTools.Runtime.Controllers
                     ResizeOptions = new ResizeOptions { IsResizingEnabled = false }
                 }, entry.Shell);
                 entry.Renderer.panelSettings.sortingOrder = 9999;
-                RestoreRect(entry.Shell, entry.Placement.Value.Split('|')[0], GetToolWindowPosition);
+                ParsePlacement(entry.Placement.Value, out string savedRect, out _, out bool isSizeSaved);
+                RestoreRect(entry.Shell, isSizeSaved ? savedRect : GetPositionOnly(savedRect), GetToolWindowPosition);
                 entry.Shell.CloseClicked += () =>
                 {
                     entry.PopoutOpen = false;
@@ -522,21 +468,49 @@ namespace DebugTools.Runtime.Controllers
             SelectSection(entry.Section);
             entry.SectionGroup.value = true;
             entry.ToolGroup.value = true;
-            entry.Slot.Add(entry.Container);
+            // A tool that was never created has no container. Showing the group creates it in the slot.
+            if (entry.Container != null)
+            {
+                entry.Slot.Add(entry.Container);
+            }
             _content.schedule.Execute(() => _content.ScrollTo(entry.ToolGroup));
             RefreshToolVisibility();
         }
 
+        // A placement is saved as "rect|host" or "rect|host|s". The rect is "left,top" or "left,top,width,height". The
+        // host is 0 for docked, 1 for popped out and open, 2 for popped out and closed. The s flag says that the user
+        // sized the pop-out, and only then does the size count. Placements saved before the flag existed hold the
+        // layout size of the moment, which must not freeze the pop-out, so their size is ignored.
+        private static void ParsePlacement(string value, out string rect, out string host, out bool isSized)
+        {
+            string[] parts = value.Split('|');
+            rect = parts[0];
+            host = parts.Length > 1 ? parts[1] : string.Empty;
+            isSized = parts.Length > 2 && parts[2] == SIZED_FLAG;
+        }
+
+        private static string GetPositionOnly(string rect)
+        {
+            string[] numbers = rect.Split(',');
+            return numbers.Length > 2 ? $"{numbers[0]},{numbers[1]}" : rect;
+        }
+
         private void SaveToolPlacement(HubEntry entry)
         {
-            VisualElement root = entry.Shell ?? entry.LegacyRoot;
-            string rect = root == null ? entry.Placement.Value.Split('|')[0] : FormatWindowRect(root);
-            if (string.IsNullOrEmpty(rect))
+            ParsePlacement(entry.Placement.Value, out string rect, out _, out bool isSized);
+            if (entry.Shell != null)
             {
-                rect = entry.Placement.Value.Split('|')[0];
+                // Only a size the user set is kept. Without one, the pop-out fits its content again the next time.
+                isSized = IsSizeSet(entry.Shell);
+                entry.Shell.EnableInClassList("dt-popout--sized", isSized);
+                string current = FormatWindowRect(entry.Shell, isSized);
+                if (!string.IsNullOrEmpty(current))
+                {
+                    rect = current;
+                }
             }
             int host = !entry.PoppedOut ? 0 : entry.PopoutOpen ? 1 : 2;
-            string value = $"{rect}|{host}";
+            string value = isSized ? $"{rect}|{host}|{SIZED_FLAG}" : $"{GetPositionOnly(rect)}|{host}";
             if (entry.Placement.Value != value)
             {
                 entry.Placement.Value = value;
@@ -548,34 +522,48 @@ namespace DebugTools.Runtime.Controllers
             _gameState = Game != null && Game.GlobalGameState != null
                 ? Game.GlobalGameState.GetGameState().GameState
                 : GameState.Invalid;
+            // The pane notice already says that no campaign is loaded, so a group does not repeat it.
+            string campaignReason = GetSceneReason(ToolScene.Campaign, _gameState);
             foreach (HubEntry entry in _entries)
             {
-                if (entry.Load == null || entry.LegacyDetected)
+                if (entry.Load == null)
                     continue;
 
                 string reason = GetUnavailableReason(entry);
-                bool dockedShown = _isWindowOpen && _rootElement.resolvedStyle.visibility == Visibility.Visible &&
-                    string.IsNullOrEmpty(_search.value) && entry.Section == _section &&
+                // F2 hides the hub by visibility and leaves this true. The tool's own IsWindowOpen follows the hidden
+                // visibility, so its work stops at once and the pane is not blank when the UI returns.
+                bool dockedShown = _isWindowOpen && string.IsNullOrEmpty(_search.value) && entry.Section == _section &&
                     entry.SectionGroup is { value: true } && entry.ToolGroup is { value: true };
                 bool shown = entry.PoppedOut ? entry.PopoutOpen : dockedShown;
                 if (entry.ToolReason != null)
                 {
-                    // Before the tool exists its Open row says the reason, and a pop-out says it in its own window. So
-                    // only a loaded tool docked in the pane needs this line.
-                    entry.ToolReason.text = reason;
-                    entry.ToolReason.style.display = reason != null && entry.Container != null && !entry.PoppedOut
-                        ? DisplayStyle.Flex
-                        : DisplayStyle.None;
+                    // A pop-out says the reason in its own window. A docked group says it in its body.
+                    bool isReasonShown = reason != null && reason != campaignReason && !entry.PoppedOut;
+                    entry.ToolReason.text = isReasonShown ? reason : string.Empty;
+                    entry.ToolReason.style.display = isReasonShown ? DisplayStyle.Flex : DisplayStyle.None;
                 }
                 if (entry.DetachButton != null)
                 {
-                    entry.DetachButton.style.display = entry.Container != null ? DisplayStyle.Flex : DisplayStyle.None;
+                    entry.DetachButton.style.display = entry.Container != null || entry.PoppedOut
+                        ? DisplayStyle.Flex
+                        : DisplayStyle.None;
                     entry.DetachButton.text = entry.PoppedOut ? "Dock" : "Pop out";
+                    entry.DetachButton.tooltip = entry.PoppedOut
+                        ? "Put the tool back into the hub"
+                        : "Open the tool in its own window";
+                }
+                if (entry.PoppedLine != null)
+                {
+                    // A popped-out tool takes one line in its group, and its window holds the controls.
+                    entry.PoppedLine.style.display = entry.PoppedOut ? DisplayStyle.Flex : DisplayStyle.None;
+                    entry.PoppedStatus.text = entry.PopoutOpen ? "Shown in a window" : "Window closed";
+                    entry.PoppedOpen.style.display = entry.PopoutOpen ? DisplayStyle.None : DisplayStyle.Flex;
+                    entry.Slot.style.display = entry.PoppedOut ? DisplayStyle.None : DisplayStyle.Flex;
                 }
                 // A saved pop-out cannot materialize from a scene message while the hub is closed.
-                if (entry.Controller == null && shown && reason == null && _isWindowOpen && !entry.LegacyDetected)
+                if (entry.Controller == null && shown && reason == null && _isWindowOpen)
                 {
-                    entry.Load(false);
+                    entry.Load();
                 }
                 if (entry.Controller != null)
                 {
@@ -887,28 +875,6 @@ namespace DebugTools.Runtime.Controllers
                     entry.ToolGroup = new Foldout { text = entry.Label, value = !entry.Collapsed };
                     entry.ToolGroup.AddToClassList("kui-category");
                     entry.ToolGroup.RegisterValueChangedCallback(_ => RefreshToolVisibility());
-                    if (entry.Detachable)
-                    {
-                        // Change the host, independently of whether the pop-out is open. Shown once the tool exists.
-                        entry.DetachButton = new OabButton(() =>
-                        {
-                            if (entry.Container == null)
-                                return;
-
-                            if (entry.PoppedOut)
-                            {
-                                DockTool(entry);
-                            }
-                            else
-                            {
-                                ShowPopout(entry);
-                            }
-                        }) { text = "Pop out" };
-                        entry.DetachButton.AddToClassList("kui-button");
-                        entry.DetachButton.AddToClassList("dt-detach");
-                        entry.DetachButton.style.display = DisplayStyle.None;
-                        entry.ToolGroup.Add(entry.DetachButton);
-                    }
                     entry.ToolReason = new Label();
                     entry.ToolReason.AddToClassList("dt-tool__reason");
                     entry.ToolGroup.Add(entry.ToolReason);
@@ -920,14 +886,54 @@ namespace DebugTools.Runtime.Controllers
                     {
                         entry.Slot.Add(entry.Container);
                     }
-                    // Keep an Open row until loading identifies the content or the legacy window.
-                    entry.SectionView = BuildRow(entry, false);
-                    entry.ToolGroup.Add(entry.SectionView.Row);
+                    if (entry.Detachable)
+                    {
+                        AddDetachControls(entry);
+                    }
                     continue;
                 }
                 entry.SectionView = BuildRow(entry, false);
                 rowParent.Add(entry.SectionView.Row);
             }
+        }
+
+        /// <summary>
+        /// Adds the host switch to the right of a detachable tool's group header, and the line that stands in for the
+        /// tool in the group while it is popped out.
+        /// </summary>
+        private void AddDetachControls(HubEntry entry)
+        {
+            // The switch floats over the header, so it adds nothing to the header's layout and the foldout toggle
+            // keeps the rest of the header.
+            entry.DetachButton = new OabButton(() =>
+            {
+                if (entry.PoppedOut)
+                {
+                    DockTool(entry);
+                }
+                else if (entry.Container != null)
+                {
+                    ShowPopout(entry);
+                }
+            }) { text = "Pop out" };
+            entry.DetachButton.AddToClassList("kui-button");
+            entry.DetachButton.AddToClassList("dt-detach");
+            entry.DetachButton.style.display = DisplayStyle.None;
+            entry.DetachButton.AddManipulator(new TooltipManipulator(_rootElement.Q<Tooltip>()));
+            entry.ToolGroup.hierarchy.Add(entry.DetachButton);
+
+            entry.PoppedLine = new VisualElement();
+            entry.PoppedLine.AddToClassList("dt-popped");
+            entry.PoppedStatus = new Label();
+            entry.PoppedStatus.AddToClassList("dt-popped__text");
+            entry.PoppedLine.Add(entry.PoppedStatus);
+            // A window closed with its X is brought back from here, since the tool is not in the group any more.
+            entry.PoppedOpen = new OabButton(() => OpenHostedTool(entry)) { text = "Open" };
+            entry.PoppedOpen.AddToClassList("kui-button");
+            entry.PoppedOpen.AddToClassList("dt-button");
+            entry.PoppedLine.Add(entry.PoppedOpen);
+            entry.PoppedLine.style.display = DisplayStyle.None;
+            entry.ToolGroup.Add(entry.PoppedLine);
         }
 
         private EntryRow BuildRow(HubEntry entry, bool isSearchResult)
@@ -1006,7 +1012,7 @@ namespace DebugTools.Runtime.Controllers
         private void ActivateEntry(HubEntry entry)
         {
             // Inline search results still navigate to their scene reason when the tool cannot run.
-            if (entry.Load != null && entry.Mode == ToolMode.Inline && !entry.PoppedOut && !entry.LegacyDetected)
+            if (entry.Load != null && entry.Mode == ToolMode.Inline && !entry.PoppedOut)
             {
                 OpenHostedTool(entry);
                 return;
@@ -1142,11 +1148,6 @@ namespace DebugTools.Runtime.Controllers
             Array.Clear(_openCounts, 0, SECTION_COUNT);
             foreach (HubEntry entry in _entries)
             {
-                if (entry.Load != null && entry.Mode == ToolMode.Inline && entry.SectionView.Row != null)
-                {
-                    entry.SectionView.Row.style.display = entry.Container == null || entry.PoppedOut
-                        ? DisplayStyle.Flex : DisplayStyle.None;
-                }
                 string reason = GetUnavailableReason(entry);
                 bool isReasonShown = reason != null && reason != campaignReason;
                 bool isActive = entry.IsActive();
@@ -1154,8 +1155,7 @@ namespace DebugTools.Runtime.Controllers
                 UpdateRow(entry.SearchView, reason, isReasonShown, isActive);
                 // Cheats are counted by the status strip, so the rail counts open tools and overlays only. A tool shown
                 // inline in its section is part of the pane and not an open window.
-                bool isShownInline = entry.Load != null && entry.Mode == ToolMode.Inline && !entry.PoppedOut &&
-                    !entry.LegacyDetected;
+                bool isShownInline = entry.Load != null && entry.Mode == ToolMode.Inline && !entry.PoppedOut;
                 if (isActive && !entry.IsOverride && !isShownInline)
                 {
                     _openCounts[(int)entry.Section]++;
@@ -1251,7 +1251,7 @@ namespace DebugTools.Runtime.Controllers
             int openWindows = 0;
             foreach (HubEntry entry in _entries)
             {
-                if (!entry.IsSwitch && (entry.Load == null || entry.LegacyDetected || entry.PoppedOut) && entry.IsActive())
+                if (!entry.IsSwitch && (entry.Load == null || entry.PoppedOut) && entry.IsActive())
                 {
                     openWindows++;
                 }
@@ -1573,22 +1573,28 @@ namespace DebugTools.Runtime.Controllers
             }
             foreach (HubEntry entry in _entries)
             {
-                if (entry.Shell != null || entry.LegacyRoot != null)
+                if (entry.Shell != null)
                 {
                     SaveToolPlacement(entry);
                 }
             }
         }
 
-        private static string FormatWindowRect(VisualElement root)
+        private static string FormatWindowRect(VisualElement root, bool includeSize = true)
         {
             Rect layout = root.layout;
             if ((float.IsNaN(layout.width) || float.IsInfinity(layout.width)) || layout.width <= 0)
                 return string.Empty;
 
-            return string.Format(CultureInfo.InvariantCulture, "{0:0},{1:0},{2:0},{3:0}", layout.x, layout.y,
-                layout.width, layout.height);
+            return includeSize
+                ? string.Format(CultureInfo.InvariantCulture, "{0:0},{1:0},{2:0},{3:0}", layout.x, layout.y,
+                    layout.width, layout.height)
+                : string.Format(CultureInfo.InvariantCulture, "{0:0},{1:0}", layout.x, layout.y);
         }
+
+        // A size is set inline only by a resize or by a saved size, never by the stylesheet.
+        private static bool IsSizeSet(VisualElement root) =>
+            root.style.width.keyword == StyleKeyword.Undefined && root.style.height.keyword == StyleKeyword.Undefined;
 
         /// <summary>
         /// Reads a window position, and optionally a size, saved as "left,top" or "left,top,width,height".

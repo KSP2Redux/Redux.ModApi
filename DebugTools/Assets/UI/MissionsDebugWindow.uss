@@ -54,9 +54,8 @@
 .mission-row__owner { flex-grow: 2; }
 .mission-row__state { flex-grow: 2; -unity-font-style: bold; }
 .mission-row__stage-info { flex-grow: 1; }
-.mission-row__select-button { display: none; }
 
-/* The table header is a MissionRow too. It leaves room for the scroll bar of the list under it. */
+/* The table header row. It leaves room for the scroll bar of the list under it. */
 .dt-table__header.mission-row {
     background-color: rgb(46, 53, 64);
     color: rgb(154, 158, 167);

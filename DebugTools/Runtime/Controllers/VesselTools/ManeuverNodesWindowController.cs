@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using DebugTools.Runtime.UI.VesselTools;
+using DebugTools.Utils;
 using KSP.Sim.impl;
 using KSP.Sim.Maneuver;
 using UnityEngine;
@@ -39,14 +40,11 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
         private void OnEnable()
         {
-            Enable();
-
             _rows = new List<ManeuverNodeRow>();
             
             _itemsView = RootElement.Q<ScrollView>("items-view");
             _itemsView.Clear();
-            var row = new ManeuverNodeRow(true);
-            _itemsView.Add(row);
+            UITKHelper.SetTableHeader(new ManeuverNodeRow(true), RootElement.Q("header-host"), _itemsView);
         }
 
         private static void FormatNodeData(ManeuverNodeRow row, ManeuverNodeData node)
@@ -68,13 +66,10 @@ namespace DebugTools.Runtime.Controllers.VesselTools
                 _itemsView.Clear();
                 _rows.Clear();
 
-                var row = new ManeuverNodeRow(true);
-                _itemsView.Add(row);
-
                 foreach (var node in nodes)
                 {
-                    row = new ManeuverNodeRow(false);
-                    DebugTools.Utils.UITKHelper.ClearLabels(row);
+                    var row = new ManeuverNodeRow(false);
+                    UITKHelper.ClearLabels(row);
                     FormatNodeData(row, node);
                     _itemsView.Add(row);
                     _rows.Add(row);

@@ -1,7 +1,7 @@
-.ManeuversWindow .vessel-table { height: 260px; min-height: 100px; }
+/* The table fits its rows up to the cap, then scrolls. A pop-out the user resized lets it fill the window (dt-fit). */
+.ManeuversWindow .vessel-table { height: auto; min-height: 60px; max-height: 440px; }
 .ManeuversWindow .maneuver-node { flex-direction: row; height: 20px; min-height: 20px; flex-shrink: 0; width: 850px; font-size: 12px; }
 .ManeuversWindow .maneuver-node > Label { font-size: 12px; flex-grow: 1; flex-basis: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; -unity-text-align: middle-right; margin: 0; padding: 0 5px; }
 .ManeuversWindow .maneuver-node > .maneuver-node__name { flex-grow: 2; -unity-text-align: middle-left; }
-.ManeuversWindow .maneuver-node > Label { flex-grow: 1; }
 .ManeuversWindow .maneuver-node > Label.dt-guid { flex-grow: 3; }
 .ManeuversWindow .maneuver-node > Label.dt-vector { flex-grow: 2; }

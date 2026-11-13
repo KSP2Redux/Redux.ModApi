@@ -208,32 +208,6 @@
     padding-bottom: 6px;
 }
 
-/* Groups: the "//" sub-header of the game's Redux windows */
-
-.dt-group {
-    margin-bottom: 2px;
-}
-
-.dt-group__header {
-    flex-direction: row;
-    align-items: center;
-    padding: 6px 0 4px 2px;
-}
-
-.dt-group__slashes {
-    margin-right: 8px;
-    font-size: 9px;
-    color: rgb(115, 121, 221);
-    -unity-font-definition: url("project://database/Packages/ksp2redux.sdk/Controls/Assets/Theme/Fonts/RosesAreFF0000/RosesareFF0000%20SDF.asset?fileID=11400000&guid=f2516f1635a41814ca97b23fac4691fd&type=2#RosesareFF0000 SDF");
-}
-
-.dt-group__title {
-    font-size: 11px;
-    letter-spacing: 20px;
-    color: rgb(115, 121, 221);
-    -unity-font-definition: url("project://database/Packages/ksp2redux.sdk/Controls/Assets/Theme/Fonts/RosesAreFF0000/RosesareFF0000%20SDF.asset?fileID=11400000&guid=f2516f1635a41814ca97b23fac4691fd&type=2#RosesareFF0000 SDF");
-}
-
 /* Rows */
 
 .dt-row {
@@ -280,13 +254,6 @@
     text-overflow: ellipsis;
 }
 
-.dt-row__note {
-    margin-top: 1px;
-    font-size: 11px;
-    white-space: normal;
-    color: rgb(163, 170, 196);
-}
-
 .dt-row__reason {
     margin-top: 1px;
     font-size: 11px;
@@ -294,10 +261,6 @@
 }
 
 .dt-row--unavailable .dt-row__name {
-    color: rgb(108, 116, 148);
-}
-
-.dt-row--unavailable .dt-row__note {
     color: rgb(108, 116, 148);
 }
 
@@ -402,10 +365,33 @@
     flex-basis: 0;
     min-width: 0;
 }
-.dt-detach {
-    align-self: flex-end;
-    margin-bottom: 2px;
-    width: 72px;
+/* A scroll view marked dt-fit has its own row cap, so an unsized pop-out fits the content and scrolls past the cap.
+   Once the user sizes the pop-out, the hub adds dt-popout--sized and the view fills the window instead. */
+.dt-popout--sized .dt-fit.unity-scroll-view {
+    max-height: none;
+    flex-grow: 1;
+}
+/* The host switch of a detachable tool floats over the right end of its group header (32px tall, 8px side padding), so
+   it adds nothing to the header layout. */
+.dt-detach.oab-button {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    width: 64px;
+    margin: 0;
+}
+/* A popped-out tool takes one muted line in its group. */
+.dt-popped {
+    flex-direction: row;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 4px 0 5px;
+}
+.dt-popped__text {
+    flex-grow: 1;
+    margin: 0;
+    font-size: 12px;
+    color: rgb(108, 116, 148);
 }
 /* The pop-out content sits in one notched InvertedCornerBox, built by the hub in code. */
 .dt-popout-frame {
@@ -442,6 +428,20 @@
     min-width: 0;
     font-size: 12px;
     overflow: hidden;
+}
+/* Vessel data tables (Thermal Data, Mass Stats, Maneuvers) hold their header in a host above the scroll view, so the
+   header stays while the rows scroll up and down. The scroll view loses its own padding and panel so that the header
+   and the rows line up. The host clips the header, and the controller moves it with a sideways scroll of the rows. */
+.dt-vtable__header {
+    flex-shrink: 0;
+    overflow: hidden;
+    padding-right: 13px;
+    background-color: rgb(46, 53, 64);
+}
+.dt-vtable > .unity-scroll-view {
+    padding: 0;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
 }
 
 

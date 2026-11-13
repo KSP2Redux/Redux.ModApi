@@ -7,8 +7,8 @@ using KSP.Modules;
 using KSP.Sim;
 using KSP.Sim.impl;
 using KSP.Utilities;
+using DebugTools.Utils;
 using Redux.Ecs.Structural;
-using UitkForKsp2.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -37,6 +37,9 @@ namespace DebugTools.Runtime.Controllers
         private Label _rigidityValue;
         private Label _stackRigidityValue;
         private Label _surfaceRigidityValue;
+
+        // The stat values that read "n/a" without an active vessel
+        private Label[] _statLabels;
 
         private Toggle _activeVesselOnly;
         private Toggle _showAnalytical;
@@ -88,8 +91,6 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnEnable()
         {
-            Enable();
-
             _vesselName = RootElement.Q<Label>("vessel-name");
             _statPhysics = RootElement.Q<Label>("stat-physics");
             _statSituation = RootElement.Q<Label>("stat-situation");
@@ -108,6 +109,11 @@ namespace DebugTools.Runtime.Controllers
             _rigidityValue = RootElement.Q<Label>("rigidity-value");
             _stackRigidityValue = RootElement.Q<Label>("stack-rigidity-value");
             _surfaceRigidityValue = RootElement.Q<Label>("surface-rigidity-value");
+            _statLabels = new[]
+            {
+                _statPhysics, _statSituation, _statParts, _statMode, _statAnalytical, _statLegacy, _statPhysx,
+                _statRigidbodies, _statMax, _statSolved, _statOverride, _statGraph
+            };
             _rowsView = RootElement.Q<ScrollView>("joint-rows");
 
             _activeVesselOnly = RootElement.Q<Toggle>("active-vessel-only");
@@ -174,7 +180,7 @@ namespace DebugTools.Runtime.Controllers
 
             RootElement.RegisterCallback<PointerEnterEvent>(OnWindowPointerEnter);
             RootElement.RegisterCallback<PointerLeaveEvent>(OnWindowPointerLeave);
-            AttachTooltip(RootElement.Q<VisualElement>("stress-override"));
+            UITKHelper.AttachTooltip(RootElement.Q<VisualElement>("stress-override"));
             JointDebugState.Changed -= OnJointDebugStateChanged;
             JointDebugState.Changed += OnJointDebugStateChanged;
 
@@ -198,14 +204,15 @@ namespace DebugTools.Runtime.Controllers
             if (!IsWindowOpen)
             {
                 JointDebugState.PointerOverJointsWindow = false;
-                if (_wasWindowOpen)
+                // Hiding the game UI with F2 keeps the selection. Only a close drops it.
+                if (_wasWindowOpen && !IsRequestedOpen)
                 {
                     JointDebugState.ClearSelection();
                     Game?.UI?.OutlineManager?.ClearOutlines();
                     _lastHighlightedId = null;
+                    _wasWindowOpen = false;
                 }
 
-                _wasWindowOpen = false;
                 return;
             }
 
@@ -233,17 +240,13 @@ namespace DebugTools.Runtime.Controllers
             if (!_hasVessel || _activeVessel == null || _activeBehavior == null)
             {
                 _vesselName!.text = "No active vessel";
-                foreach (Label stat in new[]
-                         {
-                             _statPhysics, _statSituation, _statParts, _statMode, _statAnalytical, _statLegacy,
-                             _statPhysx, _statRigidbodies, _statMax, _statSolved, _statOverride, _statGraph
-                         })
+                foreach (Label stat in _statLabels)
                 {
-                    stat!.text = "n/a";
+                    stat.text = "n/a";
                 }
 
-                _statSelected!.text = "Selected: n/a";
-                _mode!.text = "RigidBody Mode: n/a";
+                _statSelected!.text = "n/a";
+                _mode!.text = "n/a";
                 return;
             }
 
@@ -269,10 +272,9 @@ namespace DebugTools.Runtime.Controllers
             _statSolved!.text = JointDebugState.FormatPercent(snapshot?.SolvedMaximumUtilization ?? 0f);
             _statOverride!.text = snapshot?.PresentationStressOverrideActive == true ? "active" : "off";
             _statGraph!.text = snapshot?.GraphValid == true ? "valid" : "rebuilding";
-            _statSelected!.text = $"Selected: {JointDebugState.SelectedConnectionId ?? "none"}";
-            _mode!.text = _activeVessel.Physics == PhysicsMode.RigidBody
-                ? $"RigidBody Mode: {(_activeBehavior.IsUnpacked() ? "Unpacked" : "Packed")}"
-                : "RigidBody Mode: n/a";
+            _statSelected!.text = JointDebugState.SelectedConnectionId ?? "none";
+            string packing = _activeBehavior.IsUnpacked() ? "Unpacked" : "Packed";
+            _mode!.text = _activeVessel.Physics == PhysicsMode.RigidBody ? packing : "n/a";
         }
 
         private void UpdateSettingsLabels()
@@ -330,7 +332,9 @@ namespace DebugTools.Runtime.Controllers
         private void SetSelectedStressOverride()
         {
             JointRowModel selected = GetSelectedAnalyticalRow();
-            if (_activeBehavior?.PartOwner == null || selected == null) return;
+            if (_activeBehavior?.PartOwner == null || selected == null)
+                return;
+
             StructuralPhysicsService.SetPresentationStressOverride(_activeBehavior.PartOwner,
                 selected.StructuralConnectionId, Mathf.Clamp01(_stressOverrideValue.value), out _);
             _forceRebuild = true;
@@ -338,7 +342,9 @@ namespace DebugTools.Runtime.Controllers
 
         private void SetAllStressOverride()
         {
-            if (_activeBehavior?.PartOwner == null) return;
+            if (_activeBehavior?.PartOwner == null)
+                return;
+
             StructuralPhysicsService.SetPresentationStressOverride(_activeBehavior.PartOwner,
                 null, Mathf.Clamp01(_stressOverrideValue.value), out _);
             _forceRebuild = true;
@@ -347,7 +353,9 @@ namespace DebugTools.Runtime.Controllers
         private void ClearSelectedStressOverride()
         {
             JointRowModel selected = GetSelectedAnalyticalRow();
-            if (_activeBehavior?.PartOwner == null || selected == null) return;
+            if (_activeBehavior?.PartOwner == null || selected == null)
+                return;
+
             StructuralPhysicsService.ClearPresentationStressOverride(_activeBehavior.PartOwner,
                 selected.StructuralConnectionId, out _);
             _forceRebuild = true;
@@ -355,7 +363,9 @@ namespace DebugTools.Runtime.Controllers
 
         private void ClearAllStressOverrides()
         {
-            if (_activeBehavior?.PartOwner == null) return;
+            if (_activeBehavior?.PartOwner == null)
+                return;
+
             StructuralPhysicsService.ClearPresentationStressOverride(_activeBehavior.PartOwner, null, out _);
             _forceRebuild = true;
         }
@@ -406,20 +416,6 @@ namespace DebugTools.Runtime.Controllers
             }
         }
 
-        private Tooltip FindTooltip()
-        {
-            return RootElement?.panel?.visualTree.Q<Tooltip>();
-        }
-
-        private void AttachTooltip(VisualElement element)
-        {
-            element.RegisterCallback<PointerEnterEvent>(_ =>
-            {
-                if (!string.IsNullOrEmpty(element.tooltip)) FindTooltip()?.Show(element);
-            });
-            element.RegisterCallback<PointerLeaveEvent>(_ => FindTooltip()?.Close(element));
-        }
-
         private void ApplySelectionAndHover()
         {
             string activeId = JointDebugState.SelectedConnectionId ?? JointDebugState.HoveredConnectionId;
@@ -453,7 +449,8 @@ namespace DebugTools.Runtime.Controllers
         private static void HighlightParts(PartBehavior parent, PartBehavior child)
         {
             ObjectOutlinesManager outlineManager = GameManager.Instance?.Game?.UI?.OutlineManager;
-            if (outlineManager == null) return;
+            if (outlineManager == null)
+                return;
 
             outlineManager.ClearOutlines();
             if (parent != null) outlineManager.AddOutlineToPart(parent, 0);
@@ -501,12 +498,12 @@ namespace DebugTools.Runtime.Controllers
         private void OnRowPointerEnter(JointRowController row)
         {
             JointDebugState.SetHoveredConnection(row.Model.Id);
-            FindTooltip()?.Show(row.Root);
+            UITKHelper.FindTooltip(RootElement)?.Show(row.Root);
         }
 
         private void OnRowPointerLeave(JointRowController row)
         {
-            FindTooltip()?.Close(row.Root);
+            UITKHelper.FindTooltip(RootElement)?.Close(row.Root);
             if (JointDebugState.HoveredConnectionId == row.Model.Id)
             {
                 JointDebugState.SetHoveredConnection(null);
@@ -545,7 +542,9 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnSortModeChanged(ChangeEvent<string> evt)
         {
-            if (_ignoreControlEvents) return;
+            if (_ignoreControlEvents)
+                return;
+
             if (Enum.TryParse(evt.newValue, out JointDebugSortMode sortMode))
             {
                 JointDebugState.SetSortMode(sortMode);
@@ -591,13 +590,15 @@ namespace DebugTools.Runtime.Controllers
                     evt.newValue);
         }
 
-        // The handler of the Vessel Tools Multi Joints switch, which also rebuilds the unpacked vessels
+        // Saves Multi Joints in the player profile, then rebuilds the unpacked vessels.
         private void MultiJointsChanged(ChangeEvent<bool> evt)
         {
-            if (_ignoreControlEvents) return;
+            if (_ignoreControlEvents)
+                return;
 
             PersistentProfileManager.MultiJointsEnabled = evt.newValue;
-            if (Game?.ViewController == null) return;
+            if (Game?.ViewController == null)
+                return;
 
             RebuildUnpackedVessels();
         }
@@ -607,26 +608,28 @@ namespace DebugTools.Runtime.Controllers
             PhysicsSettings.ENABLE_INERTIA_TENSOR_SCALING = evt.newValue;
         }
 
-        // Moved from the Vessel Tools window with its handler
+        // Sets the physics setting only. No vessel is rebuilt.
         private void DynamicTensorSolutionChanged(ChangeEvent<bool> evt)
         {
             if (!_ignoreControlEvents)
                 PhysicsSettings.ENABLE_DYNAMIC_TENSOR_SOLUTION = evt.newValue;
         }
 
-        // Moved from the Vessel Tools window with its handler
+        // Sets the physics setting, then rebuilds the unpacked vessels.
         private void ScaledSolverIterationChanged(ChangeEvent<bool> evt)
         {
-            if (_ignoreControlEvents || Game?.ViewController == null) return;
+            if (_ignoreControlEvents || Game?.ViewController == null)
+                return;
 
             PhysicsSettings.ENABLE_SCALED_SOLVER_ITERATION = evt.newValue;
             RebuildUnpackedVessels();
         }
 
-        // Moved from the Vessel Tools window with its handler
+        // Sets the debug switch for disabled joints, repacks the unpacked vessels and asks the floating origin to snap.
         private void JointsEnabledChanged(ChangeEvent<bool> evt)
         {
-            if (_ignoreControlEvents || Game?.ViewController == null) return;
+            if (_ignoreControlEvents || Game?.ViewController == null)
+                return;
 
             PhysicsSettings.DEBUG_DISABLE_JOINTS = !evt.newValue;
 

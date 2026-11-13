@@ -34,10 +34,10 @@ namespace DebugTools.Runtime.UI
                 EnableInClassList("dt-table__row", !value);
                 if (value)
                 {
-                    KerbalName.text = "<b>Name</b>";
-                    SimObject.text = "<b>Sim Object</b>";
-                    Seat.text = "<b>Seat</b>";
-                    EnrollmentDate.text = "<b>Enrolled</b>";
+                    KerbalName.text = "Name";
+                    SimObject.text = "Sim Object";
+                    Seat.text = "Seat";
+                    EnrollmentDate.text = "Enrolled";
                     _deleteButton.visible = false;
                 }
                 else

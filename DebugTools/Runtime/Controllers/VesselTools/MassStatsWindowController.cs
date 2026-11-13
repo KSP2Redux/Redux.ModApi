@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using DebugTools.Runtime.UI.VesselTools;
+using DebugTools.Utils;
 using KSP;
 using KSP.Sim;
 using KSP.Sim.impl;
@@ -46,15 +47,12 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
         private void OnEnable()
         {
-            Enable();
-
             _rows = new List<PartDetailsRow>();
             
             _itemsView = RootElement.Q<ScrollView>("items-view");
             _itemsView.Clear();
-            var row = new PartDetailsRow(true);
-            _itemsView.Add(row);
-            
+            UITKHelper.SetTableHeader(new PartDetailsRow(true), RootElement.Q("header-host"), _itemsView);
+
             _vesselRow = new PartDetailsRow();
         }
 
@@ -69,19 +67,18 @@ namespace DebugTools.Runtime.Controllers.VesselTools
                 _itemsView.Clear();
                 _rows.Clear();
 
-                var row = new PartDetailsRow(true);
-                _itemsView.Add(row);
-
+                // The first row is the vessel total, set apart from the part rows by its style.
                 _vesselRow = new PartDetailsRow(false);
-                DebugTools.Utils.UITKHelper.ClearLabels(_vesselRow);
-                _vesselRow.PartName.text = $"<b>{vessel.RevealDisplayName()}</b>";
-                _vesselRow.ModelMass.text = $"<b>{vessel.totalMass:F2}</b>";
+                _vesselRow.AddToClassList("part-details--total");
+                UITKHelper.ClearLabels(_vesselRow);
+                _vesselRow.PartName.text = vessel.RevealDisplayName();
+                _vesselRow.ModelMass.text = $"{vessel.totalMass:F2}";
                 _itemsView.Add(_vesselRow);
-                
+
                 foreach (var part in behavior.parts)
                 {
-                    row = new PartDetailsRow(false);
-                    DebugTools.Utils.UITKHelper.ClearLabels(row);
+                    var row = new PartDetailsRow(false);
+                    UITKHelper.ClearLabels(row);
                     FormatMassStats(row, part);
                     _itemsView.Add(row);
                     _rows.Add(row);
@@ -90,8 +87,8 @@ namespace DebugTools.Runtime.Controllers.VesselTools
                 return;
             }
 
-            _vesselRow.PartName.text = $"<b>{vessel.RevealDisplayName()}</b>";
-            _vesselRow.ModelMass.text = $"<b>{vessel.totalMass:F2}</b>";
+            _vesselRow.PartName.text = vessel.RevealDisplayName();
+            _vesselRow.ModelMass.text = $"{vessel.totalMass:F2}";
 
             var i = 0;
             foreach (var part in behavior.parts)

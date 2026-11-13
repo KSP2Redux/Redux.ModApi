@@ -56,8 +56,6 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
         private void OnEnable()
         {
-            Enable();
-
             _pitchChart = SetupLineChart("pitch-chart");
             _rollChart = SetupLineChart("roll-chart");
             _yawChart = SetupLineChart("yaw-chart");

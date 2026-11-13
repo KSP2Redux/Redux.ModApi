@@ -25,7 +25,6 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnEnable()
         {
-            Enable();
             if (ReferenceEquals(_boundRoot, RootElement))
                 return;
             _boundRoot = RootElement;

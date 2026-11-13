@@ -19,11 +19,10 @@ namespace DebugTools.Runtime.Controllers
 
         private const float UpdateSeconds = 2f;
         private float _lastUpdate = -1f;
+        private bool _wasUnlockAllParts;
 
         private void OnEnable()
         {
-            Enable();
-
             _agencyName = RootElement.Q<Label>("agency-name");
             _scienceState = RootElement.Q<Label>("science-state");
 
@@ -44,12 +43,25 @@ namespace DebugTools.Runtime.Controllers
 
         private void LateUpdate()
         {
-            if (!IsWindowOpen) return;
+            if (!IsWindowOpen)
+            {
+                // The lists are brought up to date the moment the tool is shown again. The Unlock All Parts switch in
+                // the hub can have changed what they show in the meantime.
+                _lastUpdate = -1f;
+                return;
+            }
+
+            bool isUnlockAllParts = Game.CheatSystem != null && Game.CheatSystem.Get(CheatSystemItemID.UnlockAllParts);
+            if (isUnlockAllParts != _wasUnlockAllParts)
+            {
+                _wasUnlockAllParts = isUnlockAllParts;
+                _lastUpdate = -1f;
+            }
 
             _lastUpdate -= Time.unscaledDeltaTime;
             if (_lastUpdate >= 0f) return;
             _lastUpdate = UpdateSeconds;
-            
+
             UpdateScienceMetadata();
             UpdateTechNodeDropdown();
             UpdateLoadedTechNodesView();

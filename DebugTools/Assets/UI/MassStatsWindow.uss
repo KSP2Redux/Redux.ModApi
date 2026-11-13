@@ -1,4 +1,7 @@
-.MassStatsWindow .vessel-table { height: 260px; min-height: 100px; }
+/* The table fits its rows up to the cap, then scrolls. A pop-out the user resized lets it fill the window (dt-fit). */
+.MassStatsWindow .vessel-table { height: auto; min-height: 60px; max-height: 440px; }
 .MassStatsWindow .part-details { flex-direction: row; height: 20px; min-height: 20px; flex-shrink: 0; width: 900px; font-size: 12px; }
 .MassStatsWindow .part-details > Label { font-size: 12px; flex-grow: 1; flex-basis: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; -unity-text-align: middle-right; margin: 0; padding: 0 5px; }
 .MassStatsWindow .part-details > .part-details__name { flex-grow: 2; -unity-text-align: middle-left; }
+/* The first row is the vessel total. */
+.MassStatsWindow .part-details--total > Label { -unity-font-style: bold; }

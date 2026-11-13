@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using DebugTools.Runtime.UI;
+using DebugTools.Utils;
 using KSP;
 using KSP.Messages;
 using KSP.Modules;
@@ -46,14 +47,32 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
         private void OnEnable()
         {
-            Enable();
-            
             _rows = new List<ThermalDataRow>();
 
             _itemsView = RootElement.Q<ScrollView>("rows-view");
             _itemsView.Clear();
-            var row = new ThermalDataRow(true);
-            _itemsView.Add(row);
+            UITKHelper.SetTableHeader(CreateHeaderRow(), RootElement.Q("header-host"), _itemsView);
+        }
+
+        // The header cells carry the full column names as tooltips, since the columns are too narrow to spell them.
+        private ThermalDataRow CreateHeaderRow()
+        {
+            var header = new ThermalDataRow(true);
+            header.RegisterCallback<PointerOverEvent>(evt =>
+            {
+                if (evt.target is Label cell)
+                {
+                    UITKHelper.FindTooltip(header)?.Show(cell);
+                }
+            });
+            header.RegisterCallback<PointerOutEvent>(evt =>
+            {
+                if (evt.target is Label cell)
+                {
+                    UITKHelper.FindTooltip(header)?.Close(cell);
+                }
+            });
+            return header;
         }
 
         public void SyncTo(VesselComponent vessel, VesselBehavior behavior)
@@ -67,13 +86,10 @@ namespace DebugTools.Runtime.Controllers.VesselTools
                 _itemsView.Clear();
                 _rows.Clear();
                 
-                var row = new ThermalDataRow(true);
-                _itemsView.Add(row);
-
                 foreach (var part in behavior.parts)
                 {
-                    row = new ThermalDataRow(false);
-                    DebugTools.Utils.UITKHelper.ClearLabels(row);
+                    var row = new ThermalDataRow(false);
+                    UITKHelper.ClearLabels(row);
                     FormatThermalData(row, part);
                     _itemsView.Add(row);
                     _rows.Add(row);

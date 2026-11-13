@@ -62,8 +62,6 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnEnable()
         {
-            Enable();
-
             _autoSaveOnTeleport = RootElement.Q<Toggle>("autosave-on-teleport");
             _autoSaveOnTeleport.value = false;
 
@@ -117,13 +115,15 @@ namespace DebugTools.Runtime.Controllers
         /// </summary>
         private void OnCreateNewList()
         {
-            if (_newListField == null) return;
+            if (_newListField == null)
+                return;
 
             // Sanitize user-input list name as it will be used as a file name for storage
             var listName = MakeValidFileName(_newListField.value);
 
             // The field starts empty with a placeholder, and an empty name or a duplicate cannot be a list
-            if (string.IsNullOrWhiteSpace(listName) || _bookmarksLists.ContainsKey(listName)) return;
+            if (string.IsNullOrWhiteSpace(listName) || _bookmarksLists.ContainsKey(listName))
+                return;
 
             _bookmarksLists.Add(listName, new BookmarksList());
             UpdateBookmarksListsDropdown(listName);

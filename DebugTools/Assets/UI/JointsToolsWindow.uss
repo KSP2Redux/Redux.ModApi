@@ -25,11 +25,21 @@
     width: 66%;
 }
 
-.jt-stat > .kui-stat__name {
+/* A stat that shares its row with a button takes the width the button leaves */
+.jt-stat-inline {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    padding: 0 8px;
+}
+
+.jt-stat > .kui-stat__name,
+.jt-stat-inline > .kui-stat__name {
     flex-shrink: 0;
 }
 
-.jt-stat > .kui-stat__value {
+.jt-stat > .kui-stat__value,
+.jt-stat-inline > .kui-stat__value {
     flex-shrink: 1;
     overflow: hidden;
     white-space: nowrap;

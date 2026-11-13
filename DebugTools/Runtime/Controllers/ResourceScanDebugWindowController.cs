@@ -32,8 +32,6 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnEnable()
         {
-            Enable();
-            
             _celestialBody = RootElement.Q<DropdownField>("celestial-body");
             _celestialBody.RegisterValueChangedCallback(CelestialBodyChanged);
 

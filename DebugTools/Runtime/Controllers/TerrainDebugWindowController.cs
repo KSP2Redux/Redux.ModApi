@@ -45,8 +45,6 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnEnable()
         {
-            Enable();
-
             _showBiomeColors = RootElement.Q<Toggle>("show-biome-colors");
             _showBiomeColors.RegisterValueChangedCallback(ShowBiomeColors);
 

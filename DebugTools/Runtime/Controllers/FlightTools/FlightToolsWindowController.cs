@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DebugTools.Utils;
 using KSP.Game;
 using KSP.Messages;
 using KSP.Sim;
 using KSP.Sim.impl;
 using KSP.Utilities;
-using UitkForKsp2.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Toggle = UnityEngine.UIElements.Toggle;
@@ -69,13 +69,8 @@ namespace DebugTools.Runtime.Controllers.FlightTools
             Game.Messages.Unsubscribe<GameLoadFinishedMessage>(OnGameLoadFinished);
         }
 
-        /// <summary>
-        /// Runs when the window is first created, and every time the window is re-enabled.
-        /// </summary>
         private void OnEnable()
         {
-            Enable();
-
             _toggleProximityLoadUnload = RootElement.Q<Toggle>("proximity-load-unload");
             _toggleProximityLoadUnload.RegisterValueChangedCallback(OnProximityLoadUnloadChanged);
 
@@ -105,7 +100,7 @@ namespace DebugTools.Runtime.Controllers.FlightTools
             _jointItemsView.Clear();
             ShowTableForFilter();
 
-            AttachTooltip(RootElement.Q<VisualElement>("body-collision-label"));
+            UITKHelper.AttachTooltip(RootElement.Q<VisualElement>("body-collision-label"));
 
             _forceRefresh = true;
         }
@@ -115,20 +110,6 @@ namespace DebugTools.Runtime.Controllers.FlightTools
             bool showJoints = _filterType == ItemType.JointConnection;
             _simTable.style.display = showJoints ? DisplayStyle.None : DisplayStyle.Flex;
             _jointTable.style.display = showJoints ? DisplayStyle.Flex : DisplayStyle.None;
-        }
-
-        private Tooltip FindTooltip()
-        {
-            return RootElement?.panel?.visualTree.Q<Tooltip>();
-        }
-
-        private void AttachTooltip(VisualElement element)
-        {
-            element.RegisterCallback<PointerEnterEvent>(_ =>
-            {
-                if (!string.IsNullOrEmpty(element.tooltip)) FindTooltip()?.Show(element);
-            });
-            element.RegisterCallback<PointerLeaveEvent>(_ => FindTooltip()?.Close(element));
         }
 
         private void LateUpdate()

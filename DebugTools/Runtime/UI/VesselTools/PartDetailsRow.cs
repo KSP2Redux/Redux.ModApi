@@ -29,14 +29,14 @@ namespace DebugTools.Runtime.UI.VesselTools
                 EnableInClassList("dt-table__row", !value);
                 if (value)
                 {
-                    PartName.text = "Name";
+                    PartName.text = "Part";
                     ModelMass.text = "Model (t)";
                     PartMass.text = "Dry (t)";
                     ResourceMass.text = "Resource (t)";
                     GreenMass.text = "Green (t)";
                     RBMass.text = "RB (t)";
                     RBPhysXMass.text = "PhysX (t)";
-                    WettedArea.text = "A<sub>wet</sub>";
+                    WettedArea.text = "Wetted (m²)";
                 }
                 else
                 {
@@ -47,7 +47,7 @@ namespace DebugTools.Runtime.UI.VesselTools
                     GreenMass.text = "33.33";
                     RBMass.text = "99.99";
                     RBPhysXMass.text = "99.99";
-                    WettedArea.text = "9.99 m<sup>2</sup>";
+                    WettedArea.text = "9.99 m²";
                 }
             }
         }
