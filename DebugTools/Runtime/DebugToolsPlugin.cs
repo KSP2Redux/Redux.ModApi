@@ -10,7 +10,9 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using ILogger = SpaceWarp2.API.Logging.ILogger;
 using Legacy = KSP.DebugTools;
+using LogMarker = Redux.QA.LogMarker;
 using ReduxManager = Redux.ReduxManager;
+using StateChanges = Redux.Messages.StateChanges;
 using Section = DebugTools.Runtime.Controllers.DebugWindowController.Section;
 using ToolMode = DebugTools.Runtime.Controllers.DebugWindowController.ToolMode;
 using ToolScene = DebugTools.Runtime.Controllers.DebugWindowController.ToolScene;
@@ -61,11 +63,27 @@ namespace DebugTools
                 return;
 
             Configuration.Initialize(ReduxManager.ReduxCoreConfig);
+            // Redux's state event, not a message subscription: a static handler subscribed to the message center is
+            // dropped when another static handler already listens to the same message type.
+            StateChanges.MainMenuStateEntered -= OnMainMenuEntered;
+            StateChanges.MainMenuStateEntered += OnMainMenuEntered;
 
             // This object only watches the shortcut. The hub window is built the first time it is opened.
             var pluginObject = new GameObject("DebugTools");
             DontDestroyOnLoad(pluginObject);
             _instance = pluginObject.AddComponent<DebugToolsPlugin>();
+        }
+
+        // Test overrides never outlive the campaign they were set in.
+        private static void OnMainMenuEntered(KSP.Messages.GameStateEnteredMessage message)
+        {
+            DebugOverrides.RevertTestOverrides();
+        }
+
+        private void OnDestroy()
+        {
+            DebugOverrides.RevertTestOverrides();
+            StateChanges.MainMenuStateEntered -= OnMainMenuEntered;
         }
 
         private void Update()
@@ -189,6 +207,11 @@ namespace DebugTools
             hub.RegisterTool(Section.TestBenches, "Effects", "FX Debug Tools", ToolScene.Flight,
                 () => GameManager.Instance.Game.FXDebugTools != null && GameManager.Instance.Game.FXDebugTools.IsVisible,
                 ToggleFxDebugTools, "Destroy parts and break joints to see their effects", "vfx effect fx", true);
+
+            // QA runs: check many things and write it down.
+            hub.RegisterAction(Section.QaRuns, "Log", "Log marker", ToolScene.Any, "Place marker",
+                LogMarker.Place, LogMarker.GetHotkeyText, "Write a numbered marker line to the log",
+                "log mark marker bug cut qa");
         }
 
         /// <summary>

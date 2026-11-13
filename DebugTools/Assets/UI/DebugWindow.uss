@@ -274,6 +274,10 @@
     height: 24px;
 }
 
+.dt-row__button.dt-button--wide.oab-button {
+    width: 120px;
+}
+
 .dt-row__switch {
     flex-shrink: 0;
 }

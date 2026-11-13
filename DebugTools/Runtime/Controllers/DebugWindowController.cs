@@ -90,7 +90,12 @@ namespace DebugTools.Runtime.Controllers
             /// <summary>
             /// The vehicle or base assembly building.
             /// </summary>
-            Assembly
+            Assembly,
+
+            /// <summary>
+            /// Every scene, the main menu included.
+            /// </summary>
+            Any
         }
 
         internal enum ToolMode
@@ -171,6 +176,9 @@ namespace DebugTools.Runtime.Controllers
             public PanelRenderer Renderer;
             public ConfigValue<string> Placement;
             public Action Load;
+            // Set on a one-shot action row: the button text, and the hotkey text shown next to the name.
+            public string ActionText;
+            public Func<string> HotkeyText;
             public EntryRow SectionView;
             public EntryRow SearchView;
         }
@@ -184,6 +192,7 @@ namespace DebugTools.Runtime.Controllers
             public Label Reason;
             public Button Button;
             public Toggle Switch;
+            public string ActionText;
         }
 
         // The PanelRenderer component of the window game object
@@ -219,6 +228,7 @@ namespace DebugTools.Runtime.Controllers
         private bool _isWindowOpen;
         private bool _isStatusExpanded;
         private int _overrideMask = -1;
+        private bool _areOverridesDirty = true;
         private int _overrideCount;
         // A revert waiting for its Confirm click: the button that asked, and the override it reverts, or null for all.
         private float _confirmUntil;
@@ -314,6 +324,35 @@ namespace DebugTools.Runtime.Controllers
                 IsSwitch = true,
                 IsActive = isOn,
                 SetActive = setOn
+            }, keywords);
+        }
+
+        /// <summary>
+        /// Adds a one-shot action, such as placing a log marker, to a section of the hub.
+        /// </summary>
+        /// <param name="section">The section the action lives in.</param>
+        /// <param name="group">The heading the action is listed under within its section.</param>
+        /// <param name="label">The action name.</param>
+        /// <param name="scene">The scene the action needs before it can be used.</param>
+        /// <param name="buttonText">The text of the button that runs the action.</param>
+        /// <param name="run">Runs the action.</param>
+        /// <param name="hotkeyText">Returns the hotkey shown next to the name, or <c>null</c> for no hotkey.</param>
+        /// <param name="note">A short line under the name, or <c>null</c> for none.</param>
+        /// <param name="keywords">Extra words search matches the action by, or <c>null</c> for none.</param>
+        public void RegisterAction(Section section, string group, string label, ToolScene scene, string buttonText,
+            Action run, Func<string> hotkeyText = null, string note = null, string keywords = null)
+        {
+            AddEntry(new HubEntry
+            {
+                Section = section,
+                Group = group,
+                Label = label,
+                Note = note,
+                Scene = scene,
+                ActionText = buttonText,
+                HotkeyText = hotkeyText,
+                IsActive = () => false,
+                Toggle = run
             }, keywords);
         }
 
@@ -608,6 +647,7 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnDestroy()
         {
+            DebugOverrides.Changed -= OnOverridesChanged;
             UnsubscribeFromGameState();
         }
 
@@ -732,6 +772,9 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnOpened()
         {
+            DebugOverrides.Changed -= OnOverridesChanged;
+            DebugOverrides.Changed += OnOverridesChanged;
+            _areOverridesDirty = true;
             GameInstance game = Game;
             _gameState = game != null && game.GlobalGameState != null
                 ? game.GlobalGameState.GetGameState().GameState
@@ -758,6 +801,7 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnClosed()
         {
+            DebugOverrides.Changed -= OnOverridesChanged;
             SaveWindowRect();
             CancelConfirm();
             if (!string.IsNullOrEmpty(_search.value))
@@ -991,6 +1035,13 @@ namespace DebugTools.Runtime.Controllers
                 titleLine.Add(CreateTag("legacy", "dt-tag--legacy"));
             }
 
+            // The hotkey text is read once, when the row is built.
+            string hotkey = entry.HotkeyText?.Invoke();
+            if (!string.IsNullOrEmpty(hotkey))
+            {
+                titleLine.Add(CreateTag(hotkey, "dt-tag--hotkey"));
+            }
+
             text.Add(titleLine);
             view.Row.tooltip = entry.Note;
             view.Row.RegisterCallback<PointerEnterEvent>(_ =>
@@ -1022,10 +1073,13 @@ namespace DebugTools.Runtime.Controllers
             }
             else
             {
-                view.Button = new OabButton(() => ActivateEntry(entry)) { text = "Open" };
+                view.ActionText = entry.ActionText;
+                view.Button = new OabButton(() => ActivateEntry(entry)) { text = entry.ActionText ?? "Open" };
                 view.Button.AddToClassList("kui-button");
                 view.Button.AddToClassList("dt-button");
                 view.Button.AddToClassList("dt-row__button");
+                // An action names what it does, which is longer than Open and Close.
+                view.Button.EnableInClassList("dt-button--wide", entry.ActionText != null);
                 view.Row.Add(view.Button);
             }
 
@@ -1169,10 +1223,11 @@ namespace DebugTools.Runtime.Controllers
 
         private void RefreshEntries()
         {
-            // Every tool needs a campaign, so that reason is said once for the whole pane instead of on every row.
+            // Almost every tool needs a campaign, so that reason is said once for the whole pane instead of on every row.
+            // A section whose tools all work in any scene does not show it.
             string campaignReason = GetSceneReason(ToolScene.Campaign, _gameState);
             _paneNotice.text = campaignReason == null ? string.Empty : $"{campaignReason}.";
-            _paneNotice.style.display = campaignReason != null && _isViewListingEntries
+            _paneNotice.style.display = campaignReason != null && _isViewListingEntries && HasCampaignTools(_section)
                 ? DisplayStyle.Flex
                 : DisplayStyle.None;
 
@@ -1205,6 +1260,17 @@ namespace DebugTools.Runtime.Controllers
             }
         }
 
+        private bool HasCampaignTools(Section section)
+        {
+            foreach (HubEntry entry in _entries)
+            {
+                if (entry.Section == section && entry.Scene != ToolScene.Any)
+                    return true;
+            }
+
+            return false;
+        }
+
         private static void UpdateRow(EntryRow view, string reason, bool isReasonShown, bool isActive)
         {
             if (view.Row == null)
@@ -1222,7 +1288,7 @@ namespace DebugTools.Runtime.Controllers
                 return;
             }
 
-            view.Button.text = isActive ? "Close" : "Open";
+            view.Button.text = view.ActionText ?? (isActive ? "Close" : "Open");
             // The theme's active OabButton, as on the game's own toggled buttons.
             view.Button.EnableInClassList("active", isActive);
             view.Button.SetEnabled(isAvailable || isActive);
@@ -1247,6 +1313,7 @@ namespace DebugTools.Runtime.Controllers
         /// <returns>A one-line reason, or <c>null</c> when the tool can be opened.</returns>
         internal static string GetSceneReason(ToolScene scene, GameState state) => state switch
         {
+            _ when scene == ToolScene.Any => null,
             GameState.Invalid or GameState.WarmUpLoading or GameState.MainMenu => LOAD_A_CAMPAIGN,
             GameState.Loading => WAIT_FOR_LOADING,
             not (GameState.FlightView or GameState.Map3DView) when scene == ToolScene.Flight => "Needs a vessel in flight",
@@ -1379,6 +1446,8 @@ namespace DebugTools.Runtime.Controllers
 
         #region Status strip
 
+        private void OnOverridesChanged() => _areOverridesDirty = true;
+
         private void RefreshStatusStrip()
         {
             if (_confirmUntil > 0f && Time.unscaledTime > _confirmUntil)
@@ -1401,10 +1470,11 @@ namespace DebugTools.Runtime.Controllers
                 bit <<= 1;
             }
 
-            if (mask == _overrideMask)
+            if (mask == _overrideMask && !_areOverridesDirty)
                 return;
 
             _overrideMask = mask;
+            _areOverridesDirty = false;
             RebuildStatusStrip();
         }
 
@@ -1414,13 +1484,9 @@ namespace DebugTools.Runtime.Controllers
         {
             _statusList.Clear();
             _overrideNames.Clear();
-            foreach (HubEntry entry in _entries)
+            foreach (DebugOverrides.ActiveOverride activeOverride in DebugOverrides.Active)
             {
-                if (!entry.IsOverride || !IsOverridden(entry))
-                    continue;
-
-                // A cheat that is on in normal play shows as switched off.
-                string name = entry.NormalValue ? $"{entry.Label} off" : entry.Label;
+                string name = activeOverride.Name;
                 _overrideNames.Add(name);
 
                 var row = new VisualElement();
@@ -1429,7 +1495,25 @@ namespace DebugTools.Runtime.Controllers
                 label.AddToClassList("dt-override__name");
                 row.Add(label);
                 var revert = new OabButton { text = "Revert" };
-                revert.clicked += () => OnRevertClicked(revert, entry);
+                revert.clicked += () =>
+                {
+                    // Campaign settings keep their existing confirmation text and behavior.
+                    foreach (HubEntry entry in _entries)
+                    {
+                        if (entry.IsOverride && entry.IsCampaignSetting && entry.Label == name)
+                        {
+                            OnRevertClicked(revert, entry);
+                            return;
+                        }
+                    }
+                    // Reported test state may have a newer revert action than the one this row was built with.
+                    if (!DebugOverrides.Revert(activeOverride.Id))
+                    {
+                        activeOverride.Revert();
+                    }
+                    _overrideMask = -1;
+                    _nextRefresh = 0f;
+                };
                 revert.AddToClassList("kui-button");
                 revert.AddToClassList("dt-button");
                 row.Add(revert);
@@ -1523,6 +1607,7 @@ namespace DebugTools.Runtime.Controllers
                 }
             }
 
+            DebugOverrides.RevertTestOverrides();
             CancelConfirm();
             _nextRefresh = 0f;
         }
