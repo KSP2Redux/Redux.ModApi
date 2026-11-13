@@ -1,0 +1,11 @@
+.module-bench {
+    min-width: 540px;
+    max-height: 720px;
+}
+.module-bench-wrap {
+    white-space: normal;
+}
+.module-bench .kui-button {
+    min-width: 150px;
+    flex-grow: 1;
+}

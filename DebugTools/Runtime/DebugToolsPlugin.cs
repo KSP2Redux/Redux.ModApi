@@ -242,6 +242,9 @@ namespace DebugTools
                 "Assembly size limit boxes", "oab vab size limit");
 
             // Test benches: run a controlled effect.
+            RegisterWindow<ModuleBenchWindowController>(hub, Section.TestBenches, "Modules", "ModuleBenchWindow",
+                "Module bench", ToolScene.Flight, "Stated values against observed module output and resource rates",
+                "generator solar radiator converter heat shield antenna", mode: ToolMode.Window);
             RegisterWindow<StaticFireStandWindowController>(hub, Section.TestBenches, "Engines", "StaticFireStandWindow",
                 "Static-fire stand", ToolScene.Flight, "Hold, plume pressure, quality and throttle sweep",
                 "engine plume static fire pressure thrust isp", mode: ToolMode.Window);
@@ -261,6 +264,10 @@ namespace DebugTools
                 "Guided part checklist", ToolScene.Campaign, "Manual part checks with screenshots and a per-part dossier",
                 "part checklist pass fail review screenshot report");
             // QA runs: check many things and write it down.
+            RegisterWindow<PartSweepWindowController>(hub, Section.QaRuns, "Parts", "PartSweepWindow",
+                "Part sweep", ToolScene.Assembly, "Automated live checks in an empty VAB", "part sweep stock redux mod changed");
+            RegisterWindow<PartSweepWindowController>(hub, Section.QaRuns, "Parts", "PartDossierWindow",
+                "Part dossier", ToolScene.Any, "Enter a part ID or use the selected VAB part", "part dossier static live manual report", templateName: "PartSweepWindow");
             hub.RegisterAction(Section.QaRuns, "Log", "Log marker", ToolScene.Any, "Place marker",
                 LogMarker.Place, LogMarker.GetHotkeyText, "Write a numbered marker line to the log",
                 "log mark marker bug cut qa");
@@ -271,11 +278,11 @@ namespace DebugTools
         /// </summary>
         private static void RegisterWindow<T>(DebugWindowController hub, Section section, string group,
             string windowName, string label, ToolScene scene, string note = null, string keywords = null,
-            ToolMode mode = ToolMode.Window, bool detachable = false, bool collapsed = false)
+            ToolMode mode = ToolMode.Window, bool detachable = false, bool collapsed = false, string templateName = null)
             where T : BaseWindowController
         {
             hub.RegisterHostedTool<T>(section, group, windowName, label, scene, mode, detachable, collapsed,
-                note, keywords, _instance.transform);
+                note, keywords, _instance.transform, templateName);
         }
 
         private static void ToggleStockCheatsMenu()

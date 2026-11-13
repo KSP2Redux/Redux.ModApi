@@ -358,7 +358,7 @@ namespace DebugTools.Runtime.Controllers
 
         internal void RegisterHostedTool<T>(Section section, string group, string windowName, string label,
             ToolScene scene, ToolMode mode, bool detachable, bool collapsed, string note, string keywords,
-            Transform owner) where T : BaseWindowController
+            Transform owner, string templateName = null) where T : BaseWindowController
         {
             var entry = new HubEntry
             {
@@ -380,7 +380,7 @@ namespace DebugTools.Runtime.Controllers
                     return;
 
                 entry.Loading = true;
-                UITKHelper.LoadUxml(windowName, asset =>
+                UITKHelper.LoadUxml(templateName ?? windowName, asset =>
                 {
                     entry.Loading = false;
                     TemplateContainer container = asset.Instantiate();
