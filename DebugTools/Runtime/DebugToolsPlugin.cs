@@ -163,6 +163,9 @@ namespace DebugTools
         /// </remarks>
         private static void RegisterTools(DebugWindowController hub)
         {
+            RegisterWindow<PatchTraceWindowController>(hub, Section.Mods, "Patches", "PatchTraceWindow",
+                "Patch trace", ToolScene.Any, "Trace one asset field during the next normal campaign load",
+                "patch order feature mod effective original skipped failed", mode: ToolMode.Inline, detachable: true);
             RegisterWindow<LocWorkbenchWindowController>(hub, Section.Text, "Localization", "LocWorkbenchWindow",
                 "Loc workbench", ToolScene.Any, "Search, edit, reset and export runtime text", "localization translation keys text csv");
             hub.RegisterSwitch(Section.Text, "Display", "Show keys", ToolScene.Any,
@@ -184,9 +187,9 @@ namespace DebugTools
 
             RegisterWindow<ResourceScanDebugWindowController>(hub, Section.Cheats, "Progress", "ResourceScanDebugWindow",
                 "Resource Scanning", ToolScene.Campaign, keywords: "scan isru ore", mode: ToolMode.Inline, collapsed: true);
-            RegisterWindow<MissionsDebugWindowController>(hub, Section.Cheats, "Progress", "MissionsDebugWindow",
-                "Missions", ToolScene.Campaign, "Activate, complete, fail or reset missions and stages",
-                "mission stage contract", mode: ToolMode.Window);
+            RegisterWindow<MissionsDebugWindowController>(hub, Section.Inspect, "Missions", "MissionsDebugWindow",
+                "Missions", ToolScene.Campaign, "Inspect stage conditions or activate, complete, fail or reset missions",
+                "mission stage condition operand latch contract", mode: ToolMode.Window);
 
             RegisterWindow<KerbalRosterToolWindowController>(hub, Section.Cheats, "Crew", "KerbalRosterToolWindow",
                 "Roster", ToolScene.Campaign, keywords: "kerbal crew add", mode: ToolMode.Inline, detachable: true);

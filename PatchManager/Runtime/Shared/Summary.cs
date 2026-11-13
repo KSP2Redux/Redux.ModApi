@@ -106,6 +106,13 @@ namespace PatchManager.Shared
         private string _currentPass = PassDefinition.DEFAULT;
 
         /// <summary>
+        /// Gets the latest outcome for the current asset and pass, for diagnostic capture.
+        /// </summary>
+        internal SummaryEntry LatestEntry => _currentAsset != null &&
+            _currentAsset.EntriesByPass.TryGetValue(_currentPass, out var entries) && entries.Count > 0
+                ? entries[entries.Count - 1] : null;
+
+        /// <summary>
         /// Marks a patch as removed during setup (failed mod or patch constraint, or caught in a cycle).
         /// </summary>
         /// <param name="name">The patch name.</param>

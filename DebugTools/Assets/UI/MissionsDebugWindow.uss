@@ -2,6 +2,9 @@
 
 .dt-missions { width: 600px; max-width: 100%; }
 
+.dt-missions-condition-scroll { min-height: 80px; max-height: 220px; flex-shrink: 1; }
+.dt-missions-condition-detail { white-space: normal; font-size: 12px; margin: 2px 4px; }
+
 /* Filter bar: dropdown, search and refresh on one 28px line */
 .dt-missions-bar { margin-bottom: 2px; }
 .dt-missions-filter { width: 170px; flex-shrink: 1; min-width: 110px; margin: 0 8px 0 0; }

@@ -586,6 +586,15 @@ namespace PatchManager.LuaPatching
         /// <returns>True if the patch ran without error or predicate failure, false otherwise.</returns>
         public bool Apply(DynValue value, Summary summary, out bool removed, out bool errored)
         {
+            string before = Core.Assets.PatchingManager.ReadTraceValue(this, value);
+            bool applied = ApplyCore(value, summary, out removed, out errored);
+            if (before != null)
+                Core.Assets.PatchingManager.RecordTracePatch(this, value, summary.LatestEntry, before, removed);
+            return applied;
+        }
+
+        private bool ApplyCore(DynValue value, Summary summary, out bool removed, out bool errored)
+        {
             removed = false;
             errored = false;
             if (value.Type == DataType.Nil)

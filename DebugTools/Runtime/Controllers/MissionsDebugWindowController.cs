@@ -1,10 +1,16 @@
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using DebugTools.Runtime.UI;
 using KSP.Game.Missions;
 using KSP.Game.Missions.Definitions;
 using KSP.Game.Missions.State;
 using KSP.Messages;
+using KSP.Messages.PropertyWatchers;
+using KSP.Sim.impl;
+using Redux.Missions;
+using UitkForKsp2.Controls;
 using UnityEngine.UIElements;
 
 namespace DebugTools.Runtime.Controllers
@@ -47,6 +53,15 @@ namespace DebugTools.Runtime.Controllers
         private Foldout _statusDump;
         private TextField _statusText;
         private ScrollView _stagesList;
+        private Label _conditionSummary;
+        private VisualElement _conditionTree;
+        private int _selectedStageIndex = -1;
+        private MissionStage _inspectedStage;
+        private MissionData _inspectedMission;
+        private Condition _inspectedCondition;
+        private readonly Dictionary<Condition, (Foldout group, Label detail)> _conditionViews = new();
+        private readonly Dictionary<PropertyCondition, Action<object, object, bool>> _sampleHandlers = new();
+        private readonly Dictionary<PropertyCondition, (object current, object target, bool result, DateTime utc, string vessel, float sampledAt, DateTime changedUtc)> _samples = new();
 
         private readonly List<MissionRow> _rows = new();
         private string _selectedMissionId;
@@ -69,6 +84,7 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnDestroy()
         {
+            StopConditionObservation();
             if (Game == null)
                 return;
 
@@ -121,18 +137,42 @@ namespace DebugTools.Runtime.Controllers
             _statusDump = RootElement.Q<Foldout>("status-dump");
             _statusText = RootElement.Q<TextField>("status-text");
             _stagesList = RootElement.Q<ScrollView>("stages-list");
+            _conditionSummary = RootElement.Q<Label>("condition-summary");
+            _conditionTree = RootElement.Q<VisualElement>("condition-tree");
 
             ClearDetails();
         }
 
-        private void OnMissionMessage(MessageCenterMessage _)
+        private void OnMissionMessage(MessageCenterMessage message)
         {
+            if (message is GameLoadFinishedMessage ||
+                message is GameStateEnteredMessage { StateBeingEntered: KSP.Game.GameState.MainMenu or KSP.Game.GameState.Loading })
+            {
+                StopConditionObservation();
+                _selectedMissionId = null;
+                _rows.Clear();
+                if (_conditionTree != null)
+                    ClearDetails();
+            }
             _dirty = true;
         }
 
         private void LateUpdate()
         {
-            if (!IsWindowOpen) return;
+            if (!IsWindowOpen)
+            {
+                StopConditionObservation();
+                return;
+            }
+            if (Game.GlobalGameState.GetState() is KSP.Game.GameState.MainMenu or KSP.Game.GameState.Loading)
+            {
+                StopConditionObservation();
+                _selectedMissionId = null;
+                _rows.Clear();
+                _missionsList.Clear();
+                _dirty = true;
+                return;
+            }
             if (UnityEngine.Time.unscaledTime < _nextRefreshTime && !_dirty) return;
             _nextRefreshTime = UnityEngine.Time.unscaledTime + RefreshThrottle;
 
@@ -267,6 +307,11 @@ namespace DebugTools.Runtime.Controllers
 
         private void SelectMission(string id, bool isActive)
         {
+            if (_selectedMissionId != id)
+            {
+                _selectedStageIndex = -1;
+                StopConditionObservation();
+            }
             _selectedMissionId = id;
             _selectedIsActive = isActive;
 
@@ -336,6 +381,7 @@ namespace DebugTools.Runtime.Controllers
                 _statusText.value = data.GenerateMissionStatus();
 
             BuildStagesList(data, isActive);
+            RefreshConditionInspector(data);
         }
 
         private void BuildStagesList(MissionData data, bool isActive)
@@ -382,6 +428,16 @@ namespace DebugTools.Runtime.Controllers
             statusLabel.AddToClassList("stage-row__status");
             row.Add(statusLabel);
 
+            var inspectButton = new Button { text = "Inspect" };
+            inspectButton.AddToClassList("kui-button");
+            inspectButton.AddToClassList("stage-row__btn");
+            inspectButton.clicked += () =>
+            {
+                _selectedStageIndex = index;
+                RefreshConditionInspector(data);
+            };
+            row.Add(inspectButton);
+
             var activateBtn = new Button { text = "Jump" };
             activateBtn.AddToClassList("kui-button");
             activateBtn.AddToClassList("stage-row__btn");
@@ -405,8 +461,215 @@ namespace DebugTools.Runtime.Controllers
             return row;
         }
 
+        private void OnDisable() => StopConditionObservation();
+
+        private void StopConditionObservation()
+        {
+            foreach (var entry in _sampleHandlers)
+            {
+                entry.Key.OnDiagnosticSample -= entry.Value;
+            }
+            _sampleHandlers.Clear();
+            _samples.Clear();
+            _conditionViews.Clear();
+            _inspectedStage = null;
+            _inspectedMission = null;
+            _inspectedCondition = null;
+        }
+
+        private string GetDiagnosticVessel()
+        {
+            if (Game == null || Game.ViewController == null ||
+                !Game.ViewController.TryGetActiveSimVessel(out VesselComponent vessel))
+                return "No active vessel";
+
+            return $"{vessel.Name} | {vessel.GlobalId}";
+        }
+
+        private void RefreshConditionInspector(MissionData data)
+        {
+            if (data.missionStages == null || data.missionStages.Count == 0)
+                return;
+
+            if (_selectedStageIndex < 0 || _selectedStageIndex >= data.missionStages.Count)
+                _selectedStageIndex = Math.Max(0, Math.Min(data.currentStageIndex, data.missionStages.Count - 1));
+
+            MissionStage stage = data.missionStages[_selectedStageIndex];
+            if (_inspectedStage != stage || _inspectedCondition != stage.condition)
+            {
+                StopConditionObservation();
+                _inspectedStage = stage;
+                _inspectedMission = data;
+                _inspectedCondition = stage.condition;
+                _conditionTree.Clear();
+                BuildConditionTree(stage.condition, _conditionTree, "root");
+            }
+
+            foreach (var entry in _conditionViews)
+            {
+                Condition condition = entry.Key;
+                (bool? result, string reason) = ReadConditionResult(condition);
+                string state = result.HasValue ? result.Value.ToString() : "Unknown";
+                string latch = condition.HasLatchedProgress ? condition.IsLatched.ToString() : "Not applicable";
+                entry.Value.detail.text = $"Result: {state} | Latched: {latch}\n{ReadConditionDetail(condition)}";
+            }
+
+            (bool? met, string why) = ReadConditionResult(stage.condition);
+            string summary = stage.completed ? "Stage already completed" : !stage.active
+                ? "Stage inactive. Values are not being evaluated"
+                : met == true ? "Condition met. Awaiting mission progression or branch handling"
+                : $"Why not complete: {why}";
+            if (stage.ProgressScope == MissionProgressScope.Vessel && GetDiagnosticVessel() == "No active vessel")
+                summary = "Why not complete: vessel-scoped stage has no active vessel";
+
+            _conditionSummary.text = $"Stage #{_selectedStageIndex} (ID {stage.StageID}) | {stage.ProgressScope}\n{summary}\nActive vessel: {GetDiagnosticVessel()}";
+        }
+
+        private void BuildConditionTree(Condition condition, VisualElement parent, string path)
+        {
+            if (condition == null)
+                return;
+
+            string title = condition switch
+            {
+                ConditionSet set => $"{path}: {set.ConditionMode}",
+                PropertyCondition property => $"{path}: {property.PropertyTypeAQNAbbrev} {property.propOperator}",
+                EventCondition eventCondition => $"{path}: event {eventCondition.EventTypeAQNAbbrev}",
+                _ => $"{path}: {condition.GetType().Name}"
+            };
+            var group = new Foldout { text = title, value = true };
+            group.AddToClassList("kui-group");
+            var detail = new Label { enableRichText = false };
+            detail.AddToClassList("dt-missions-condition-detail");
+            group.Add(detail);
+            parent.Add(group);
+            _conditionViews[condition] = (group, detail);
+
+            if (condition is PropertyCondition watched)
+            {
+                Action<object, object, bool> handler = (current, target, result) =>
+                {
+                    if (!IsWindowOpen)
+                        return;
+
+                    float now = UnityEngine.Time.unscaledTime;
+                    if (_samples.TryGetValue(watched, out var previous) && now < previous.sampledAt + RefreshThrottle)
+                        return;
+
+                    DateTime utc = DateTime.UtcNow;
+                    string vessel = GetDiagnosticVessel();
+                    bool unchanged = _samples.ContainsKey(watched) && Equals(current, previous.current) &&
+                        Equals(target, previous.target) && result == previous.result && vessel == previous.vessel;
+                    _samples[watched] = (current, target, result, utc, vessel, now, unchanged ? previous.changedUtc : utc);
+                };
+                _sampleHandlers[watched] = handler;
+                watched.OnDiagnosticSample += handler;
+            }
+
+            if (condition is not ConditionSet children)
+                return;
+
+            for (int i = 0; i < children.Children.Count; i++)
+            {
+                BuildConditionTree(children.Children[i], group, $"{path}.{i}");
+            }
+        }
+
+        private (bool? result, string reason) ReadConditionResult(Condition condition)
+        {
+            if (condition == null)
+                return (true, "No condition");
+
+            if (condition is PropertyCondition property)
+            {
+                if (property.IsLatched && !property.RequireCurrentValue)
+                    return (true, "Latched");
+
+                return _samples.TryGetValue(property, out var sample)
+                    ? (sample.result, $"{property.PropertyTypeAQNAbbrev} {property.propOperator} {FormatOperand(sample.target)}")
+                    : (null, $"{property.PropertyTypeAQNAbbrev}: waiting for normal evaluation");
+            }
+            if (condition is EventCondition eventCondition)
+                return (condition.IsLatched, $"{eventCondition.EventTypeAQNAbbrev}: waiting for accepted event");
+            if (condition is ScriptCondition scriptCondition)
+                return (condition.IsLatched, $"{scriptCondition.triggerEventTypeAQN}: waiting for script trigger");
+
+            if (condition is not ConditionSet set)
+                return (null, $"{condition.GetType().Name}: unsupported condition");
+
+            int trueCount = 0;
+            int unknownCount = 0;
+            string firstUnmet = null;
+            string firstMet = null;
+            foreach (Condition child in set.Children)
+            {
+                (bool? result, string reason) = ReadConditionResult(child);
+                if (result == true)
+                {
+                    trueCount++;
+                    firstMet ??= child is PropertyCondition metProperty ? metProperty.PropertyTypeAQNAbbrev : child?.GetType().Name;
+                }
+                else
+                    firstUnmet ??= reason;
+                if (!result.HasValue)
+                    unknownCount++;
+            }
+            bool? combined = set.ConditionMode switch
+            {
+                LogicalOperator.AND => trueCount + unknownCount < set.Children.Count ? false : unknownCount > 0 ? null : true,
+                LogicalOperator.OR => trueCount > 0 ? true : unknownCount > 0 ? null : false,
+                LogicalOperator.XOR => trueCount > 1 ? false : unknownCount > 0 ? null : trueCount == 1,
+                LogicalOperator.NOT => trueCount > 0 ? false : unknownCount > 0 ? null : true,
+                _ => null
+            };
+            string failure = set.ConditionMode switch
+            {
+                LogicalOperator.NOT when trueCount > 0 => $"NOT requires {firstMet} to be unmet",
+                LogicalOperator.XOR when trueCount > 1 => $"XOR has {trueCount} met children, including {firstMet}. Needs exactly one",
+                _ => firstUnmet ?? "No child is met"
+            };
+            return (combined, failure);
+        }
+
+        private string ReadConditionDetail(Condition condition)
+        {
+            if (condition is EventCondition eventCondition)
+                return $"Needs accepted event: {eventCondition.EventTypeAQNAbbrev}\nInput filter: {eventCondition.DiagnosticInput}\nLast accepted event (UTC): {FormatEventTime(eventCondition.LastDiagnosticEventUtc)}";
+            if (condition is ScriptCondition script)
+                return $"Trigger: {script.triggerEventTypeAQN}\nLast trigger (UTC): {FormatEventTime(script.LastDiagnosticEventUtc)}\nRuntime script handler currently marks success on receipt without executing the script.";
+            if (condition is not PropertyCondition property)
+                return "Derived from children without calling Evaluate or resetting latches.";
+
+            Type watcherType = property.property?.GetType();
+            var metadata = watcherType == null ? null : (PropertyWatcherInfo)Attribute.GetCustomAttribute(watcherType, typeof(PropertyWatcherInfo));
+            string target = watcherType != null && typeof(VehiclePropertyWatcher).IsAssignableFrom(watcherType)
+                ? "Active vessel at sample time" : "Watcher-defined campaign, UI or input context";
+            string threshold = !string.IsNullOrWhiteSpace(property.TestWatchedStringVariable)
+                ? $"mission variable {property.TestWatchedStringVariable}" : "configured threshold";
+            Type outputType = metadata?.OutputType ?? property.property?.baseType();
+            object required = outputType == typeof(string) ? property.TestWatchedstring
+                : outputType == typeof(bool) ? true
+                : outputType == typeof(double) ? property.TestWatchedValue : (object)property.TestWatchedInt;
+            if (!string.IsNullOrWhiteSpace(property.TestWatchedStringVariable))
+                required = _inspectedMission.TryGetStringVariable(property.TestWatchedStringVariable, out string variable) ? variable : null;
+            string values = _samples.TryGetValue(property, out var sample)
+                ? $"Current sampled operand: {FormatOperand(sample.current)} {metadata?.Units}\nNeeds: {FormatOperand(sample.target)} {metadata?.Units}\nSample UTC: {sample.utc:O}\nLast observed operand or result change UTC: {sample.changedUtc:O}\nSample vessel: {sample.vessel}"
+                : $"Current operand: unavailable until normal evaluation. A latched condition may no longer poll.\nNeeds: {FormatOperand(required)} {metadata?.Units}";
+            return $"{values}\nInput: {(property.isInput ? property.Inputstring : "none")} | Target source: {threshold}\nContext: {target} | Require current: {property.RequireCurrentValue}\nLast event: not applicable (polled property). Samples do not invoke watchers.";
+        }
+
+        private static string FormatOperand(object value) => value == null
+            ? "Unresolved" : Convert.ToString(value, CultureInfo.InvariantCulture);
+
+        private static string FormatEventTime(DateTime? time) => time.HasValue
+            ? time.Value.ToString("O", CultureInfo.InvariantCulture) : "Not recorded this session";
+
         private void ClearDetails()
         {
+            StopConditionObservation();
+            _selectedStageIndex = -1;
+            _conditionTree.Clear();
+            _conditionSummary.text = "Select a mission and inspect a stage.";
             _headerId.text = "-";
             _headerName.text = "-";
             _headerType.text = "-";

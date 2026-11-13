@@ -32,7 +32,7 @@ namespace PatchManager.Core.Assets
     /// Bridges the Lua patch <see cref="LuaPatching.Universe" /> to addressables: imports patch files, runs the
     /// patching pipeline against each addressable, and writes the results into the on-disk archive cache.
     /// </summary>
-    internal static class PatchingManager
+    internal static partial class PatchingManager
     {
         /// <summary>
         /// The current patch universe, created by <see cref="GenerateUniverse" />.
@@ -104,6 +104,7 @@ namespace PatchManager.Core.Assets
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
+            ClearTrace();
             Universe = null;
             CurrentPatchHashes = PatchHashes.CreateDefault();
             _createdAssets = new Dictionary<string, List<(string name, LuaAsset data)>>();
@@ -178,17 +179,20 @@ namespace PatchManager.Core.Assets
         /// cache steps, its per-set data and the loading screen's patch counts run as the flow's next steps.
         /// </summary>
         /// <remarks>
-        /// Does nothing when the set is already active.
+        /// Does nothing when the set is already active unless a diagnostic trace requests a rebuild.
         /// </remarks>
         /// <param name="flow">The flow running the calling step.</param>
         /// <param name="features">The set's enabled features, already closed over their requirements.</param>
-        internal static void SwitchToSet(SequentialFlow flow, IEnumerable<string> features)
+        /// <param name="campaign">True when loading a campaign rather than the main menu.</param>
+        internal static void SwitchToSet(SequentialFlow flow, IEnumerable<string> features, bool campaign = false)
         {
             var set = features.ToList();
-            if (IsActive(set))
+            if (IsActive(set) && !(campaign && _isTraceRequested))
                 return;
 
             ActivateSet(set);
+            if (campaign)
+                BeginRequestedTrace(flow);
             var steps = SetRunSteps(next => InsertNext(flow, next), out _);
             steps.AddRange(SetLoadingSteps());
             steps.Add(new GenericFlowAction("Patch Manager: Showing patch counts", (resolve, _) =>
@@ -278,7 +282,8 @@ namespace PatchManager.Core.Assets
             out bool rebuilds
         )
         {
-            if (RebuildsSet(CacheManager.ActiveSet))
+            bool rebuildsByPolicy = RebuildsSet(CacheManager.ActiveSet);
+            if (IsTraceRecording || rebuildsByPolicy)
             {
                 CacheManager.InvalidateCache();
             }
@@ -299,8 +304,26 @@ namespace PatchManager.Core.Assets
             }
 
             steps.Add(new GenericFlowAction("Patch Manager: Resolving Prefab Patch Plans", ResolvePrefabPatchPlans));
-            return steps;
+            return steps.Select(GuardTraceAction).ToList();
         }
+
+        private static GenericFlowAction GuardTraceAction(GenericFlowAction action) => new(action.Name,
+            (resolve, reject) =>
+            {
+                try
+                {
+                    action.Do(_ => resolve(), (_, error) =>
+                    {
+                        OnTraceFlowError(null, error);
+                        reject(error);
+                    });
+                }
+                catch (Exception exception)
+                {
+                    OnTraceFlowError(null, exception.Message);
+                    reject(exception.Message);
+                }
+            });
 
         /// <summary>
         /// Lists the steps that clear and reload the data mods keep per feature set, for the set just activated.
@@ -676,7 +699,8 @@ namespace PatchManager.Core.Assets
         public static void RebuildAllCache(Action<List<GenericFlowAction>> insertNext, Action resolve)
         {
             Universe.BeginRun();
-            var labels = Universe.PatchedLabels.Concat(_createdAssets.Keys).Distinct().ToList();
+            var labels = Universe.PatchedLabels.Concat(_createdAssets.Keys)
+                .Concat(IsTraceRecording ? new[] { TraceLabel } : Array.Empty<string>()).Distinct().ToList();
 
             if (labels.Count == 0)
             {
@@ -715,11 +739,12 @@ namespace PatchManager.Core.Assets
                 {
                     FinalizeRebuild();
                     Universe.EndRun();
+                    FinishRequestedTrace();
                     r();
                 }
             ));
 
-            insertNext(actions);
+            insertNext(actions.Select(GuardTraceAction).ToList());
             resolve();
         }
 
@@ -757,6 +782,8 @@ namespace PatchManager.Core.Assets
             {
                 if (HasPatchesInPass(label, pass)) result.Add(pass);
             }
+            if (result.Count == 0 && IsTraceRecording && label == TraceLabel)
+                result.Add(PassDefinition.DEFAULT);
             if (result.Count == 0
                 && _rebuildStates.TryGetValue(label, out var state)
                 && state.CreatedAssets.Count > 0)
@@ -788,9 +815,57 @@ namespace PatchManager.Core.Assets
 
             return new GenericFlowAction(
                 $"Patching: {label}{passSuffix}",
-                (resolve, _) => CoroutineUtil.Instance.DoCoroutine(
-                    RunPassActionCoroutine(labelCopy, passCopy, loadCopy, writeCopy, resolve))
+                (resolve, reject) => CoroutineUtil.Instance.DoCoroutine(
+                    GuardTraceCoroutine(RunPassActionCoroutine(labelCopy, passCopy, loadCopy, writeCopy, resolve), reject))
             );
+        }
+
+        private static IEnumerator GuardTraceCoroutine(IEnumerator routine, Action<string> reject)
+        {
+            // Advance nested iterators here so asynchronous rebuild failures reach the flow's reject handler.
+            var pending = new Stack<IEnumerator>();
+            pending.Push(routine);
+            try
+            {
+                while (pending.Count > 0)
+                {
+                    object current = null;
+                    Exception failure = null;
+                    bool moved = false;
+                    try
+                    {
+                        moved = pending.Peek().MoveNext();
+                        if (moved)
+                            current = pending.Peek().Current;
+                    }
+                    catch (Exception exception)
+                    {
+                        failure = exception;
+                    }
+                    if (failure != null)
+                    {
+                        OnTraceFlowError(null, failure.Message);
+                        reject(failure.Message);
+                        yield break;
+                    }
+                    if (!moved)
+                    {
+                        (pending.Pop() as IDisposable)?.Dispose();
+                        continue;
+                    }
+                    if (current is IEnumerator nested)
+                        pending.Push(nested);
+                    else
+                        yield return current;
+                }
+            }
+            finally
+            {
+                foreach (IEnumerator remaining in pending)
+                {
+                    (remaining as IDisposable)?.Dispose();
+                }
+            }
         }
 
         private static IEnumerator RunPassActionCoroutine(
@@ -895,7 +970,8 @@ namespace PatchManager.Core.Assets
             var assetNames = state.RawTexts.Keys.Concat(state.Tokens.Keys).Distinct().ToList();
             foreach (var assetName in assetNames)
             {
-                if (!Universe.HasAnyPatchInPass(label, assetName, pass))
+                bool isTraced = IsTraceTarget(label, assetName);
+                if (!isTraced && !Universe.HasAnyPatchInPass(label, assetName, pass))
                     continue;
 
                 var token = EnsureParsed(state, assetName);
@@ -904,8 +980,10 @@ namespace PatchManager.Core.Assets
 
                 var address = state.PrimaryKeyMap.TryGetValue(assetName, out var a) ? a : "<unknown>";
                 Universe.Summary.BeginAsset(assetName, address);
+                BeginTraceAsset(label, assetName, token);
 
                 var result = Universe.RunAllPatchesFor(label, assetName, token, pass, duplicates, -1, out var pc, out var ec);
+                EndTraceAsset(result);
                 TotalPatchCount += pc;
                 TotalErrorCount += ec;
                 if (pc > 0)
@@ -930,7 +1008,10 @@ namespace PatchManager.Core.Assets
             {
                 state.AddressAliases.TryGetValue(name, out var alias);
                 Universe.Summary.BeginAsset(name, alias);
-                Universe.RunAllPatchesFor(luaAsset, pass, duplicates, out var pc, out var ec);
+                BeginTraceAsset(label, name, IsTraceTarget(label, name)
+                    ? luaAsset.ConverterInstance.ToJson(luaAsset.CurrentValue) : null);
+                var result = Universe.RunAllPatchesFor(luaAsset, pass, duplicates, out var pc, out var ec);
+                EndTraceAsset(result);
                 TotalPatchCount += pc;
                 TotalErrorCount += ec;
             }
@@ -960,9 +1041,11 @@ namespace PatchManager.Core.Assets
                 if (alias != null) state.AddressAliases[duplicate.Name] = alias;
                 Universe.Summary.BeginNewAsset(duplicate.Name, alias);
                 state.Unchanged = false;
+                BeginTraceAsset(label, duplicate.Name, duplicate.Data);
 
                 var result = Universe.RunAllPatchesFor(label, duplicate.Name, duplicate.Data, pass, duplicates,
                     duplicate.AfterOrder, out var pc, out var ec);
+                EndTraceAsset(result);
                 TotalPatchCount += pc;
                 TotalErrorCount += ec;
                 if (result != null)

@@ -116,5 +116,13 @@
                 <ui:Button text="Complete" class="kui-button stage-row__btn stage-row__complete" />
             </ui:VisualElement>
         </ui:ScrollView>
+        <ui:VisualElement class="kui-section">
+            <ui:Label text="//" class="kui-section__slashes" />
+            <ui:Label text="Stage conditions (read only)" class="kui-section__title" />
+        </ui:VisualElement>
+        <ui:Label name="condition-summary" text="Select a mission and inspect a stage." class="dt-missions-condition-detail" enable-rich-text="false" />
+        <ui:ScrollView class="dt-missions-condition-scroll dt-fit">
+            <ui:VisualElement name="condition-tree" />
+        </ui:ScrollView>
     </ui:VisualElement>
 </ui:UXML>

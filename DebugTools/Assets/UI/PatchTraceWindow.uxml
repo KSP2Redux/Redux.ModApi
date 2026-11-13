@@ -1,0 +1,24 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="DebugWindow.uss" />
+    <ui:VisualElement name="root" class="dt-tool">
+        <ui:Label text="// PATCH TARGET" class="kui-section__title" />
+        <ui:VisualElement class="kui-row">
+            <UitkForKsp2.Controls.PlaceholderTextField name="search" placeholder="Search asset ID or label" class="oab-text-field kui-field" />
+            <UitkForKsp2.Controls.OabButton name="find" text="Find" class="kui-button" />
+        </ui:VisualElement>
+        <ui:ScrollView name="matches" style="max-height: 140px;" />
+        <UitkForKsp2.Controls.PlaceholderTextField name="label" value="parts_data" placeholder="Addressables label" class="oab-text-field kui-field" />
+        <UitkForKsp2.Controls.PlaceholderTextField name="asset" placeholder="Exact asset ID" class="oab-text-field kui-field" />
+        <UitkForKsp2.Controls.PlaceholderTextField name="path" value="data.mass" placeholder="Required single JSONPath (zero-based arrays)" class="oab-text-field kui-field" />
+        <ui:Label text="Arm, then load a campaign normally. Rebuilds that set's patch cache once. No live patch replay. Refresh to read the capture. Values use raw JSON paths, not Lua adapter paths." class="kui-row__label" style="white-space: normal;" />
+        <ui:VisualElement class="kui-row">
+            <UitkForKsp2.Controls.OabButton name="arm" text="Arm next load" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="refresh" text="Refresh capture" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="clear" text="Clear capture" class="kui-button" />
+        </ui:VisualElement>
+        <ui:Label text="// LOAD-TIME VALUES AND PATCH CHAINS" class="kui-section__title" />
+        <ui:ScrollView style="max-height: 420px;">
+            <ui:TextField name="output" multiline="true" is-read-only="true" class="oab-text-field kui-field" />
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>
