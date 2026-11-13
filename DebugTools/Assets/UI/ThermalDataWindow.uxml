@@ -1,13 +1,62 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/ThermalDataWindow.uss?fileID=7433441132597879392&amp;guid=d65e593cd82c5b747aec41e97c5a3cbe&amp;type=3#ThermalDataWindow" />
-    <ui:VisualElement name="root" class="root">
-        <ui:VisualElement name="title-bar">
-            <ui:Label text="Thermal Data" />
-            <ui:Button text="×" name="close-button" />
-        </ui:VisualElement>
-        <ui:ScrollView scroll-deceleration-rate="0,135" elasticity="0,1" name="rows-view" style="background-color: rgba(34, 38, 46, 0.5);">
-            <DebugTools.Runtime.UI.ThermalDataRow />
-            <DebugTools.Runtime.UI.ThermalDataRow IsHeader="false" />
-        </ui:ScrollView>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/DebugWindow.uss?fileID=7433441132597879392&amp;guid=3b02df7e5905e8746a5ed673f30eb0be&amp;type=3#DebugWindow"/>
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/ThermalDataWindow.uss?fileID=7433441132597879392&amp;guid=d65e593cd82c5b747aec41e97c5a3cbe&amp;type=3#ThermalDataWindow"/>
+    <ui:VisualElement name="root" class="dt-tool ThermalDataWindow">
+        <UitkForKsp2.Controls.InvertedCornerBox border-thickness="1" notch-size="5" border-color="#747680FF" background-color="#1B1E24FF" class="oab-window-body kui-panel">
+            <ui:ScrollView name="rows-view" mode="VerticalAndHorizontal" class="dt-table vessel-table">
+                <DebugTools.Runtime.UI.ThermalDataRow IsHeader="true" class="dt-table__header"/>
+                <ui:VisualElement class="data-row dt-table__row">
+                    <ui:Label text="Part 01" class="dt-table__cell data-row-entry-large"/>
+                    <ui:Label text="99.9" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="290 / 1200" class="dt-table__cell data-row-entry-large"/>
+                    <ui:Label text="9.99" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="10.0" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="1.00" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="999" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="999" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="0" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="-999" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="9.99" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="Bow" class="dt-table__cell data-row-entry-small"/>
+                    <ui:Label text="35" class="dt-table__cell data-row-entry-small"/>
+                    <ui:Label text="2.0" class="dt-table__cell data-row-entry-small"/>
+                    <ui:Label text="—" class="dt-table__cell data-row-entry-small"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="data-row dt-table__row">
+                    <ui:Label text="Part 01" class="dt-table__cell data-row-entry-large"/>
+                    <ui:Label text="99.9" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="290 / 1200" class="dt-table__cell data-row-entry-large"/>
+                    <ui:Label text="9.99" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="10.0" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="1.00" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="999" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="999" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="0" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="-999" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="9.99" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="Bow" class="dt-table__cell data-row-entry-small"/>
+                    <ui:Label text="35" class="dt-table__cell data-row-entry-small"/>
+                    <ui:Label text="2.0" class="dt-table__cell data-row-entry-small"/>
+                    <ui:Label text="—" class="dt-table__cell data-row-entry-small"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="data-row dt-table__row">
+                    <ui:Label text="Part 01" class="dt-table__cell data-row-entry-large"/>
+                    <ui:Label text="99.9" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="290 / 1200" class="dt-table__cell data-row-entry-large"/>
+                    <ui:Label text="9.99" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="10.0" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="1.00" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="999" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="999" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="0" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="-999" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="9.99" class="dt-table__cell data-row-entry"/>
+                    <ui:Label text="Bow" class="dt-table__cell data-row-entry-small"/>
+                    <ui:Label text="35" class="dt-table__cell data-row-entry-small"/>
+                    <ui:Label text="2.0" class="dt-table__cell data-row-entry-small"/>
+                    <ui:Label text="—" class="dt-table__cell data-row-entry-small"/>
+                </ui:VisualElement>
+            </ui:ScrollView>
+        </UitkForKsp2.Controls.InvertedCornerBox>
     </ui:VisualElement>
 </ui:UXML>

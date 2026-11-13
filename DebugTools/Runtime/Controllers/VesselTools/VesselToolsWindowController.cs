@@ -1,9 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DebugShapes;
-using DebugTools.Utils;
 using KSP.Game;
 using KSP.Messages;
 using KSP.Modules;
@@ -17,23 +15,6 @@ namespace DebugTools.Runtime.Controllers.VesselTools
     public class VesselToolsWindowController : BaseWindowController
     {
         private bool _initialized;
-
-        // Stats windows
-        private Toggle? _thermalDataToggle;
-        private ThermalDataWindowController? _thermalData;
-        private float _thermalDataLastUpdated = -1f;
-
-        private Toggle? _massStatsToggle;
-        private MassStatsWindowController? _massStats;
-        private float _massStatsLastUpdated = -1f;
-
-        private Toggle? _maneuversToggle;
-        private ManeuverNodesWindowController? _maneuvers;
-        private float _maneuversLastUpdated = -1f;
-
-        private Toggle? _coordsToggle;
-        private VesselCoordinatesWindowController? _coords;
-        private float _coordsLastUpdated = -1f;
 
         // Flight axes
         private Toggle? _showControlPoints;
@@ -52,22 +33,7 @@ namespace DebugTools.Runtime.Controllers.VesselTools
         private Toggle? _showOrbitPoints;
         private readonly List<DebugAxes> _vesselOrbitAxes = new();
         private bool _isOrbitPointsShowing;
-        
-        // Control
-        private Label? _pitch;
-        private Label? _yaw;
-        private Label? _roll;
-        private Label? _controlState;
-        
-        private Toggle _showSASCharts;
-        private SASChartsWindowController? _sasCharts;
 
-        // Joints
-        private Toggle? _inertiaTensorScaling;
-        private Toggle? _dynamicTensorSolution;
-        private Toggle? _scaledSolverIteration;
-        private Toggle? _multiJoints;
-        private Toggle? _jointsEnabled;
         private Toggle? _showJoints;
 
         // Buoyancy
@@ -87,14 +53,13 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
         private List<VesselComponent> _vessels = new();
 
-        private bool _ignoreValueChanged;
 
         private MessageCenter _messageCenter;
 
         private void Awake()
         {
             _messageCenter = Game.Messages;
-            // Keep vessel and thermal data updating after a campaign is unloaded and loaded again (#1427).
+            // Refresh overlay state after campaign transitions.
             _messageCenter.PersistentSubscribe<GameStateChangedMessage>(OnStateChanged);
             _messageCenter.PersistentSubscribe<GameLoadFinishedMessage>(OnStateChanged);
             Refresh();
@@ -124,15 +89,7 @@ namespace DebugTools.Runtime.Controllers.VesselTools
             _state = Game.GlobalGameState.GetGameState().GameState;
             _view = Game.ViewController;
 
-            // Joints
-            _ignoreValueChanged = true;
-            _inertiaTensorScaling!.value = PhysicsSettings.ENABLE_INERTIA_TENSOR_SCALING;
-            _dynamicTensorSolution!.value = PhysicsSettings.ENABLE_DYNAMIC_TENSOR_SOLUTION;
-            _scaledSolverIteration!.value = PhysicsSettings.ENABLE_SCALED_SOLVER_ITERATION;
-            _multiJoints!.value = PersistentProfileManager.MultiJointsEnabled;
-            _jointsEnabled!.value = !PhysicsSettings.DEBUG_DISABLE_JOINTS;
             _showJoints?.SetValueWithoutNotify(JointDebugState.ShowMarkers);
-            _ignoreValueChanged = false;
 
             _isPhysicsForceShowing = Game.PhysicsForceDisplaySystem.IsDisplayed;
             _showPhysicsForce!.value = _isPhysicsForceShowing;
@@ -160,12 +117,6 @@ namespace DebugTools.Runtime.Controllers.VesselTools
         {
             Enable();
 
-            // Stats windows
-            InitThermalData();
-            InitMassStats();
-            InitManeuvers();
-            InitCoords();
-
             // Flight axes
             _showControlPoints = RootElement.Q<Toggle>("show-control-points");
             _showControlPoints.RegisterValueChangedCallback(OnShowControlPointsChanged);
@@ -179,29 +130,6 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
             _showOrbitPoints = RootElement.Q<Toggle>("show-orbit-points");
             _showOrbitPoints.RegisterValueChangedCallback(OnShowOrbitPointsChanged);
-            
-            // Control
-            _pitch = RootElement.Q<Label>("pitch");
-            _yaw = RootElement.Q<Label>("yaw");
-            _roll = RootElement.Q<Label>("roll");
-            _controlState = RootElement.Q<Label>("control-state");
-            InitSASCharts();
-
-            // Joints
-            _inertiaTensorScaling = RootElement.Q<Toggle>("inertia-tensor-scaling");
-            _inertiaTensorScaling.RegisterValueChangedCallback(OnInertiaTensorScalingChanged);
-
-            _dynamicTensorSolution = RootElement.Q<Toggle>("dynamic-tensor-solution");
-            _dynamicTensorSolution.RegisterValueChangedCallback(OnDynamicTensorSolutionChanged);
-
-            _scaledSolverIteration = RootElement.Q<Toggle>("scaled-solver-iteration");
-            _scaledSolverIteration.RegisterValueChangedCallback(OnScaledSolverIterationChanged);
-
-            _multiJoints = RootElement.Q<Toggle>("multi-joints");
-            _multiJoints.RegisterValueChangedCallback(OnMultiJointsChanged);
-
-            _jointsEnabled = RootElement.Q<Toggle>("joints-enabled");
-            _jointsEnabled.RegisterValueChangedCallback(OnJointsEnabledChanged);
 
             _showJoints = RootElement.Q<Toggle>("show-joints");
             _showJoints.SetValueWithoutNotify(JointDebugState.ShowMarkers);
@@ -225,6 +153,7 @@ namespace DebugTools.Runtime.Controllers.VesselTools
             _showPhysicsForce.RegisterValueChangedCallback(OnShowPhysicsForceChanged);
 
             _initialized = true;
+            Refresh();
         }
 
         private void OnDisable()
@@ -232,240 +161,12 @@ namespace DebugTools.Runtime.Controllers.VesselTools
             JointDebugState.Changed -= OnJointDebugStateChanged;
         }
 
-        private void InitThermalData()
-        {
-            _thermalDataToggle = RootElement.Q<Toggle>("thermal-data-toggle");
-
-            UITKHelper.LoadUxml("ThermalDataWindow", uxml =>
-            {
-                var window = UITKHelper.CreateWindowFromUxml(uxml, "ThermalDataWindow");
-                _thermalData = window.gameObject.AddComponent<ThermalDataWindowController>();
-                _thermalData.IsWindowOpen = false;
-
-                _thermalDataToggle!.RegisterValueChangedCallback(evt => _thermalData.IsWindowOpen = evt.newValue);
-
-                _thermalData.CloseButton.clicked += () =>
-                {
-                    _thermalData.IsWindowOpen = false;
-                    _thermalDataToggle!.value = false;
-                };
-            });
-        }
-
-        private void InitMassStats()
-        {
-            _massStatsToggle = RootElement.Q<Toggle>("mass-stats-toggle");
-
-            UITKHelper.LoadUxml("MassStatsWindow", uxml =>
-            {
-                var window = UITKHelper.CreateWindowFromUxml(uxml, "MassStatsWindow");
-                _massStats = window.gameObject.AddComponent<MassStatsWindowController>();
-                _massStats.IsWindowOpen = false;
-
-                _massStatsToggle!.RegisterValueChangedCallback(evt => _massStats.IsWindowOpen = evt.newValue);
-
-                _massStats.CloseButton.clicked += () =>
-                {
-                    _massStats.IsWindowOpen = false;
-                    _massStatsToggle!.value = false;
-                };
-            });
-        }
-
-        private void InitManeuvers()
-        {
-            _maneuversToggle = RootElement.Q<Toggle>("maneuvers-toggle");
-
-            UITKHelper.LoadUxml("ManeuversWindow", uxml =>
-            {
-                var window = UITKHelper.CreateWindowFromUxml(uxml, "ManeuversWindow");
-                _maneuvers = window.gameObject.AddComponent<ManeuverNodesWindowController>();
-                _maneuvers.IsWindowOpen = false;
-
-                _maneuversToggle!.RegisterValueChangedCallback(evt => _maneuvers.IsWindowOpen = evt.newValue);
-
-                _maneuvers.CloseButton.clicked += () =>
-                {
-                    _maneuvers.IsWindowOpen = false;
-                    _maneuversToggle!.value = false;
-                };
-            });
-        }
-
-        private void InitCoords()
-        {
-            _coordsToggle = RootElement.Q<Toggle>("coords-toggle");
-
-            UITKHelper.LoadUxml("VesselCoordinatesWindow", uxml =>
-            {
-                var window = UITKHelper.CreateWindowFromUxml(uxml, "VesselCoordinatesWindow");
-                _coords = window.gameObject.AddComponent<VesselCoordinatesWindowController>();
-                _coords.IsWindowOpen = false;
-
-                _coordsToggle!.RegisterValueChangedCallback(evt => _coords.IsWindowOpen = evt.newValue);
-
-                _coords.CloseButton.clicked += () =>
-                {
-                    _coords.IsWindowOpen = false;
-                    _coordsToggle!.value = false;
-                };
-            });
-        }
-
-        private void InitSASCharts()
-        {
-            _showSASCharts = RootElement.Q<Toggle>("show-sas-charts");
-
-            UITKHelper.LoadUxml("SASChartsWindow", uxml =>
-            {
-                var window = UITKHelper.CreateWindowFromUxml(uxml, "SASChartsWindow");
-                _sasCharts = window.gameObject.AddComponent<SASChartsWindowController>();
-                _sasCharts.IsWindowOpen = false;
-
-                _showSASCharts!.RegisterValueChangedCallback(evt => _sasCharts.IsWindowOpen = evt.newValue);
-
-                _sasCharts.CloseButton.clicked += () =>
-                {
-                    _sasCharts.IsWindowOpen = false;
-                    _showSASCharts!.value = false;
-                };
-            });
-        }
-
         private void LateUpdate()
         {
-            UpdateThermalData();
-            UpdateMassStats();
-            UpdateManeuvers();
-            UpdateCoords();
-            UpdateSASCharts();
-
-            if (!IsWindowOpen) return;
+            if (!IsWindowOpen)
+                return;
 
             UpdateVesselsCoM();
-
-            if (_state == GameState.FlightView || _state == GameState.Map3DView)
-            {
-                UpdateControlStateValues();
-                UpdateInputValues();
-            }
-        }
-
-        private void UpdateControlStateValues()
-        {
-            if (_view == null || _controlState == null) return;
-
-            var vessel = _view.GetActiveSimVessel();
-            _controlState.text = "Control State: ";
-            _controlState.text += vessel != null ? vessel.ControlStatus.ToString() : "";
-        }
-
-        private void UpdateInputValues()
-        {
-            if (_view == null || _pitch == null || _yaw == null || _roll == null) return;
-
-            _pitch.text = "Pitch: ";
-            _yaw.text = "Yaw: ";
-            _roll.text = "Roll: ";
-
-            var vessel = _view.GetActiveSimVessel();
-            var behavior = _view.GetBehaviorIfLoaded(vessel);
-            if (behavior != null)
-            {
-                _pitch.text += behavior.flightCtrlState.pitch.ToString("0.00");
-                _yaw.text += behavior.flightCtrlState.yaw.ToString("0.00");
-                _roll.text += behavior.flightCtrlState.roll.ToString("0.00");
-            }
-            else
-            {
-                _pitch.text += "-";
-                _yaw.text += "-";
-                _roll.text += "-";
-            }
-        }
-
-        private void UpdateThermalData()
-        {
-            if (_thermalData == null || !_thermalData.IsWindowOpen || _view == null) return;
-
-            // Update mass stats every 2 seconds
-            _thermalDataLastUpdated -= Time.unscaledDeltaTime;
-            if (_thermalDataLastUpdated >= 0f) return;
-            _thermalDataLastUpdated = 1f;
-
-            var activeVessel = _view.GetActiveSimVessel();
-            var activeBehavior = _view.GetBehaviorIfLoaded(activeVessel);
-
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (activeVessel == null || activeBehavior == null) return;
-
-            _thermalData.SyncTo(activeVessel, activeBehavior);
-        }
-
-        private void UpdateMassStats()
-        {
-            if (_massStats == null || !_massStats.IsWindowOpen || _view == null) return;
-
-            // Update mass stats every 2 seconds
-            _massStatsLastUpdated -= Time.unscaledDeltaTime;
-            if (_massStatsLastUpdated >= 0f) return;
-            _massStatsLastUpdated = 1f;
-
-            var activeVessel = _view.GetActiveSimVessel();
-            var activeBehavior = _view.GetBehaviorIfLoaded(activeVessel);
-
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (activeVessel == null || activeBehavior == null) return;
-
-            _massStats.SyncTo(activeVessel, activeBehavior);
-        }
-
-        private void UpdateManeuvers()
-        {
-            if (_maneuvers == null || !_maneuvers.IsWindowOpen || _view == null) return;
-
-            // Update maneuvers every second
-            _maneuversLastUpdated -= Time.unscaledDeltaTime;
-            if (_maneuversLastUpdated >= 0f) return;
-            _maneuversLastUpdated = 1f;
-
-            var activeVessel = _view.GetActiveSimVessel();
-
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (activeVessel == null) return;
-
-            _maneuvers.SyncTo(activeVessel);
-        }
-
-        private void UpdateCoords()
-        {
-            if (_coords == null || !_coords.IsWindowOpen || _view == null) return;
-
-            // Update maneuvers every second
-            _coordsLastUpdated -= Time.unscaledDeltaTime;
-            if (_coordsLastUpdated >= 0f) return;
-            _coordsLastUpdated = 0.5f;
-
-            var activeVessel = _view.GetActiveSimVessel();
-            var activeBehavior = _view.GetBehaviorIfLoaded(activeVessel);
-
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (activeVessel == null || activeBehavior == null) return;
-
-            _coords.SyncTo(activeVessel, activeBehavior);
-        }
-
-        private void UpdateSASCharts()
-        {
-            if (_sasCharts == null || !_sasCharts.IsWindowOpen || _view == null) return;
-
-            var activeVessel = _view.GetActiveSimVessel();
-            var activeBehavior = _view.GetBehaviorIfLoaded(activeVessel);
-
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (activeVessel == null || activeBehavior == null) return;
-
-            _sasCharts.SyncTo(activeVessel, activeBehavior);
         }
 
         private void OnShowControlPointsChanged(ChangeEvent<bool> evt)
@@ -560,7 +261,7 @@ namespace DebugTools.Runtime.Controllers.VesselTools
                 var arrow = new DebugArrow(vessel.DisplayName + "_SAS", behavior.transform, _sasActiveColor,
                     Vector3.zero, Vector3.forward, 4f, 0.15f);
                 arrow.UseWorldSpace = false;
-                arrow.SetupTracker(vessel.SimulationObject, UpdateSASVectors, true); 
+                arrow.SetupTracker(vessel.SimulationObject, UpdateSASVectors, true);
                 arrow.Tracker.RotationOffset = _navballRotation;
                 _vesselSASArrows.Add(arrow);
             }
@@ -809,84 +510,8 @@ namespace DebugTools.Runtime.Controllers.VesselTools
                 t.UpdateRotation(telemetry.OrbitMovementRotation);
         }
 
-        private void OnInertiaTensorScalingChanged(ChangeEvent<bool> evt)
-        {
-            if (!_ignoreValueChanged)
-                PhysicsSettings.ENABLE_INERTIA_TENSOR_SCALING = evt.newValue;
-        }
-
-        private void OnDynamicTensorSolutionChanged(ChangeEvent<bool> evt)
-        {
-            if (!_ignoreValueChanged)
-                PhysicsSettings.ENABLE_DYNAMIC_TENSOR_SOLUTION = evt.newValue;
-        }
-
-        private static IEnumerator CoroutineRebuildVessel(VesselBehavior vessel)
-        {
-            vessel.DebugForcePackVessel();
-            yield return null;
-            vessel.DebugForceUnpackVessel();
-        }
-
-        private void OnScaledSolverIterationChanged(ChangeEvent<bool> evt)
-        {
-            if (_ignoreValueChanged || _view == null) return;
-
-            PhysicsSettings.ENABLE_SCALED_SOLVER_ITERATION = evt.newValue;
-
-            _vessels = _view.Universe.GetAllVessels();
-            foreach (var vessel in _vessels)
-            {
-                if (Game.SpaceSimulation.TryGetViewObjectComponent<PartOwnerBehavior>(vessel.SimulationObject,
-                        out var partOwner) &&
-                    partOwner.ViewObject.Vessel.IsUnpacked())
-                {
-                    StartCoroutine(CoroutineRebuildVessel(partOwner.ViewObject.Vessel));
-                }
-            }
-        }
-
-        private void OnMultiJointsChanged(ChangeEvent<bool> evt)
-        {
-            if (_ignoreValueChanged || _view == null) return;
-
-            PersistentProfileManager.MultiJointsEnabled = evt.newValue;
-
-            _vessels = _view.Universe.GetAllVessels();
-            foreach (var vessel in _vessels)
-            {
-                if (Game.SpaceSimulation.TryGetViewObjectComponent<PartOwnerBehavior>(vessel.SimulationObject,
-                        out var partOwner) &&
-                    partOwner.ViewObject.Vessel.IsUnpacked())
-                {
-                    StartCoroutine(CoroutineRebuildVessel(partOwner.ViewObject.Vessel));
-                }
-            }
-        }
-
-        private void OnJointsEnabledChanged(ChangeEvent<bool> evt)
-        {
-            if (_ignoreValueChanged || _view == null) return;
-
-            PhysicsSettings.DEBUG_DISABLE_JOINTS = !evt.newValue;
-
-            _vessels = _view.Universe.GetAllVessels();
-            foreach (var vessel in _vessels)
-            {
-                if (Game.SpaceSimulation.TryGetViewObjectComponent<PartOwnerBehavior>(vessel.SimulationObject,
-                        out var partOwner) &&
-                    partOwner.ViewObject.Vessel.IsUnpacked())
-                {
-                    partOwner.ViewObject.Vessel.DebugForcePackVessel();
-                }
-            }
-
-            Game.UniverseView.PhysicsSpace.FloatingOrigin.IsPendingForceSnap = true;
-        }
-
         private void OnShowJointsChanged(ChangeEvent<bool> evt)
         {
-            if (_ignoreValueChanged) return;
             JointDebugState.SetShowMarkers(evt.newValue);
         }
 
@@ -957,7 +582,7 @@ namespace DebugTools.Runtime.Controllers.VesselTools
             _vessels = _view.Universe.GetAllVessels();
             foreach (var vessel in _vessels)
             {
-                var marker = new DebugSphere(vessel.Name + "_CoM", Window.transform, Color.yellow, Vector3.zero, 1f)
+                var marker = new DebugSphere(vessel.Name + "_CoM", transform, Color.yellow, Vector3.zero, 1f)
                 {
                     Enabled = _showCoMMarkers?.value ?? false
                 };

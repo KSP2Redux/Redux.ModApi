@@ -6,6 +6,7 @@ using KSP.Game;
 using KSP.Messages;
 using SpaceWarp2.API.Configuration;
 using UitkForKsp2.API;
+using UitkForKsp2.API.Order;
 using UitkForKsp2.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -91,7 +92,11 @@ namespace DebugTools.Runtime.Controllers
             Assembly
         }
 
-        internal enum ToolMode { Inline, Window }
+        internal enum ToolMode
+        {
+            Inline,
+            Window
+        }
 
         private const int SECTION_COUNT = 9;
         private const float REFRESH_INTERVAL = 0.25f;
@@ -148,6 +153,7 @@ namespace DebugTools.Runtime.Controllers
             public bool LegacyDetected;
             public bool PoppedOut;
             public bool PopoutOpen;
+            public bool RestorePopout;
             public string WindowName;
             public BaseWindowController Controller;
             public TemplateContainer Container;
@@ -205,6 +211,7 @@ namespace DebugTools.Runtime.Controllers
         private Section _section;
         private bool _isViewListingEntries;
         private bool _isBuilt;
+        private bool _hasOpened;
         private bool _isWindowOpen;
         private bool _isStatusExpanded;
         private int _overrideMask = -1;
@@ -316,26 +323,40 @@ namespace DebugTools.Runtime.Controllers
                 Mode = mode, Detachable = detachable, Collapsed = collapsed, Note = note,
                 Placement = Configuration.BindToolWindowRect(windowName)
             };
-            entry.PoppedOut = entry.Placement.Value.EndsWith("|1", StringComparison.Ordinal);
-            entry.PopoutOpen = entry.PoppedOut;
-            entry.IsActive = () => entry.Controller != null && entry.Controller.IsWindowOpen;
+            // Old |0 and |1 values retain their docked and popped-open meanings. |2 is popped-closed.
+            string host = entry.Placement.Value.Split('|')[^1];
+            entry.PoppedOut = mode == ToolMode.Window || host is "1" or "2";
+            entry.RestorePopout = mode == ToolMode.Inline && host == "1";
+            entry.IsActive = () => entry.PoppedOut && !entry.LegacyDetected
+                ? entry.PopoutOpen
+                : entry.Controller != null && entry.Controller.IsWindowOpen;
             entry.Toggle = () => OpenHostedTool(entry);
             entry.Load = open =>
             {
+                if (GetUnavailableReason(entry) != null)
+                {
+                    entry.OpenRequested = false;
+                    return;
+                }
+                if (entry.Controller != null)
+                    return;
+
                 entry.OpenRequested |= open;
-                if (entry.Loading || entry.Controller != null)
+                if (entry.Loading)
                     return;
 
                 entry.Loading = true;
                 UITKHelper.LoadUxml(windowName, asset =>
                 {
                     entry.Loading = false;
+                    bool openRequested = entry.OpenRequested && GetUnavailableReason(entry) == null;
+                    entry.OpenRequested = false;
                     TemplateContainer container = asset.Instantiate();
                     if (container.Q("title-bar") != null)
                     {
                         // Keep old controllers attached to their own renderer until their UXML is converted.
                         entry.LegacyDetected = true;
-                        if (!entry.OpenRequested)
+                        if (!openRequested)
                             return;
 
                         PanelRenderer legacy = UITKHelper.CreateWindowFromUxml(asset, windowName);
@@ -357,6 +378,8 @@ namespace DebugTools.Runtime.Controllers
                         return;
                     }
 
+                    // A campaign reload destroys the old controller, and its container would stay in the slot or pop-out.
+                    entry.Container?.RemoveFromHierarchy();
                     entry.Container = container;
                     container.AddToClassList("dt-tool-template");
                     var toolObject = new GameObject(windowName);
@@ -367,7 +390,7 @@ namespace DebugTools.Runtime.Controllers
                     toolObject.SetActive(true);
                     container.Query<TextField>().ForEach(field => field.DisableGameInputOnFocus());
                     entry.Controller.CatchUpWithLoadedGame();
-                    if (entry.Mode == ToolMode.Window || entry.PoppedOut)
+                    if (entry.PoppedOut && entry.PopoutOpen)
                     {
                         ShowPopout(entry);
                     }
@@ -399,7 +422,6 @@ namespace DebugTools.Runtime.Controllers
 
             if (entry.Mode == ToolMode.Inline && !entry.PoppedOut)
             {
-                entry.OpenRequested = true;
                 SelectSection(entry.Section);
                 entry.SectionGroup.value = true;
                 entry.ToolGroup.value = true;
@@ -409,17 +431,29 @@ namespace DebugTools.Runtime.Controllers
                 }
                 _content.schedule.Execute(() => _content.ScrollTo(entry.ToolGroup));
             }
-            else if (entry.Controller == null)
-            {
-                entry.Load(true);
-            }
             else
             {
+                if (!entry.PopoutOpen && GetUnavailableReason(entry) != null)
+                    return;
+
+                entry.PoppedOut = true;
                 entry.PopoutOpen = !entry.PopoutOpen;
                 if (entry.PopoutOpen)
                 {
-                    ShowPopout(entry);
+                    if (entry.Controller == null)
+                    {
+                        entry.Load(true);
+                    }
+                    else
+                    {
+                        ShowPopout(entry);
+                    }
                 }
+                else
+                {
+                    entry.OpenRequested = false;
+                }
+                SaveToolPlacement(entry);
                 RefreshToolVisibility();
             }
         }
@@ -456,7 +490,7 @@ namespace DebugTools.Runtime.Controllers
                 entry.Shell.Add(new WindowResizeHandle { TargetName = "tool-shell", MinWidth = 320, MinHeight = 160 });
                 entry.Renderer = Window.Create(new WindowOptions
                 {
-                    WindowId = $"DebugTools_{entry.WindowName}", IsHidingEnabled = false,
+                    WindowId = $"DebugTools_{entry.WindowName}", IsHidingEnabled = true,
                     MoveOptions = new MoveOptions { IsMovingEnabled = true, CheckScreenBounds = true, HandleElementName = "header" },
                     ResizeOptions = new ResizeOptions { IsResizingEnabled = false }
                 }, entry.Shell);
@@ -481,10 +515,15 @@ namespace DebugTools.Runtime.Controllers
             entry.PoppedOut = false;
             entry.PopoutOpen = false;
             SaveToolPlacement(entry);
+            if (!_isWindowOpen)
+            {
+                IsWindowOpen = true;
+            }
             SelectSection(entry.Section);
             entry.SectionGroup.value = true;
             entry.ToolGroup.value = true;
             entry.Slot.Add(entry.Container);
+            _content.schedule.Execute(() => _content.ScrollTo(entry.ToolGroup));
             RefreshToolVisibility();
         }
 
@@ -496,7 +535,12 @@ namespace DebugTools.Runtime.Controllers
             {
                 rect = entry.Placement.Value.Split('|')[0];
             }
-            entry.Placement.Value = $"{rect}|{(entry.PoppedOut ? 1 : 0)}";
+            int host = !entry.PoppedOut ? 0 : entry.PopoutOpen ? 1 : 2;
+            string value = $"{rect}|{host}";
+            if (entry.Placement.Value != value)
+            {
+                entry.Placement.Value = value;
+            }
         }
 
         private void RefreshToolVisibility()
@@ -510,7 +554,8 @@ namespace DebugTools.Runtime.Controllers
                     continue;
 
                 string reason = GetUnavailableReason(entry);
-                bool dockedShown = _isWindowOpen && string.IsNullOrEmpty(_search.value) && entry.Section == _section &&
+                bool dockedShown = _isWindowOpen && _rootElement.resolvedStyle.visibility == Visibility.Visible &&
+                    string.IsNullOrEmpty(_search.value) && entry.Section == _section &&
                     entry.SectionGroup is { value: true } && entry.ToolGroup is { value: true };
                 bool shown = entry.PoppedOut ? entry.PopoutOpen : dockedShown;
                 if (entry.ToolReason != null)
@@ -524,11 +569,11 @@ namespace DebugTools.Runtime.Controllers
                 }
                 if (entry.DetachButton != null)
                 {
-                    bool isPopoutShown = entry.PoppedOut && entry.PopoutOpen;
                     entry.DetachButton.style.display = entry.Container != null ? DisplayStyle.Flex : DisplayStyle.None;
-                    entry.DetachButton.text = isPopoutShown ? "Dock" : "Pop out";
+                    entry.DetachButton.text = entry.PoppedOut ? "Dock" : "Pop out";
                 }
-                if (entry.Controller == null && shown && reason == null && !entry.LegacyDetected)
+                // A saved pop-out cannot materialize from a scene message while the hub is closed.
+                if (entry.Controller == null && shown && reason == null && _isWindowOpen && !entry.LegacyDetected)
                 {
                     entry.Load(false);
                 }
@@ -704,6 +749,15 @@ namespace DebugTools.Runtime.Controllers
                 _messageCenter.PersistentSubscribe<GameStateEnteredMessage>(OnGameStateEntered);
             }
 
+            if (!_hasOpened)
+            {
+                _hasOpened = true;
+                foreach (HubEntry entry in _entries)
+                {
+                    entry.PopoutOpen = entry.RestorePopout;
+                    entry.RestorePopout = false;
+                }
+            }
             _overrideMask = -1;
             _nextRefresh = 0f;
         }
@@ -803,8 +857,7 @@ namespace DebugTools.Runtime.Controllers
                 var groupElement = new Foldout { text = group, value = true };
                 groupElement.AddToClassList("kui-group");
                 groupElement.RegisterValueChangedCallback(_ => RefreshToolVisibility());
-                // The rows go into a plain element of their own. The two column rule matches its children, and the
-                // content container of a Foldout is not a parent that rule can see.
+                // A plain wrapper owns the two-column layout inside the Foldout content container.
                 VisualElement rowParent = groupElement;
                 if (group == "Game rules")
                 {
@@ -836,13 +889,13 @@ namespace DebugTools.Runtime.Controllers
                     entry.ToolGroup.RegisterValueChangedCallback(_ => RefreshToolVisibility());
                     if (entry.Detachable)
                     {
-                        // Pops the tool out, or docks it while its pop-out is open. It shows once the tool exists.
+                        // Change the host, independently of whether the pop-out is open. Shown once the tool exists.
                         entry.DetachButton = new OabButton(() =>
                         {
                             if (entry.Container == null)
                                 return;
 
-                            if (entry.PoppedOut && entry.PopoutOpen)
+                            if (entry.PoppedOut)
                             {
                                 DockTool(entry);
                             }
@@ -867,7 +920,7 @@ namespace DebugTools.Runtime.Controllers
                     {
                         entry.Slot.Add(entry.Container);
                     }
-                    // Legacy tools remain explicit Open rows until their slice converts the UXML.
+                    // Keep an Open row until loading identifies the content or the legacy window.
                     entry.SectionView = BuildRow(entry, false);
                     entry.ToolGroup.Add(entry.SectionView.Row);
                     continue;
@@ -933,6 +986,7 @@ namespace DebugTools.Runtime.Controllers
             else
             {
                 view.Button = new OabButton(() => ActivateEntry(entry)) { text = "Open" };
+                view.Button.AddToClassList("kui-button");
                 view.Button.AddToClassList("dt-button");
                 view.Button.AddToClassList("dt-row__button");
                 view.Row.Add(view.Button);
@@ -973,6 +1027,26 @@ namespace DebugTools.Runtime.Controllers
             }
 
             _nextRefresh = 0f;
+        }
+
+        private void OpenSearchResult(HubEntry entry)
+        {
+            if (entry.IsSwitch)
+            {
+                ActivateEntry(entry);
+                return;
+            }
+            if (entry.IsActive())
+            {
+                if (entry.Shell != null)
+                {
+                    OrderManager.BringToFront(entry.Renderer);
+                    entry.Shell.focusable = true;
+                    entry.Shell.Focus();
+                }
+                return;
+            }
+            ActivateEntry(entry);
         }
 
         private void ShowSearchResults()
@@ -1046,7 +1120,7 @@ namespace DebugTools.Runtime.Controllers
                     break;
                 case KeyCode.Return or KeyCode.KeypadEnter when _firstSearchResult != null &&
                     !string.IsNullOrWhiteSpace(_search.value):
-                    ActivateEntry(_firstSearchResult);
+                    OpenSearchResult(_firstSearchResult);
                     evt.StopPropagation();
                     break;
             }
@@ -1070,7 +1144,8 @@ namespace DebugTools.Runtime.Controllers
             {
                 if (entry.Load != null && entry.Mode == ToolMode.Inline && entry.SectionView.Row != null)
                 {
-                    entry.SectionView.Row.style.display = entry.Container == null ? DisplayStyle.Flex : DisplayStyle.None;
+                    entry.SectionView.Row.style.display = entry.Container == null || entry.PoppedOut
+                        ? DisplayStyle.Flex : DisplayStyle.None;
                 }
                 string reason = GetUnavailableReason(entry);
                 bool isReasonShown = reason != null && reason != campaignReason;
@@ -1176,7 +1251,7 @@ namespace DebugTools.Runtime.Controllers
             int openWindows = 0;
             foreach (HubEntry entry in _entries)
             {
-                if (!entry.IsSwitch && entry.IsActive())
+                if (!entry.IsSwitch && (entry.Load == null || entry.LegacyDetected || entry.PoppedOut) && entry.IsActive())
                 {
                     openWindows++;
                 }
@@ -1324,6 +1399,7 @@ namespace DebugTools.Runtime.Controllers
                 row.Add(label);
                 var revert = new OabButton { text = "Revert" };
                 revert.clicked += () => OnRevertClicked(revert, entry);
+                revert.AddToClassList("kui-button");
                 revert.AddToClassList("dt-button");
                 row.Add(revert);
                 _statusList.Add(row);
@@ -1456,7 +1532,12 @@ namespace DebugTools.Runtime.Controllers
         #region Window position
 
         private void RestoreWindowRect() => RestoreRect(_rootElement, Configuration.HubWindowRect?.Value,
-            size => new Vector2((ReferenceResolution.Width - size.x) / 2, (ReferenceResolution.Height - size.y) / 2));
+            size =>
+            {
+                Vector2 panelSize = _rootElement.panel?.visualTree?.contentRect.size ??
+                    new Vector2(ReferenceResolution.Width, ReferenceResolution.Height);
+                return (panelSize - size) / 2;
+            });
 
         private static void RestoreRect(VisualElement root, string saved, Func<Vector2, Vector2> fallback)
         {
@@ -1485,7 +1566,8 @@ namespace DebugTools.Runtime.Controllers
         private void SaveWindowRect()
         {
             string value = FormatWindowRect(_rootElement);
-            if (Configuration.HubWindowRect != null && !string.IsNullOrEmpty(value))
+            if (Configuration.HubWindowRect != null && !string.IsNullOrEmpty(value) &&
+                Configuration.HubWindowRect.Value != value)
             {
                 Configuration.HubWindowRect.Value = value;
             }
@@ -1504,10 +1586,8 @@ namespace DebugTools.Runtime.Controllers
             if ((float.IsNaN(layout.width) || float.IsInfinity(layout.width)) || layout.width <= 0)
                 return string.Empty;
 
-            return root.style.width.keyword == StyleKeyword.Undefined
-                ? string.Format(CultureInfo.InvariantCulture, "{0:0},{1:0},{2:0},{3:0}", layout.x, layout.y,
-                    layout.width, layout.height)
-                : string.Format(CultureInfo.InvariantCulture, "{0:0},{1:0}", layout.x, layout.y);
+            return string.Format(CultureInfo.InvariantCulture, "{0:0},{1:0},{2:0},{3:0}", layout.x, layout.y,
+                layout.width, layout.height);
         }
 
         /// <summary>

@@ -5,19 +5,19 @@
         <ui:Label text="Go to" class="kui-section" />
         <ui:VisualElement name="actions" class="dt-quick-grid">
             <ui:VisualElement class="dt-quick-row">
-                <UitkForKsp2.Controls.OabButton text="Ship in VAB" display-tooltip-when-elided="true" name="ship-in-vab" class="kui-button dt-quick-button" />
-                <UitkForKsp2.Controls.OabButton text="Ship on Launchpad" display-tooltip-when-elided="true" name="ship-on-launchpad" class="kui-button dt-quick-button" />
-                <UitkForKsp2.Controls.OabButton text="Ship in Orbit" display-tooltip-when-elided="true" name="ship-in-orbit" class="kui-button dt-quick-button" />
+                <UitkForKsp2.Controls.OabButton text="Ship in VAB" tooltip="Ship in VAB" display-tooltip-when-elided="true" name="ship-in-vab" class="kui-button dt-quick-button" />
+                <UitkForKsp2.Controls.OabButton text="Ship on Launchpad" tooltip="Ship on Launchpad" display-tooltip-when-elided="true" name="ship-on-launchpad" class="kui-button dt-quick-button" />
+                <UitkForKsp2.Controls.OabButton text="Ship in Orbit" tooltip="Ship in Orbit" display-tooltip-when-elided="true" name="ship-in-orbit" class="kui-button dt-quick-button" />
             </ui:VisualElement>
             <ui:VisualElement class="dt-quick-row">
-                <UitkForKsp2.Controls.OabButton text="Plane in VAB" display-tooltip-when-elided="true" name="plane-in-vab" class="kui-button dt-quick-button" />
-                <UitkForKsp2.Controls.OabButton text="Plane on Runway" display-tooltip-when-elided="true" name="plane-on-runway" class="kui-button dt-quick-button" />
-                <UitkForKsp2.Controls.OabButton text="VAB Surface" display-tooltip-when-elided="true" name="vab-surface" class="kui-button dt-quick-button" />
+                <UitkForKsp2.Controls.OabButton text="Plane in VAB" tooltip="Plane in VAB" display-tooltip-when-elided="true" name="plane-in-vab" class="kui-button dt-quick-button" />
+                <UitkForKsp2.Controls.OabButton text="Plane on Runway" tooltip="Plane on Runway" display-tooltip-when-elided="true" name="plane-on-runway" class="kui-button dt-quick-button" />
+                <UitkForKsp2.Controls.OabButton text="VAB Surface" tooltip="VAB Surface" display-tooltip-when-elided="true" name="vab-surface" class="kui-button dt-quick-button" />
             </ui:VisualElement>
             <ui:VisualElement class="dt-quick-row">
-                <UitkForKsp2.Controls.OabButton text="VAB Orbit" display-tooltip-when-elided="true" name="vab-orbit" class="kui-button dt-quick-button" />
-                <UitkForKsp2.Controls.OabButton text="BAE Surface" display-tooltip-when-elided="true" name="bae-surface" class="kui-button dt-quick-button" />
-                <UitkForKsp2.Controls.OabButton text="BAE Orbit" display-tooltip-when-elided="true" name="bae-orbit" class="kui-button dt-quick-button" />
+                <UitkForKsp2.Controls.OabButton text="VAB Orbit" tooltip="VAB Orbit" display-tooltip-when-elided="true" name="vab-orbit" class="kui-button dt-quick-button" />
+                <UitkForKsp2.Controls.OabButton text="BAE Surface" tooltip="BAE Surface" display-tooltip-when-elided="true" name="bae-surface" class="kui-button dt-quick-button" />
+                <UitkForKsp2.Controls.OabButton text="BAE Orbit" tooltip="BAE Orbit" display-tooltip-when-elided="true" name="bae-orbit" class="kui-button dt-quick-button" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

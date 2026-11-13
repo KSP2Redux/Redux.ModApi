@@ -47,7 +47,8 @@ namespace DebugTools.Runtime.Controllers
         
         private void Update()
         {
-            if (!IsWindowOpen) return;
+            if (!IsWindowOpen)
+                return;
             
             _roster = Game.SessionManager.KerbalRosterManager;
             
@@ -74,6 +75,8 @@ namespace DebugTools.Runtime.Controllers
             _addXKerbals.clicked += AddXKerbals;
             
             _kerbals = RootElement.Q<ScrollView>("roster");
+            _kerbals.Clear();
+            _rosterInitialized = false;
         }
 
         private void RefreshRoster()
@@ -89,7 +92,7 @@ namespace DebugTools.Runtime.Controllers
             
             foreach (var kerbal in _roster.GetAllKerbals())
             {
-                row = new KerbalRosterRow();
+                row = new KerbalRosterRow(false);
                 row.KerbalName.text = kerbal.Attributes.GetFullName();
                 row.SimObject.text = kerbal.Location.SimObjectId.Guid.ToString().Split("-")[0];
                 row.Seat.text = kerbal.Location.PositionIndex.ToString();

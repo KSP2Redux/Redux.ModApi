@@ -31,7 +31,9 @@ namespace DebugTools.Runtime.Controllers
         /// </summary>
         public bool IsWindowOpen
         {
-            get => _isWindowOpen;
+            // HideManipulator uses visibility, independently of the requested display state.
+            get => _isWindowOpen && RootElement != null &&
+                RootElement.resolvedStyle.visibility == Visibility.Visible;
             set
             {
                 _isWindowOpen = value;

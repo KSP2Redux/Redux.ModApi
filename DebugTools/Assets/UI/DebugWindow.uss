@@ -266,11 +266,18 @@
 .dt-row__title-line {
     flex-direction: row;
     align-items: center;
+    min-width: 0;
 }
 
+/* The two-column switch grid is only 200px per column at the hub's minimum width, so a long name ends in dots. */
 .dt-row__name {
+    flex-shrink: 1;
+    min-width: 0;
     font-size: 14px;
     color: rgb(214, 219, 239);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .dt-row__note {
@@ -323,34 +330,129 @@
     white-space: normal;
     color: rgb(108, 116, 148);
 }
-.dt-search { height: 24px; min-height: 24px; margin-bottom: 2px; }
-.dt-strip__header { min-height: 24px; }
-.dt-pane__header { flex-direction: row; align-items: center; min-height: 24px; margin-bottom: 2px; }
-.dt-pane__purpose { margin-left: 8px; margin-top: 0; flex-shrink: 1; white-space: nowrap; overflow: hidden; }
-.dt-pane__title { flex-shrink: 0; }
+.dt-search {
+    height: 24px;
+    min-height: 24px;
+    margin-bottom: 2px;
+}
+.dt-strip__header {
+    min-height: 24px;
+}
+.dt-pane__header {
+    flex-direction: row;
+    align-items: center;
+    min-height: 24px;
+    margin-bottom: 2px;
+}
+.dt-pane__purpose {
+    margin-left: 8px;
+    margin-top: 0;
+    flex-shrink: 1;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.dt-pane__title {
+    flex-shrink: 0;
+}
 /* The notice sits in the header line after the purpose. An absolute notice was painted over by the pane content. */
-.dt-pane__notice { flex-shrink: 0; margin: 0 0 0 8px; padding: 2px 6px; white-space: nowrap; }
-.dt-rail__label { letter-spacing: 0; }
-.dt-grid-2 { flex-direction: row; flex-wrap: wrap; }
-.dt-grid-2 > .dt-row { width: 50%; }
-.dt-tool { flex-grow: 1; min-width: 0; }
-.dt-tool__bar { flex-direction: row; align-items: center; height: 28px; }
-.dt-tool__reason { color: rgb(240, 160, 75); font-size: 12px; }
+.dt-pane__notice {
+    flex-shrink: 0;
+    margin: 0 0 0 8px;
+    padding: 2px 6px;
+    white-space: nowrap;
+}
+.dt-rail__label {
+    letter-spacing: 0;
+}
+.dt-grid-2 {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+/* Two columns when the pane is wide enough for two 260px rows, one column at the hub's minimum width. The last row of
+   an odd count takes the full width, so its switch lines up with the right column. */
+.dt-grid-2 > .dt-row {
+    flex-grow: 1;
+    flex-basis: 260px;
+}
+.dt-tool {
+    flex-grow: 1;
+    min-width: 0;
+}
+.dt-tool__bar {
+    flex-direction: row;
+    align-items: center;
+    height: 28px;
+}
+.dt-tool__reason {
+    color: rgb(240, 160, 75);
+    font-size: 12px;
+}
 /* A pop-out is as large as its tool needs. Its size is set only after a manual resize, and is then remembered. The
    header dashes take what is left over and add nothing to the width the content asks for. */
-.dt-popout { min-width: 320px; min-height: 120px; max-width: 90%; max-height: 90%; }
-.dt-popout > .oab-window-content { flex-grow: 1; }
-.dt-popout .oab-window-header-dashes { flex-basis: 0; min-width: 0; }
-.dt-detach { align-self: flex-end; margin-bottom: 2px; }
+.dt-popout {
+    min-width: 500px;
+    min-height: 120px;
+    max-width: 90%;
+    max-height: 90%;
+}
+.dt-popout > .oab-window-content {
+    flex-grow: 1;
+}
+.dt-popout .oab-window-header-dashes {
+    flex-basis: 0;
+    min-width: 0;
+}
+.dt-detach {
+    align-self: flex-end;
+    margin-bottom: 2px;
+    width: 72px;
+}
 /* The pop-out content sits in one notched InvertedCornerBox, built by the hub in code. */
-.dt-popout-frame { flex-grow: 1; min-height: 0; padding: 6px; }
-.dt-popout-frame > .kui-button { align-self: flex-end; margin-bottom: 4px; }
-.dt-tool-slot { min-width: 0; }
-.dt-tool-template { flex-grow: 1; flex-shrink: 1; min-width: 0; }
-.dt-table { flex-grow: 1; }
-.dt-table__header, .dt-table__row { flex-direction: row; height: 20px; font-size: 12px; }
-.dt-table__header { background-color: rgb(46, 53, 64); }
-.dt-table__cell { flex-grow: 1; flex-basis: 0; min-width: 0; font-size: 12px; overflow: hidden; }
+.dt-popout-frame {
+    flex-grow: 1;
+    min-height: 0;
+    padding: 6px;
+}
+.dt-popout-frame > .kui-button {
+    align-self: flex-end;
+    margin-bottom: 4px;
+}
+.dt-tool-slot {
+    min-width: 0;
+}
+.dt-tool-template {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+.dt-table {
+    flex-grow: 1;
+}
+.dt-table__header, .dt-table__row {
+    flex-direction: row;
+    height: 20px;
+    font-size: 12px;
+}
+.dt-table__header {
+    background-color: rgb(46, 53, 64);
+}
+.dt-table__cell {
+    flex-grow: 1;
+    flex-basis: 0;
+    min-width: 0;
+    font-size: 12px;
+    overflow: hidden;
+}
 
-.dt-sample-quick { flex-direction: row; flex-wrap: wrap; }
-.dt-sample-quick-button { width: 32%; margin-right: 1%; margin-bottom: 4px; }
+
+/* Design-time Quick Switch sample in DebugWindow.uxml. */
+.dt-sample-quick {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.dt-sample-quick-button {
+    width: 32%;
+    margin-right: 1%;
+    margin-bottom: 4px;
+}

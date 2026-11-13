@@ -10,8 +10,6 @@ namespace DebugTools.Runtime.Controllers
         private Label? _agencyName;
         private Label? _scienceState;
 
-        private Toggle? _unlockAllParts;
-
         private TextField? _addSciencePointsField;
 
         private DropdownField? _availableNodes;
@@ -29,11 +27,8 @@ namespace DebugTools.Runtime.Controllers
             _agencyName = RootElement.Q<Label>("agency-name");
             _scienceState = RootElement.Q<Label>("science-state");
 
-            _unlockAllParts = RootElement.Q<Toggle>("unlock-all-parts");
-            _unlockAllParts.value = Game.CheatSystem.Get(CheatSystemItemID.UnlockAllParts);
-            _unlockAllParts.RegisterValueChangedCallback(UnlockAllPartsChanged);
-
             _addSciencePointsField = RootElement.Q<TextField>("add-points-field");
+            _addSciencePointsField.value = string.Empty;
             var addPoints = RootElement.Q<Button>("add-points");
             addPoints.clicked += AddSciencePoints;
 
@@ -43,15 +38,14 @@ namespace DebugTools.Runtime.Controllers
 
             _loadedNodes = RootElement.Q<ScrollView>("loaded-nodes");
             _unlockedNodes = RootElement.Q<ScrollView>("unlocked-nodes");
+            _loadedNodes.Clear();
+            _unlockedNodes.Clear();
         }
 
         private void LateUpdate()
         {
             if (!IsWindowOpen) return;
 
-            if (_unlockAllParts != null)
-                _unlockAllParts.value = Game.CheatSystem.Get(CheatSystemItemID.UnlockAllParts);
-            
             _lastUpdate -= Time.unscaledDeltaTime;
             if (_lastUpdate >= 0f) return;
             _lastUpdate = UpdateSeconds;
@@ -59,12 +53,6 @@ namespace DebugTools.Runtime.Controllers
             UpdateScienceMetadata();
             UpdateTechNodeDropdown();
             UpdateLoadedTechNodesView();
-            UpdateUnlockedTechNodesView();
-        }
-
-        private void UnlockAllPartsChanged(ChangeEvent<bool> evt)
-        {
-            Game.CheatSystem.Set(CheatSystemItemID.UnlockAllParts, evt.newValue);
             UpdateUnlockedTechNodesView();
         }
 
@@ -81,10 +69,8 @@ namespace DebugTools.Runtime.Controllers
         {
             var sessionManager = Game.SessionManager;
 
-            _agencyName!.text = "Agency Name: <b>" + sessionManager.GetMyAgencyName() + "</b>";
-
-            var text = "Available: <b>" + sessionManager.GetMyAgencyAvailableSciencePoints() + "</b>";
-            _scienceState!.text = text;
+            _agencyName!.text = sessionManager.GetMyAgencyName();
+            _scienceState!.text = sessionManager.GetMyAgencyAvailableSciencePoints().ToString();
         }
 
         private void UpdateTechNodeDropdown()
@@ -141,6 +127,8 @@ namespace DebugTools.Runtime.Controllers
             foreach (var nodeData in Game.ScienceManager.TechNodeDataStore.AvailableData.Values)
             {
                 var label = new Label { text = nodeData.ID };
+                label.AddToClassList("dt-table__row");
+                label.AddToClassList("dt-table__cell");
                 _loadedNodes!.Add(label);
             }
         }
@@ -153,6 +141,8 @@ namespace DebugTools.Runtime.Controllers
             foreach (var unlockedTechNode in agencyEntry.UnlockedTechNodes)
             {
                 var label = new Label { text = unlockedTechNode };
+                label.AddToClassList("dt-table__row");
+                label.AddToClassList("dt-table__cell");
                 _unlockedNodes!.Add(label);
             }
         }

@@ -18,7 +18,22 @@ namespace DebugTools.Utils
             GameManager.Instance.Assets.Load($"Assets/Modules/DebugTools/Assets/UI/{name}.uxml", callback);
         }
 
-        public static PanelRenderer CreateWindowFromUxml(VisualTreeAsset uxml, string name)
+        /// <summary>
+        /// Empties the text of every label that is a direct child of a table row. A new row starts with the sample or
+        /// header text of its row class, which would otherwise show in cells that the controller never fills.
+        /// </summary>
+        /// <param name="row">Table row</param>
+        public static void ClearLabels(VisualElement row)
+        {
+            foreach (var child in row.hierarchy.Children())
+            {
+                if (child is Label label)
+                    label.text = string.Empty;
+            }
+        }
+
+        public static PanelRenderer CreateWindowFromUxml(VisualTreeAsset uxml, string name, float minWidth = MinResizableWindowWidth,
+            float minHeight = MinResizableWindowHeight)
         {
             // Create the window options object
             var windowOptions = new WindowOptions
@@ -35,8 +50,8 @@ namespace DebugTools.Utils
                 {
                     IsResizingEnabled = true,
                     CheckScreenBounds = true,
-                    MinWidth = name == "DebugWindow" ? 560f : MinResizableWindowWidth,
-                    MinHeight = name == "DebugWindow" ? 360f : MinResizableWindowHeight
+                    MinWidth = minWidth,
+                    MinHeight = minHeight
                 }
             };
 

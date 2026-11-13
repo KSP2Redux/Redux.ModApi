@@ -1,52 +1,169 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/VesselCoordinatesWindow.uss?fileID=7433441132597879392&amp;guid=dacfacb2c23db1148ba02a8f469c3fd3&amp;type=3#VesselCoordinatesWindow" />
-    <ui:VisualElement name="root" class="root">
-        <ui:VisualElement name="title-bar">
-            <ui:Label text="Vessel Coordinates" />
-            <ui:Button text="×" name="close-button" />
-        </ui:VisualElement>
-        <ui:Label tabindex="-1" text="Coordinates ------------------------------------------------------------------------------------------" display-tooltip-when-elided="true" style="overflow: hidden; -unity-font-style: normal; color: rgb(154, 158, 167);" />
-        <ui:VisualElement name="coordinates" class="row">
-            <ui:Label tabindex="-1" text="Latitude: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="latitude" class="label-3" />
-            <ui:Label tabindex="-1" text="Longitude: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="longitude" class="label-3" />
-            <ui:Label tabindex="-1" text="Heading: &lt;b&gt;999.999999" display-tooltip-when-elided="true" name="heading" class="label-3" />
-            <ui:Label tabindex="-1" text="Zenith: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="zenith" class="label-3" />
-            <ui:Label tabindex="-1" text="Pitch: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="horizon-pitch" class="label-3" />
-        </ui:VisualElement>
-        <ui:Label tabindex="-1" text="Situation -----------------------------------------------------------------------------------------" display-tooltip-when-elided="true" style="overflow: hidden; -unity-font-style: normal; color: rgb(154, 158, 167);" />
-        <ui:VisualElement name="situation" class="row">
-            <ui:Label tabindex="-1" text="Body: &lt;b&gt;Kerbin" display-tooltip-when-elided="true" name="celestial-body" class="label-3" />
-            <ui:Label tabindex="-1" text="Origin: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="origin-distance" class="label-3" />
-            <ui:Label tabindex="-1" text="Situation: &lt;b&gt;Flying" display-tooltip-when-elided="true" name="situation" class="label-3" />
-            <ui:Label tabindex="-1" text="Landed: &lt;b&gt;false" display-tooltip-when-elided="true" name="landed" class="label-3" />
-            <ui:Label tabindex="-1" text="Splashed: &lt;b&gt;false" display-tooltip-when-elided="true" name="splashed" class="label-3" />
-        </ui:VisualElement>
-        <ui:Label tabindex="-1" text="Altitude ---------------------------------------------------------------------------------------" display-tooltip-when-elided="true" style="overflow: hidden; -unity-font-style: normal; color: rgb(154, 158, 167);" />
-        <ui:VisualElement name="altitude" class="row">
-            <ui:Label tabindex="-1" text="Radius: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="alt-radius" class="label-3" />
-            <ui:Label tabindex="-1" text="Terrain: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="alt-terrain" class="label-3" />
-            <ui:Label tabindex="-1" text="Sea Level: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="alt-sl" class="label-3" />
-            <ui:Label tabindex="-1" text="Scenery: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="alt-scenery" class="label-3" />
-            <ui:Label tabindex="-1" text="Surface: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="alt-surface" class="label-3" />
-        </ui:VisualElement>
-        <ui:Label tabindex="-1" text="Orbit ---------------------------------------------------------------------------------------" display-tooltip-when-elided="true" style="overflow: hidden; -unity-font-style: normal; color: rgb(154, 158, 167);" />
-        <ui:VisualElement name="orbit" class="row">
-            <ui:Label tabindex="-1" text="Semi Major Axis: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="semi-major-axis" style="overflow: hidden; text-overflow: ellipsis; width: 42%; margin-right: 3%;" />
-            <ui:Label tabindex="-1" text="Eccentricity: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="eccentricity" class="label-3" style="width: 45%;" />
-            <ui:Label tabindex="-1" text="Inclination: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="inclination" class="label-3" style="width: 42%; margin-right: 3%;" />
-            <ui:Label tabindex="-1" text="Long. Ascending Node: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="long-asc-node" class="label-3" style="width: 45%;" />
-            <ui:Label tabindex="-1" text="Arg. Periapsis: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="periapsis" class="label-3" style="width: 42%; margin-right: 3%;" />
-            <ui:Label tabindex="-1" text="Epoch: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="epoch" class="label-3" style="width: 28%;" />
-            <ui:Label tabindex="-1" text="Mean Anomaly at Epoch: &lt;b&gt;99.999999" display-tooltip-when-elided="true" name="epoch-anomaly" />
-        </ui:VisualElement>
-        <ui:Label tabindex="-1" text="Hand of Kraken ---------------------------------------------------------------------------------------" display-tooltip-when-elided="true" style="overflow: hidden; -unity-font-style: normal; color: rgb(154, 158, 167);" />
-        <ui:VisualElement name="hand-of-kraken" class="row" style="justify-content: flex-start;">
-            <ui:Toggle label="Hand of Kraken Enabled" name="toggle-hok" class="toggle" style="width: 42%; margin-right: 3%;" />
-            <ui:Label tabindex="-1" text="Physics Mode: &lt;b&gt;RigidBody" display-tooltip-when-elided="true" name="hok-phys-mode" style="width: 35%; margin-right: 3%;" />
-            <ui:Label tabindex="-1" text="Correcting Orbit: &lt;b&gt;false&lt;/b&gt;" display-tooltip-when-elided="true" name="hok-correcting" style="width: 42%; margin-right: 3%;" />
-            <ui:Label tabindex="-1" text="Got Expected Orbit: &lt;b&gt;false" display-tooltip-when-elided="true" name="hok-got-pos" style="width: 40%; margin-right: 3%;" />
-            <ui:Label tabindex="-1" text="Under Acceleration: &lt;b&gt;false" display-tooltip-when-elided="true" name="hok-under-accel" style="width: 42%; margin-right: 3%;" />
-            <ui:Label tabindex="-1" text="Orbit Standoff: &lt;b&gt;false" display-tooltip-when-elided="true" name="hok-orbit-standoff" style="width: 50%;" />
-        </ui:VisualElement>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/DebugWindow.uss?fileID=7433441132597879392&amp;guid=3b02df7e5905e8746a5ed673f30eb0be&amp;type=3#DebugWindow"/>
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/VesselCoordinatesWindow.uss?fileID=7433441132597879392&amp;guid=dacfacb2c23db1148ba02a8f469c3fd3&amp;type=3#VesselCoordinatesWindow"/>
+    <ui:VisualElement name="root" class="dt-tool VesselCoordinatesWindow">
+        <UitkForKsp2.Controls.InvertedCornerBox border-thickness="1" notch-size="5" border-color="#747680FF" background-color="#1B1E24FF" class="oab-window-body kui-panel">
+            <ui:VisualElement class="kui-section">
+                <ui:Label text="//" class="kui-section__slashes"/>
+                <ui:Label text="Coordinates" class="kui-section__title"/>
+            </ui:VisualElement>
+            <ui:VisualElement class="dt-grid-2 state-grid">
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Latitude" class="kui-stat__name"/>
+                    <ui:Label name="latitude" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Longitude" class="kui-stat__name"/>
+                    <ui:Label name="longitude" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Heading" class="kui-stat__name"/>
+                    <ui:Label name="heading" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Zenith" class="kui-stat__name"/>
+                    <ui:Label name="zenith" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Pitch" class="kui-stat__name"/>
+                    <ui:Label name="horizon-pitch" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="kui-section">
+                <ui:Label text="//" class="kui-section__slashes"/>
+                <ui:Label text="Situation" class="kui-section__title"/>
+            </ui:VisualElement>
+            <ui:VisualElement class="dt-grid-2 state-grid">
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Body" class="kui-stat__name"/>
+                    <ui:Label name="celestial-body" text="Kerbin" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Origin" class="kui-stat__name"/>
+                    <ui:Label name="origin-distance" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Situation" class="kui-stat__name"/>
+                    <ui:Label name="situation" text="Flying" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Landed" class="kui-stat__name"/>
+                    <ui:Label name="landed" text="false" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Splashed" class="kui-stat__name"/>
+                    <ui:Label name="splashed" text="false" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="kui-section">
+                <ui:Label text="//" class="kui-section__slashes"/>
+                <ui:Label text="Altitude" class="kui-section__title"/>
+            </ui:VisualElement>
+            <ui:VisualElement class="dt-grid-2 state-grid">
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Radius" class="kui-stat__name"/>
+                    <ui:Label name="alt-radius" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Terrain" class="kui-stat__name"/>
+                    <ui:Label name="alt-terrain" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Sea Level" class="kui-stat__name"/>
+                    <ui:Label name="alt-sl" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Scenery" class="kui-stat__name"/>
+                    <ui:Label name="alt-scenery" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Surface" class="kui-stat__name"/>
+                    <ui:Label name="alt-surface" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="kui-section">
+                <ui:Label text="//" class="kui-section__slashes"/>
+                <ui:Label text="Orbit" class="kui-section__title"/>
+            </ui:VisualElement>
+            <ui:VisualElement class="dt-grid-2 state-grid">
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Semi Major Axis" class="kui-stat__name"/>
+                    <ui:Label name="semi-major-axis" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Eccentricity" class="kui-stat__name"/>
+                    <ui:Label name="eccentricity" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Inclination" class="kui-stat__name"/>
+                    <ui:Label name="inclination" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Long. Ascending Node" class="kui-stat__name"/>
+                    <ui:Label name="long-asc-node" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Arg. Periapsis" class="kui-stat__name"/>
+                    <ui:Label name="periapsis" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Epoch" class="kui-stat__name"/>
+                    <ui:Label name="epoch" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Mean Anomaly at Epoch" class="kui-stat__name"/>
+                    <ui:Label name="epoch-anomaly" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="kui-section">
+                <ui:Label text="//" class="kui-section__slashes"/>
+                <ui:Label text="Hand of Kraken" class="kui-section__title"/>
+            </ui:VisualElement>
+            <ui:Toggle name="toggle-hok" label="Hand of Kraken enabled" class="switch kui-row"/>
+            <ui:VisualElement class="dt-grid-2 state-grid">
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Physics Mode" class="kui-stat__name"/>
+                    <ui:Label name="hok-phys-mode" text="false" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Correcting Orbit" class="kui-stat__name"/>
+                    <ui:Label name="hok-correcting" text="false" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Got Expected Orbit" class="kui-stat__name"/>
+                    <ui:Label name="hok-got-pos" text="false" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Under Acceleration" class="kui-stat__name"/>
+                    <ui:Label name="hok-under-accel" text="false" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Orbit Standoff" class="kui-stat__name"/>
+                    <ui:Label name="hok-orbit-standoff" text="false" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="kui-section">
+                <ui:Label text="//" class="kui-section__slashes"/>
+                <ui:Label text="Control inputs" class="kui-section__title"/>
+            </ui:VisualElement>
+            <ui:VisualElement class="dt-grid-2 state-grid">
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Pitch input" class="kui-stat__name"/>
+                    <ui:Label name="pitch" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Yaw input" class="kui-stat__name"/>
+                    <ui:Label name="yaw" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Roll input" class="kui-stat__name"/>
+                    <ui:Label name="roll" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="kui-stat">
+                    <ui:Label text="Control state" class="kui-stat__name"/>
+                    <ui:Label name="control-state" text="0.000000" class="kui-stat__value" display-tooltip-when-elided="true"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </UitkForKsp2.Controls.InvertedCornerBox>
     </ui:VisualElement>
 </ui:UXML>

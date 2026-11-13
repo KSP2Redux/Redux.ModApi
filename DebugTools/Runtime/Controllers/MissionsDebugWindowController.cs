@@ -229,7 +229,7 @@ namespace DebugTools.Runtime.Controllers
             var foundSelected = false;
             foreach (var (data, isActive) in entries)
             {
-                var row = new MissionRow { IsHeader = false };
+                var row = new MissionRow();
                 BindRow(row, data, isActive);
 
                 var capturedId = data.ID;
@@ -321,11 +321,11 @@ namespace DebugTools.Runtime.Controllers
 
             _selectedIsActive = isActive;
 
-            _headerId.text = $"ID: {data.ID}";
-            _headerName.text = $"Name: {(string.IsNullOrEmpty(data.name) ? "-" : data.name)}";
-            _headerType.text = $"Type: {data.type}";
-            _headerOwner.text = $"Owner: {data.Owner}";
-            _headerState.text = $"State: {(isActive ? data.state.ToString() : "Not Active")}";
+            _headerId.text = data.ID;
+            _headerName.text = string.IsNullOrEmpty(data.name) ? "-" : data.name;
+            _headerType.text = data.type.ToString();
+            _headerOwner.text = $"{data.Owner}";
+            _headerState.text = isActive ? data.state.ToString() : "Not Active";
 
             _btnActivate.SetEnabled(!isActive || data.state != MissionState.Active);
             _btnDeactivate.SetEnabled(isActive && data.state == MissionState.Active);
@@ -385,6 +385,8 @@ namespace DebugTools.Runtime.Controllers
             row.Add(statusLabel);
 
             var activateBtn = new Button { text = "Jump" };
+            activateBtn.AddToClassList("kui-button");
+            activateBtn.AddToClassList("stage-row__btn");
             activateBtn.AddToClassList("stage-row__activate");
             activateBtn.tooltip = "Jump mission to this stage";
             activateBtn.SetEnabled(isActive);
@@ -392,6 +394,8 @@ namespace DebugTools.Runtime.Controllers
             row.Add(activateBtn);
 
             var completeBtn = new Button { text = "Complete" };
+            completeBtn.AddToClassList("kui-button");
+            completeBtn.AddToClassList("stage-row__btn");
             completeBtn.AddToClassList("stage-row__complete");
             completeBtn.tooltip = isCurrent
                 ? "Complete this stage (fires events, advances mission)"
@@ -405,11 +409,11 @@ namespace DebugTools.Runtime.Controllers
 
         private void ClearDetails()
         {
-            _headerId.text = "ID: -";
-            _headerName.text = "Name: -";
-            _headerType.text = "Type: -";
-            _headerOwner.text = "Owner: -";
-            _headerState.text = "State: -";
+            _headerId.text = "-";
+            _headerName.text = "-";
+            _headerType.text = "-";
+            _headerOwner.text = "-";
+            _headerState.text = "-";
             _btnActivate.SetEnabled(false);
             _btnDeactivate.SetEnabled(false);
             _btnComplete.SetEnabled(false);

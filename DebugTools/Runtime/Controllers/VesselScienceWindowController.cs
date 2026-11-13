@@ -14,8 +14,6 @@ namespace DebugTools.Runtime.Controllers
     {
         private const string PhysXBubbleMaterialAddress = "Assets/Modules/DebugTools/Assets/UI/PhysXBubbleMat.mat";
         private const string PqsOverlayPrefabAddress = "Assets/Modules/DebugTools/Assets/PqsOverlayPrefab.prefab";
-        private const string OverflowTextClassName = "overflow-text";
-
         private DropdownField? _vessel;
         private Toggle? _useActive;
 
@@ -99,6 +97,9 @@ namespace DebugTools.Runtime.Controllers
 
             _experimentIDsView = RootElement.Q<ScrollView>("experiment-ids");
             _reportsView = RootElement.Q<ScrollView>("reports");
+            _experimentIDsView.Clear();
+            _reportsView.Clear();
+            SetDefaultLabels();
         }
 
         private void OnGameLoaded(MessageCenterMessage msg)
@@ -133,7 +134,8 @@ namespace DebugTools.Runtime.Controllers
             foreach (var id in _experimentIDs)
             {
                 var label = new Label { text = id };
-                label.AddToClassList(OverflowTextClassName);
+                label.AddToClassList("dt-table__row");
+                label.AddToClassList("dt-table__cell");
                 _experimentIDsView.Add(label);
             }
         }
@@ -221,19 +223,19 @@ namespace DebugTools.Runtime.Controllers
         private void SetDefaultLabels()
         {
             if (_researchLocation == null) return;
-            _researchLocation.text = "Research Location:";
+            _researchLocation.text = "-";
 
             if (_scienceSituation == null) return;
-            _scienceSituation.text = "Situation:";
+            _scienceSituation.text = "-";
 
             if (_scienceRegion == null) return;
-            _scienceRegion.text = "Region:";
+            _scienceRegion.text = "-";
 
             if (_scienceScalars == null) return;
-            _scienceScalars.text = "Scalars (CB/Sit./Reg.):";
+            _scienceScalars.text = "-";
 
             if (_hasStorageCapacity == null) return;
-            _hasStorageCapacity.text = "Has Research Report Storage Capacity:";
+            _hasStorageCapacity.text = "-";
         }
 
         private void UpdateScienceSituationLabels(ScienceLocationRegionSituation situation)
@@ -242,23 +244,22 @@ namespace DebugTools.Runtime.Controllers
                 _scienceScalars == null) return;
 
             // Research location ID (e.g. "Kerbin_Splashed_KerbinWater")
-            _researchLocation.text = $"Research Location: <b>{situation.ResearchLocation.ResearchLocationId}</b>";
+            _researchLocation.text = situation.ResearchLocation.ResearchLocationId;
 
             // Science situation (e.g. "Splashed")
             var translatedSituation = situation.ResearchLocation.ScienceSituation.GetTranslatedDescription();
             var scienceSituation = situation.ResearchLocation.ScienceSituation;
-            _scienceSituation.text = $"Situation: <b>{translatedSituation}</b> (<b>{scienceSituation}</b>)";
+            _scienceSituation.text = $"{translatedSituation} ({scienceSituation})";
 
             // Science region (e.g. "KerbinWater")
             var translatedRegion = ScienceRegionsHelper.GetRegionDisplayName(situation.ResearchLocation.ScienceRegion);
             var scienceRegion = situation.ResearchLocation.ScienceRegion;
-            _scienceRegion.text = $"Region: <b>{translatedRegion}</b> (<b>{scienceRegion}</b>)";
+            _scienceRegion.text = $"{translatedRegion} ({scienceRegion})";
 
             // Science scalars (body/situation/region)
-            _scienceScalars.text = $"Scalars (CB/Sit./Reg.): " +
-                                   $"<b>{situation.CelestialBodyScalar}</b>/" +
-                                   $"<b>{situation.SituationScalar}</b>/" +
-                                   $"<b>{situation.ScienceRegionScalar}</b>";
+            _scienceScalars.text = $"{situation.CelestialBodyScalar} / " +
+                                   $"{situation.SituationScalar} / " +
+                                   $"{situation.ScienceRegionScalar}";
         }
 
         private void UpdateScienceOverlay(VesselComponent vessel)
@@ -287,8 +288,7 @@ namespace DebugTools.Runtime.Controllers
         {
             if (_hasStorageCapacity == null || _reportsView == null) return;
 
-            _hasStorageCapacity.text = "Has Research Report Storage Capability : " +
-                                       (vessel.ReportStorageAllowed ? "<b>YES</b>" : "<b>NO</b>");
+            _hasStorageCapacity.text = vessel.ReportStorageAllowed ? "YES" : "NO";
 
             _reportsView.Clear();
             if (vessel.ReportStorageAllowed &&
@@ -297,7 +297,8 @@ namespace DebugTools.Runtime.Controllers
                 foreach (var report in _storageComponent.GetStoredResearchReports())
                 {
                     var label = new Label { text = $"{report.ResearchReportKey} {report.FlavorText}" };
-                    label.AddToClassList(OverflowTextClassName);
+                    label.AddToClassList("dt-table__row");
+                    label.AddToClassList("dt-table__cell");
                     _reportsView.Add(label);
                 }
             }

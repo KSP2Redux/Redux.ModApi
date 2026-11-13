@@ -34,6 +34,8 @@ namespace DebugTools.Runtime.UI
             set
             {
                 _isHeader = value;
+                EnableInClassList("dt-table__header", value);
+                EnableInClassList("dt-table__row", !value);
                 if (value)
                 {
                     PartName.text = "Part";
@@ -78,65 +80,81 @@ namespace DebugTools.Runtime.UI
         public ThermalDataRow()
         {
             AddToClassList(ClassName);
+            AddToClassList("dt-table__row");
 
             PartName = new Label();
             PartName.AddToClassList(LargeEntryClassName);
+            PartName.AddToClassList("dt-table__cell");
             hierarchy.Add(PartName);
 
             ThermalMass = new Label();
             ThermalMass.AddToClassList(EntryClassName);
+            ThermalMass.AddToClassList("dt-table__cell");
             hierarchy.Add(ThermalMass);
 
             Temperature = new Label();
             Temperature.AddToClassList(LargeEntryClassName);
+            Temperature.AddToClassList("dt-table__cell");
             hierarchy.Add(Temperature);
 
             WettedArea = new Label();
             WettedArea.AddToClassList(EntryClassName);
+            WettedArea.AddToClassList("dt-table__cell");
             hierarchy.Add(WettedArea);
 
             ShockMult = new Label();
             ShockMult.AddToClassList(EntryClassName);
+            ShockMult.AddToClassList("dt-table__cell");
             hierarchy.Add(ShockMult);
 
             ShockArea = new Label();
             ShockArea.AddToClassList(EntryClassName);
+            ShockArea.AddToClassList("dt-table__cell");
             hierarchy.Add(ShockArea);
 
             ReentryFlux = new Label();
             ReentryFlux.AddToClassList(EntryClassName);
+            ReentryFlux.AddToClassList("dt-table__cell");
             hierarchy.Add(ReentryFlux);
 
             EnvironmentFlux = new Label();
             EnvironmentFlux.AddToClassList(EntryClassName);
+            EnvironmentFlux.AddToClassList("dt-table__cell");
             hierarchy.Add(EnvironmentFlux);
 
             OtherFlux = new Label();
             OtherFlux.AddToClassList(EntryClassName);
+            OtherFlux.AddToClassList("dt-table__cell");
             hierarchy.Add(OtherFlux);
 
             CoolingFlux = new Label();
             CoolingFlux.AddToClassList(EntryClassName);
+            CoolingFlux.AddToClassList("dt-table__cell");
             hierarchy.Add(CoolingFlux);
 
             ExposedArea = new Label();
             ExposedArea.AddToClassList(EntryClassName);
+            ExposedArea.AddToClassList("dt-table__cell");
             hierarchy.Add(ExposedArea);
 
             ConeType = new Label();
             ConeType.AddToClassList(SmallEntryClassName);
+            ConeType.AddToClassList("dt-table__cell");
             hierarchy.Add(ConeType);
 
             ShockAngle = new Label();
             ShockAngle.AddToClassList(SmallEntryClassName);
+            ShockAngle.AddToClassList("dt-table__cell");
             hierarchy.Add(ShockAngle);
 
             ShockDistance = new Label();
             ShockDistance.AddToClassList(SmallEntryClassName);
+            ShockDistance.AddToClassList("dt-table__cell");
             hierarchy.Add(ShockDistance);
 
             IsShielded = new Label();
             IsShielded.AddToClassList(SmallEntryClassName);
+            IsShielded.AddToClassList("dt-table__cell");
             hierarchy.Add(IsShielded);
 
             IsHeader = true;

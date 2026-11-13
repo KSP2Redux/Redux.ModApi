@@ -1,13 +1,50 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/MassStatsWindow.uss?fileID=7433441132597879392&amp;guid=744e026163207f34385f494a2da668b6&amp;type=3#MassStatsWindow" />
-    <ui:VisualElement name="root" class="root">
-        <ui:VisualElement name="title-bar">
-            <ui:Label text="Mass Stats" />
-            <ui:Button text="×" name="close-button" />
-        </ui:VisualElement>
-        <ui:ScrollView scroll-deceleration-rate="0,135" elasticity="0,1" name="items-view" style="background-color: rgba(34, 38, 46, 0.5);">
-            <DebugTools.Runtime.UI.VesselTools.PartDetailsRow />
-            <DebugTools.Runtime.UI.VesselTools.PartDetailsRow IsHeader="false" />
-        </ui:ScrollView>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/DebugWindow.uss?fileID=7433441132597879392&amp;guid=3b02df7e5905e8746a5ed673f30eb0be&amp;type=3#DebugWindow"/>
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/MassStatsWindow.uss?fileID=7433441132597879392&amp;guid=744e026163207f34385f494a2da668b6&amp;type=3#MassStatsWindow"/>
+    <ui:VisualElement name="root" class="dt-tool MassStatsWindow">
+        <UitkForKsp2.Controls.InvertedCornerBox border-thickness="1" notch-size="5" border-color="#747680FF" background-color="#1B1E24FF" class="oab-window-body kui-panel">
+            <ui:ScrollView name="items-view" mode="VerticalAndHorizontal" class="dt-table vessel-table">
+                <ui:VisualElement class="part-details dt-table__header">
+                    <ui:Label text="Part" class="dt-table__cell part-details__name"/>
+                    <ui:Label text="Model (t)" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="Dry (t)" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="Resource (t)" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="Green (t)" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="RB (t)" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="PhysX (t)" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="Awet (m²)" class="dt-table__cell part-details__item"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="part-details dt-table__row">
+                    <ui:Label text="Part 01" class="dt-table__cell part-details__name"/>
+                    <ui:Label text="1.50" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="1.00" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="0.50" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="0.00" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="1.50" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="1.50" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="9.99" class="dt-table__cell part-details__item"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="part-details dt-table__row">
+                    <ui:Label text="Part 01" class="dt-table__cell part-details__name"/>
+                    <ui:Label text="1.50" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="1.00" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="0.50" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="0.00" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="1.50" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="1.50" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="9.99" class="dt-table__cell part-details__item"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="part-details dt-table__row">
+                    <ui:Label text="Part 01" class="dt-table__cell part-details__name"/>
+                    <ui:Label text="1.50" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="1.00" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="0.50" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="0.00" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="1.50" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="1.50" class="dt-table__cell part-details__item"/>
+                    <ui:Label text="9.99" class="dt-table__cell part-details__item"/>
+                </ui:VisualElement>
+            </ui:ScrollView>
+        </UitkForKsp2.Controls.InvertedCornerBox>
     </ui:VisualElement>
 </ui:UXML>

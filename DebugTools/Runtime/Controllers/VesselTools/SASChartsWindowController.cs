@@ -31,6 +31,29 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
         private int _currentIndex;
         
+        private void LateUpdate()
+        {
+            if (!IsWindowOpen)
+                return;
+
+            var view = Game.ViewController;
+            if (view == null)
+                return;
+
+            var vessel = view.GetActiveSimVessel();
+            if (vessel == null)
+                return;
+
+            var behavior = view.GetBehaviorIfLoaded(vessel);
+            if (behavior == null)
+                return;
+
+            if (behavior.Autopilot?.SAS == null)
+                return;
+
+            SyncTo(vessel, behavior);
+        }
+
         private void OnEnable()
         {
             Enable();

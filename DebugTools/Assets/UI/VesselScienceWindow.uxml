@@ -1,37 +1,25 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/VesselScienceWindow.uss?fileID=7433441132597879392&amp;guid=7ff452ae4fa10644b923b0f1a0043765&amp;type=3#VesselScienceWindow" />
-    <ui:VisualElement name="root" class="root" style="max-height: 600px;">
-        <ui:VisualElement name="title-bar">
-            <ui:Label text="Vessel Science" />
-            <ui:Button text="×" name="close-button" />
-        </ui:VisualElement>
-        <ui:VisualElement name="content">
-            <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row; align-items: center; justify-content: space-between; margin-top: 4px;">
-                <ui:DropdownField label="Vessel" index="-1" choices="System.Collections.Generic.List`1[System.String]" name="vessel" style="width: 60%; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0;" />
-                <ui:Toggle label="Use Active" name="use-active" class="toggle" />
-            </ui:VisualElement>
-            <ui:Label tabindex="-1" text="Situation ==============================================================" display-tooltip-when-elided="true" style="overflow: hidden; -unity-font-style: normal; color: rgb(154, 158, 167);" />
-            <ui:Label tabindex="-1" text="Research Location: " display-tooltip-when-elided="true" name="research-location" />
-            <ui:Label tabindex="-1" text="Situation: " display-tooltip-when-elided="true" name="situation" />
-            <ui:Label tabindex="-1" text="Region: " display-tooltip-when-elided="true" name="region" style="margin-top: 4px;" />
-            <ui:Label tabindex="-1" text="Scalars: " display-tooltip-when-elided="true" name="scalars" style="margin-top: 4px;" />
-            <ui:Slider picking-mode="Ignore" label="Region Overlay Strength" value="0" high-value="1" name="overlay-strength" style="margin-top: 4px;" />
-            <ui:Label tabindex="-1" text="Experiment Reports ======================================================" display-tooltip-when-elided="true" style="overflow: hidden; -unity-font-style: normal; color: rgb(154, 158, 167);" />
-            <ui:Label tabindex="-1" text="Has Research Report Storage Capability: &lt;b&gt;YES&lt;/b&gt;" display-tooltip-when-elided="true" name="has-storage-capacity" />
-            <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-                <ui:Button text="Create" display-tooltip-when-elided="true" name="create-report" class="report-button" />
-                <ui:Button text="Submit" display-tooltip-when-elided="true" name="submit-report" class="report-button" />
-                <ui:Button text="Transmit" display-tooltip-when-elided="true" name="transmit-report" class="report-button" />
-                <ui:Button text="Delete" display-tooltip-when-elided="true" name="delete-reports" class="report-button" />
-            </ui:VisualElement>
-            <ui:VisualElement style="flex-direction: row; justify-content: space-between; margin-top: 4px;">
-                <ui:Label tabindex="-1" text="Experiment IDs" display-tooltip-when-elided="true" style="width: 30%; -unity-text-align: upper-center;" />
-                <ui:Label tabindex="-1" text="Reports" display-tooltip-when-elided="true" style="width: 66%; -unity-text-align: upper-center;" />
-            </ui:VisualElement>
-            <ui:VisualElement style="flex-direction: row; justify-content: space-between; margin-top: 4px;">
-                <ui:ScrollView scroll-deceleration-rate="0,135" elasticity="0,1" name="experiment-ids" style="width: 30%;" />
-                <ui:ScrollView scroll-deceleration-rate="0,135" elasticity="0,1" name="reports" style="width: 66%;" />
-            </ui:VisualElement>
-        </ui:VisualElement>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/DebugWindow.uss?fileID=7433441132597879392&amp;guid=3b02df7e5905e8746a5ed673f30eb0be&amp;type=3#DebugWindow" />
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/VesselScienceWindow.uss?fileID=7433441132597879392&amp;guid=7ff452ae4fa10644b923b0f1a0043765&amp;type=3#VesselScienceWindow" />
+    <ui:VisualElement name="root" class="dt-tool dt-science">
+<ui:VisualElement class="kui-row"><ui:Label text="Vessel" class="kui-row__label" /><ui:DropdownField name="vessel" class="kui-field dt-science-picker" /></ui:VisualElement>
+<ui:VisualElement class="kui-row"><ui:Label text="Use active vessel" class="kui-row__label" /><ui:Toggle name="use-active" value="true" class="switch" /></ui:VisualElement>
+<ui:VisualElement class="kui-section"><ui:Label text="//" class="kui-section__slashes" /><ui:Label text="Situation" class="kui-section__title" /></ui:VisualElement>
+<ui:VisualElement class="kui-stat"><ui:VisualElement class="kui-stat__icon" /><ui:Label text="Research location" class="kui-stat__name" /><ui:Label name="research-location" text="Kerbin_Landed_KSC" display-tooltip-when-elided="true" class="kui-stat__value dt-science-value" /></ui:VisualElement>
+<ui:VisualElement class="kui-stat"><ui:VisualElement class="kui-stat__icon" /><ui:Label text="Situation" class="kui-stat__name" /><ui:Label name="situation" text="Landed" display-tooltip-when-elided="true" class="kui-stat__value dt-science-value" /></ui:VisualElement>
+<ui:VisualElement class="kui-stat"><ui:VisualElement class="kui-stat__icon" /><ui:Label text="Region" class="kui-stat__name" /><ui:Label name="region" text="KSC" display-tooltip-when-elided="true" class="kui-stat__value dt-science-value" /></ui:VisualElement>
+<ui:VisualElement class="kui-stat"><ui:VisualElement class="kui-stat__icon" /><ui:Label text="Scalars (CB / Sit. / Reg.)" class="kui-stat__name" /><ui:Label name="scalars" text="1 / 1 / 1" display-tooltip-when-elided="true" class="kui-stat__value dt-science-value" /></ui:VisualElement>
+<ui:VisualElement class="kui-row"><ui:Label text="Region overlay strength" class="kui-row__label" /><ui:Slider name="overlay-strength" value="0" high-value="1" class="dt-science-slider" /></ui:VisualElement>
+<ui:VisualElement class="kui-section"><ui:Label text="//" class="kui-section__slashes" /><ui:Label text="Experiment reports" class="kui-section__title" /></ui:VisualElement>
+<ui:VisualElement class="kui-stat"><ui:VisualElement class="kui-stat__icon" /><ui:Label text="Report storage" class="kui-stat__name" /><ui:Label name="has-storage-capacity" text="YES" display-tooltip-when-elided="true" class="kui-stat__value dt-science-value" /></ui:VisualElement>
+<ui:VisualElement class="kui-row dt-science-actions">
+<UitkForKsp2.Controls.OabButton name="create-report" text="Create" class="kui-button" />
+<UitkForKsp2.Controls.OabButton name="submit-report" text="Submit" class="kui-button" />
+<UitkForKsp2.Controls.OabButton name="transmit-report" text="Transmit" class="kui-button" />
+<UitkForKsp2.Controls.OabButton name="delete-reports" text="Delete" class="kui-button" />
+</ui:VisualElement><ui:VisualElement class="dt-science-tables">
+<ui:VisualElement class="dt-table dt-science-table"><ui:VisualElement class="dt-table__header"><ui:Label text="Experiment IDs" class="dt-table__cell" /></ui:VisualElement><ui:ScrollView name="experiment-ids" class="dt-science-list"><ui:Label text="Experiment ID 01" class="dt-table__row dt-table__cell" /><ui:Label text="Experiment ID 02" class="dt-table__row dt-table__cell" /><ui:Label text="Experiment ID 03" class="dt-table__row dt-table__cell" /></ui:ScrollView></ui:VisualElement>
+<ui:VisualElement class="dt-table dt-science-table"><ui:VisualElement class="dt-table__header"><ui:Label text="Reports" class="dt-table__cell" /></ui:VisualElement><ui:ScrollView name="reports" class="dt-science-list"><ui:Label text="Report key 01" class="dt-table__row dt-table__cell" /><ui:Label text="Report key 02" class="dt-table__row dt-table__cell" /><ui:Label text="Report key 03" class="dt-table__row dt-table__cell" /></ui:ScrollView></ui:VisualElement>
+</ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

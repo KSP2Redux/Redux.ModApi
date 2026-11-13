@@ -1,133 +1,156 @@
-.root {
-    max-width: 800px;
-    max-height: 600px;
-    min-height: 200px;
-    flex-direction: column;
-    min-width: 800px;
-    background-color: rgba(34, 38, 46, 0.95);
+/* Sim Objects (Flight Tools). Chrome-less tool: the hub or the pop-out shell supplies the frame. Switches are kui-rows,
+   the two lists are dt-tables. The item rows are built in code (SimObjectItem, JointConnectionItem), so they are styled
+   here by their own class names. Column widths of the headers and of the rows must match. */
+
+.ft-tool {
+    width: 660px;
 }
 
-#title-bar {
-    justify-content: space-between;
-    margin-bottom: 12px;
-    margin-top: 0;
-    flex-grow: 1;
-    min-height: 25px;
+.ft-dropdown {
+    width: 170px;
+    flex-shrink: 0;
 }
 
-#close-button {
-    margin-left: 0;
-    margin-right: 4px;
-    margin-top: 0;
-    margin-bottom: 0;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 9px;
-    padding-bottom: 10px;
-    font-size: 25px;
-    max-width: 20px;
-    max-height: 20px;
+/* The themed scroll view paints its own inset panel, so it is reset to a flat list under the table header. */
+.ft-table {
+    flex-grow: 0;
+    flex-shrink: 1;
+    min-height: 0;
 }
 
-#close-button:hover {
-    color: rgb(194, 41, 25);
-    border-left-color: rgb(194, 41, 25);
-    border-right-color: rgb(194, 41, 25);
-    border-top-color: rgb(194, 41, 25);
-    border-bottom-color: rgb(194, 41, 25);
+.ft-items {
+    width: auto;
+    height: 220px;
+    min-height: 60px;
+    flex-shrink: 1;
+    padding: 0;
+    border-radius: 0;
+    background-color: rgb(23, 26, 32);
 }
 
-.settings {
-    min-height: 90px;
-}
-
-.settings-row {
-    flex-direction: row;
-    justify-content: space-between;
-}
-
-.divider {
-    min-height: 2px;
-    background-color: rgb(134, 139, 148);
-    margin-top: 8px;
-    margin-bottom: 8px;
-}
-
-.unity-toggle {
-    width: 45%;
-}
-
-.unity-base-popup-field__label {
+.ft-table > .dt-table__header > .unity-label {
+    padding: 0 4px;
+    margin: 0;
+    color: rgb(214, 224, 255);
     -unity-text-align: middle-left;
-    min-width: 100px;
+    white-space: nowrap;
 }
 
-.unity-base-popup-field__text {
+/* Sim object row: name, physics, parent frame, then three buttons of the same width */
+
+.ft-head-name,
+.ft-table .sim-object-item > .sim-object-item_name {
+    flex-grow: 3;
+    flex-shrink: 1;
+    flex-basis: 0;
+    width: auto;
+    max-width: none;
+}
+
+.ft-head-physics,
+.ft-table .sim-object-item > .sim-object-item_physics-mode {
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: auto;
+    width: 84px;
+    max-width: none;
+}
+
+.ft-head-frame,
+.ft-table .sim-object-item > .sim-object-item_parent-frame {
+    flex-grow: 5;
+    flex-shrink: 1;
+    flex-basis: 0;
+    width: auto;
+    max-width: none;
+}
+
+.ft-head-actions {
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: auto;
+    width: 228px;
+}
+
+.ft-table .sim-object-item {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    width: auto;
+    height: 20px;
+    min-height: 20px;
+    margin: 0;
+    font-size: 12px;
+}
+
+.ft-table .sim-object-item:hover,
+.ft-table .joint-connection-item:hover {
+    background-color: rgba(123, 124, 240, 0.08);
+}
+
+.ft-table .sim-object-item > .unity-label,
+.ft-table .joint-connection-item > .unity-label {
+    margin: 0;
+    padding: 0 4px;
+    font-size: 12px;
     color: rgb(192, 199, 213);
-}
-
-.unity-base-popup-field__input:hover {
-    background-color: rgba(0, 0, 0, 0);
-}
-
-.item-type {
-    min-width: 40%;
-}
-
-.unity-base-popup-field__label:hover {
     -unity-text-align: middle-left;
-    min-width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.sim-object-item {
+.ft-table .sim-object-item > .unity-button,
+.ft-table .joint-connection-item > .unity-button {
+    flex-grow: 0;
+    flex-shrink: 0;
+    width: 72px;
+    min-width: 0;
+    height: 18px;
+    min-height: 0;
+    margin: 0 0 0 4px;
+    padding: 0;
+    font-size: 11px;
+}
+
+/* The kui-button plate of a plain Button is 24px high, so the row version is set to 18px here. */
+.ft-table .sim-object-item > .kui-button.unity-button.unity-text-element,
+.ft-table .joint-connection-item > .kui-button.unity-button.unity-text-element {
+    width: 72px;
+    min-width: 0;
+    height: 18px;
+    min-height: 0;
+    margin: 0 0 0 4px;
+    padding: 0;
+    font-size: 11px;
+}
+
+/* Joint connection row: count, host, target, node type, joint type, destroy */
+
+.ft-head-small,
+.ft-table .joint-connection-item > .unity-label {
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: auto;
+    width: 72px;
+}
+
+.ft-table .joint-connection-item {
     flex-direction: row;
-    width: 100%;
-    justify-content: space-between;
-    margin-bottom: 4px;
+    align-items: center;
+    justify-content: flex-start;
+    width: auto;
+    height: 20px;
+    min-height: 20px;
+    margin: 0;
+    font-size: 12px;
 }
 
-.sim-object-item_name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 20%;
-}
-
-.sim-object-item_physics-mode {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 12%;
+.ft-head-joint-name,
+.ft-table .joint-connection-item > .joint-connection-item_name {
     flex-grow: 1;
-}
-
-.sim-object-item_parent-frame {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 25%;
-}
-
-.sim-object-item_load-unload {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 12%;
-}
-
-.joint-connection-item {
-    flex-direction: row;
-    width: 100%;
-    justify-content: space-between;
-    margin-bottom: 4px;
-}
-
-.joint-connection-item_name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 20%;
-}
-
-.items-view {
-    padding-bottom: 2px;
-    padding-left: 4px;
-    padding-right: 4px;
-    padding-top: 4px;
-    background-color: rgba(34, 38, 46, 0.85);
+    flex-shrink: 1;
+    flex-basis: 0;
+    width: auto;
+    max-width: none;
 }

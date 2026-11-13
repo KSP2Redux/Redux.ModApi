@@ -91,7 +91,7 @@ namespace DebugTools
             UITKHelper.LoadUxml("DebugWindow", uxml =>
             {
                 _isHubLoading = false;
-                PanelRenderer hubWindow = UITKHelper.CreateWindowFromUxml(uxml, "DebugWindow");
+                PanelRenderer hubWindow = UITKHelper.CreateWindowFromUxml(uxml, "DebugWindow", minWidth: 560f, minHeight: 360f);
                 DebugWindowController = hubWindow.gameObject.AddComponent<DebugWindowController>();
                 RegisterTools(DebugWindowController);
                 DebugWindowController.IsWindowOpen = true;
@@ -115,56 +115,56 @@ namespace DebugTools
                 "Teleport to an orbit, a surface or a rendezvous, and add science",
                 "teleport orbit surface rendezvous science stock", true);
             RegisterWindow<TeleportBookmarksWindowController>(hub, Section.Cheats, "Teleport", "TeleportBookmarksWindow",
-                "Teleport Bookmarks", ToolScene.Flight, keywords: "teleport position save");
+                "Teleport Bookmarks", ToolScene.Flight, keywords: "teleport position save", mode: ToolMode.Inline, detachable: true);
             RegisterWindow<QuickSwitchWindowController>(hub, Section.Cheats, "Teleport", "QuickSwitchWindow",
                 "Quick Switch", ToolScene.Campaign, "Jump to the VAB, launchpad, runway or orbit",
-                "vab bae launchpad runway orbit");
+                "vab bae launchpad runway orbit", mode: ToolMode.Inline, detachable: true);
             RegisterWindow<FreeFlightWindowController>(hub, Section.Cheats, "Teleport", "FreeFlightWindow",
-                "Free Flight", ToolScene.Campaign, keywords: "camera planet viewer fly");
+                "Free Flight", ToolScene.Campaign, keywords: "camera planet viewer fly", mode: ToolMode.Inline, collapsed: true);
 
             RegisterWindow<ResourceScanDebugWindowController>(hub, Section.Cheats, "Progress", "ResourceScanDebugWindow",
-                "Resource Scanning", ToolScene.Campaign, keywords: "scan isru ore");
+                "Resource Scanning", ToolScene.Campaign, keywords: "scan isru ore", mode: ToolMode.Inline, collapsed: true);
             RegisterWindow<MissionsDebugWindowController>(hub, Section.Cheats, "Progress", "MissionsDebugWindow",
                 "Missions", ToolScene.Campaign, "Activate, complete, fail or reset missions and stages",
-                "mission stage contract");
+                "mission stage contract", mode: ToolMode.Window);
 
             RegisterWindow<KerbalRosterToolWindowController>(hub, Section.Cheats, "Crew", "KerbalRosterToolWindow",
-                "Roster", ToolScene.Campaign, keywords: "kerbal crew add");
+                "Roster", ToolScene.Campaign, keywords: "kerbal crew add", mode: ToolMode.Inline, detachable: true);
 
             // Science: is science working, and move through progression. The stock Science Tools window does the same
             // as the Redux one, so only the Redux one is listed.
             RegisterWindow<ScienceToolsWindowController>(hub, Section.Science, "Progression", "ScienceToolsWindow",
                 "Science Tools", ToolScene.Campaign, "Science points, tech nodes, Unlock All Parts",
-                "tech tree node research unlock all parts");
+                "tech tree node research unlock all parts", mode: ToolMode.Inline);
             RegisterWindow<VesselScienceWindowController>(hub, Section.Science, "Experiments", "VesselScienceWindow",
                 "Vessel Science", ToolScene.Flight, "Situation, region and experiment reports",
-                "experiment report region");
+                "experiment report region", mode: ToolMode.Window);
 
             // Inspect: what is going on.
             RegisterWindow<VesselToolsWindowController>(hub, Section.Overlays, "Vessel", "VesselToolsWindow",
                 "Vessel Tools", ToolScene.Campaign,
                 "Vessel markers and marker size",
-                "thermal mass maneuver coordinates sas com control markers physics");
+                "com cot col markers size", mode: ToolMode.Inline);
             RegisterWindow<JointsToolsWindowController>(hub, Section.Inspect, "Structure", "JointsToolsWindow",
-                "Joints", ToolScene.Flight, keywords: "joint stress structural");
+                "Joints", ToolScene.Flight, keywords: "joint stress structural", mode: ToolMode.Window);
             RegisterWindow<FlightToolsWindowController>(hub, Section.Inspect, "Simulation", "FlightToolsWindow",
-                "Sim Objects", ToolScene.Campaign, "Sim objects, proximity load and unload", "sim object load unload");
+                "Sim Objects", ToolScene.Campaign, "Sim objects, proximity load and unload", "sim object load unload", mode: ToolMode.Window);
 
             RegisterWindow<VesselCoordinatesWindowController>(hub, Section.Inspect, "Vessel", "VesselCoordinatesWindow",
-                "Vessel State", ToolScene.Flight, keywords: "coordinates control inputs");
+                "Vessel State", ToolScene.Flight, keywords: "coordinates control inputs", mode: ToolMode.Window);
             RegisterWindow<ThermalDataWindowController>(hub, Section.Inspect, "Vessel", "ThermalDataWindow",
-                "Thermal Data", ToolScene.Flight, keywords: "heat temperature");
+                "Thermal Data", ToolScene.Flight, keywords: "heat temperature", mode: ToolMode.Window);
             RegisterWindow<MassStatsWindowController>(hub, Section.Inspect, "Vessel", "MassStatsWindow",
-                "Mass Stats", ToolScene.Flight, keywords: "mass dry wet");
+                "Mass Stats", ToolScene.Flight, keywords: "mass dry wet", mode: ToolMode.Window);
             RegisterWindow<ManeuverNodesWindowController>(hub, Section.Inspect, "Vessel", "ManeuversWindow",
-                "Maneuvers", ToolScene.Flight, keywords: "node delta v");
+                "Maneuvers", ToolScene.Flight, keywords: "node delta v", mode: ToolMode.Window);
             RegisterWindow<SASChartsWindowController>(hub, Section.Inspect, "Vessel", "SASChartsWindow",
-                "SAS Charts", ToolScene.Flight, keywords: "sas control chart");
+                "SAS Charts", ToolScene.Flight, keywords: "sas control chart", mode: ToolMode.Window);
 
             // Overlays: show it in the world.
             RegisterWindow<TerrainDebugWindowController>(hub, Section.Overlays, "Planet", "TerrainDebugWindow",
                 "Terrain Debug", ToolScene.Campaign, "Biome colors, wireframe, PhysX bubble, triplanar",
-                "terrain biome wireframe pqs quad");
+                "terrain biome wireframe pqs quad", mode: ToolMode.Inline);
             hub.RegisterSwitch(Section.Overlays, "Flight", "Aero data", ToolScene.Flight,
                 () => GameManager.Instance.Game.AeroGUI != null && GameManager.Instance.Game.AeroGUI.IsVisible,
                 value =>
@@ -195,18 +195,10 @@ namespace DebugTools
         /// Registers a Redux debug window that is created the first time it is opened.
         /// </summary>
         private static void RegisterWindow<T>(DebugWindowController hub, Section section, string group,
-            string windowName, string label, ToolScene scene, string note = null, string keywords = null)
+            string windowName, string label, ToolScene scene, string note = null, string keywords = null,
+            ToolMode mode = ToolMode.Window, bool detachable = false, bool collapsed = false)
             where T : BaseWindowController
         {
-            ToolMode mode = windowName switch
-            {
-                "QuickSwitchWindow" or "TeleportBookmarksWindow" or "FreeFlightWindow" or
-                "ResourceScanDebugWindow" or "KerbalRosterToolWindow" or "ScienceToolsWindow" or
-                "VesselToolsWindow" or "TerrainDebugWindow" => ToolMode.Inline,
-                _ => ToolMode.Window
-            };
-            bool detachable = windowName is "QuickSwitchWindow" or "TeleportBookmarksWindow" or "KerbalRosterToolWindow";
-            bool collapsed = windowName is "FreeFlightWindow" or "ResourceScanDebugWindow";
             hub.RegisterHostedTool<T>(section, group, windowName, label, scene, mode, detachable, collapsed,
                 note, keywords, _instance.transform);
         }

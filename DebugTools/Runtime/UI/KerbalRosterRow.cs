@@ -7,12 +7,12 @@ namespace DebugTools.Runtime.UI
     [UxmlElement]
     public partial class KerbalRosterRow : VisualElement
     {
-        private const string ClassName = "kerbal-roster-row";
-        private const string KerbalNameClassName = ClassName + "__kerbal-name";
-        private const string SimObjectClassName = ClassName + "__sim-object";
-        private const string SeatClassName = ClassName + "__seat";
-        private const string EnrollmentDateClassName = ClassName + "__enrollment-date";
-        private const string DeleteButtonClassName = ClassName + "__delete-button";
+        private const string ClassName = "dt-table__row";
+        private const string KerbalNameClassName = "dt-roster-name";
+        private const string SimObjectClassName = "dt-roster-object";
+        private const string SeatClassName = "dt-roster-seat";
+        private const string EnrollmentDateClassName = "dt-roster-date";
+        private const string DeleteButtonClassName = "dt-roster-action";
 
         public readonly Label KerbalName;
         public readonly Label SimObject;
@@ -30,6 +30,8 @@ namespace DebugTools.Runtime.UI
             set
             {
                 _isHeaderValue = value;
+                EnableInClassList("dt-table__header", value);
+                EnableInClassList("dt-table__row", !value);
                 if (value)
                 {
                     KerbalName.text = "<b>Name</b>";
@@ -56,18 +58,22 @@ namespace DebugTools.Runtime.UI
             AddToClassList(ClassName);
 
             KerbalName = new Label();
+            KerbalName.AddToClassList("dt-table__cell");
             KerbalName.AddToClassList(KerbalNameClassName);
             hierarchy.Add(KerbalName);
 
             SimObject = new Label();
+            SimObject.AddToClassList("dt-table__cell");
             SimObject.AddToClassList(SimObjectClassName);
             hierarchy.Add(SimObject);
 
             Seat = new Label();
+            Seat.AddToClassList("dt-table__cell");
             Seat.AddToClassList(SeatClassName);
             hierarchy.Add(Seat);
 
             EnrollmentDate = new Label();
+            EnrollmentDate.AddToClassList("dt-table__cell");
             EnrollmentDate.AddToClassList(EnrollmentDateClassName);
             hierarchy.Add(EnrollmentDate);
 
@@ -76,6 +82,7 @@ namespace DebugTools.Runtime.UI
                 text = "Del"
             };
             _deleteButton.AddToClassList(DeleteButtonClassName);
+            _deleteButton.AddToClassList("kui-button");
             _deleteButton.clicked += () => OnDelete?.Invoke(KerbalName.text);
             hierarchy.Add(_deleteButton);
 

@@ -1,19 +1,17 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/FreeFlightWindow.uss?fileID=7433441132597879392&amp;guid=529f820d07054cd69d48c12e2f942e58&amp;type=3#FreeFlightWindow" />
-    <ui:VisualElement name="root" class="root">
-        <ui:VisualElement name="title-bar">
-            <ui:Label text="Free Flight" />
-            <ui:Button text="×" name="close-button" />
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/FreeFlightWindow.uss?fileID=7433441132597879392&amp;guid=529f820d07054cd69d48c12e2f942e58&amp;type=3#FreeFlightWindow" />
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/DebugWindow.uss?fileID=7433441132597879392&amp;guid=3b02df7e5905e8746a5ed673f30eb0be&amp;type=3#DebugWindow" />
+    <ui:VisualElement name="root" class="dt-tool">
+        <ui:VisualElement class="kui-row">
+            <ui:Label text="Celestial body" class="kui-row__label ff-label" />
+            <ui:DropdownField index="0" choices="Kerbin,Mun,Minmus" name="body-dropdown" class="kui-field ff-body" />
         </ui:VisualElement>
-        <ui:VisualElement name="controls" class="controls">
-            <ui:DropdownField label="Celestial Body" index="-1" name="body-dropdown" />
-            <ui:Button text="Enable Free Flight" name="enable-button" />
-            <ui:Button text="Teleport to Body" name="teleport-button" />
-            <ui:Button text="Disable and Return to Vessel" name="return-vessel-button" />
-            <ui:Button text="Disable and Return to KSC" name="return-ksc-button" />
-            <ui:Label name="status-label" text="Free flight is off." />
-            <ui:Label name="simulation-note" text="Simulation continues while free flight is active." style="white-space: normal; margin-top: 4px;" />
-            <ui:Label text="WASD to move, Space/Ctrl for elevation, right mouse to look. Scroll to change speed." style="white-space: normal; margin-top: 4px;" />
+        <ui:VisualElement name="controls" class="ff-buttons">
+            <UitkForKsp2.Controls.OabButton text="Enable" tooltip="Enable free flight from the current camera position" display-tooltip-when-elided="true" name="enable-button" class="kui-button ff-button" />
+            <UitkForKsp2.Controls.OabButton text="Teleport" tooltip="Teleport to the selected body" display-tooltip-when-elided="true" name="teleport-button" class="kui-button ff-button" />
+            <UitkForKsp2.Controls.OabButton text="Exit: vessel" tooltip="Disable free flight and return to the vessel" display-tooltip-when-elided="true" name="return-vessel-button" class="kui-button ff-button" />
+            <UitkForKsp2.Controls.OabButton text="Exit: KSC" tooltip="Disable free flight and return to KSC" display-tooltip-when-elided="true" name="return-ksc-button" class="kui-button ff-button" />
         </ui:VisualElement>
+        <ui:Label name="status-label" text="Free flight is off." tooltip="Simulation continues while free flight is active. WASD to move, Space and Ctrl for elevation, right mouse to look, scroll to change speed." class="ff-status" />
     </ui:VisualElement>
 </ui:UXML>

@@ -6,6 +6,7 @@ using KSP;
 using KSP.Sim;
 using KSP.Sim.impl;
 using UniLinq;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DebugTools.Runtime.Controllers.VesselTools
@@ -15,6 +16,33 @@ namespace DebugTools.Runtime.Controllers.VesselTools
         private ScrollView? _itemsView;
         private PartDetailsRow? _vesselRow;
         private List<PartDetailsRow>? _rows;
+
+        private float _refreshRemaining;
+
+        private void LateUpdate()
+        {
+            if (!IsWindowOpen)
+                return;
+
+            _refreshRemaining -= Time.unscaledDeltaTime;
+            if (_refreshRemaining > 0f)
+                return;
+            _refreshRemaining = 1f;
+
+            var view = Game.ViewController;
+            if (view == null)
+                return;
+
+            var vessel = view.GetActiveSimVessel();
+            if (vessel == null)
+                return;
+
+            var behavior = view.GetBehaviorIfLoaded(vessel);
+            if (behavior == null)
+                return;
+
+            SyncTo(vessel, behavior);
+        }
 
         private void OnEnable()
         {
@@ -44,14 +72,16 @@ namespace DebugTools.Runtime.Controllers.VesselTools
                 var row = new PartDetailsRow(true);
                 _itemsView.Add(row);
 
-                _vesselRow = new PartDetailsRow();
+                _vesselRow = new PartDetailsRow(false);
+                DebugTools.Utils.UITKHelper.ClearLabels(_vesselRow);
                 _vesselRow.PartName.text = $"<b>{vessel.RevealDisplayName()}</b>";
                 _vesselRow.ModelMass.text = $"<b>{vessel.totalMass:F2}</b>";
                 _itemsView.Add(_vesselRow);
                 
                 foreach (var part in behavior.parts)
                 {
-                    row = new PartDetailsRow();
+                    row = new PartDetailsRow(false);
+                    DebugTools.Utils.UITKHelper.ClearLabels(row);
                     FormatMassStats(row, part);
                     _itemsView.Add(row);
                     _rows.Add(row);

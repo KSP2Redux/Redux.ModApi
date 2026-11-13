@@ -1,47 +1,7 @@
-.root {
-    max-height: 600px;
-    background-color: rgba(34, 38, 46, 0.95);
-    width: 650px;
-}
-
-#title-bar {
-    justify-content: space-between;
-    margin-bottom: 8px;
-    margin-top: 0;
-    min-height: 30px;
-}
-
-#close-button {
-    margin-left: 0;
-    margin-right: 4px;
-    margin-top: 0;
-    margin-bottom: 0;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 9px;
-    padding-bottom: 10px;
-    font-size: 25px;
-    max-width: 20px;
-    max-height: 20px;
-}
-
-#close-button:hover {
-    color: rgb(194, 41, 25);
-    border-left-color: rgb(194, 41, 25);
-    border-right-color: rgb(194, 41, 25);
-    border-top-color: rgb(194, 41, 25);
-    border-bottom-color: rgb(194, 41, 25);
-}
-
-.row {
-    flex-direction: row;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-}
-
-.label-3 {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 32%;
-    margin-right: 1%;
-}
+/* The grid wraps at 50% widths, which needs a definite width. An auto-sized pop-out would otherwise measure all stats
+   as one row and grow to the screen width. */
+.VesselCoordinatesWindow { width: 600px; max-width: 100%; }
+.VesselCoordinatesWindow .state-grid > .kui-stat { width: 50%; min-width: 0; }
+.VesselCoordinatesWindow #toggle-hok { padding: 0 16px; }
+.VesselCoordinatesWindow .kui-stat__name { min-width: 0; flex-shrink: 1; font-size: 14px; }
+.VesselCoordinatesWindow .kui-stat__value { min-width: 0; flex-shrink: 1; font-size: 14px; text-overflow: ellipsis; overflow: hidden; }

@@ -41,6 +41,8 @@ namespace DebugTools.Runtime.Controllers
             
             _scanned = RootElement.Q<ScrollView>("scanned");
             _unscanned = RootElement.Q<ScrollView>("unscanned");
+            _scanned.Clear();
+            _unscanned.Clear();
 
             _scanUnscan = RootElement.Q<Button>("scan-unscan");
             _scanUnscan.clicked += ScanUnscan;
@@ -120,6 +122,7 @@ namespace DebugTools.Runtime.Controllers
                 }
                 
                 var label = new Label { text = resource };
+                label.AddToClassList("dt-table__row");
                 _scanned.Add(label);
             }
 
@@ -131,6 +134,7 @@ namespace DebugTools.Runtime.Controllers
                 }
                 
                 var label = new Label { text = resource };
+                label.AddToClassList("dt-table__row");
                 _unscanned.Add(label);
             }
         }

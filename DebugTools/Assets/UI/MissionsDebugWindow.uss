@@ -1,231 +1,153 @@
-.root {
-    width: 720px;
-    max-height: 700px;
-    background-color: rgba(34, 38, 46, 0.95);
+/* Missions: a pop-out tool. The frame, buttons and fields come from the KerbalUI theme and DebugWindow.uss. */
+
+.dt-missions { width: 600px; max-width: 100%; }
+
+/* Filter bar: dropdown, search and refresh on one 28px line */
+.dt-missions-bar { margin-bottom: 2px; }
+.dt-missions-filter { width: 170px; flex-shrink: 1; min-width: 110px; margin: 0 8px 0 0; }
+.dt-missions-search { flex-grow: 1; flex-shrink: 1; min-width: 90px; margin: 0 8px 0 0; }
+.dt-missions-refresh { flex-shrink: 0; min-width: 72px; }
+.dt-missions-bar .unity-base-field__label { min-width: 0; width: auto; margin-right: 6px; font-size: 12px; }
+
+/* The themed scroll view paints an inset panel at 100% size, so it is reset */
+.unity-scroll-view.dt-missions-list {
+    width: auto;
+    height: auto;
+    padding: 0;
+    border-radius: 0;
+    background-color: rgb(23, 26, 32);
 }
 
-#title-bar {
-    justify-content: space-between;
-    margin-bottom: 8px;
-    margin-top: 0;
-}
-
-#close-button {
-    margin-left: 0;
-    margin-right: 4px;
-    margin-top: 0;
-    margin-bottom: 0;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 9px;
-    padding-bottom: 10px;
-    font-size: 25px;
-    max-width: 20px;
-    max-height: 20px;
-}
-
-#close-button:hover {
-    color: rgb(194, 41, 25);
-    border-left-color: rgb(194, 41, 25);
-    border-right-color: rgb(194, 41, 25);
-    border-top-color: rgb(194, 41, 25);
-    border-bottom-color: rgb(194, 41, 25);
-}
-
-.field {
-    flex-direction: row;
-    justify-content: space-between;
-    padding-right: 10px;
-    margin-bottom: 6px;
-}
-
-.unity-base-field__label {
-    min-width: 60px;
-}
-
-.unity-base-popup-field {
-    margin: 0;
-    margin-top: 5px;
-}
-
-.unity-base-popup-field__label {
-    -unity-text-align: middle-left;
-    min-width: 60px;
-}
-
-.unity-base-popup-field__text {
-    color: rgb(192, 199, 213);
-}
-
-.unity-base-popup-field__input:hover {
-    background-color: rgba(0, 0, 0, 0);
-}
-
-.unity-base-popup-field__label:hover {
-    -unity-text-align: middle-left;
-    min-width: 60px;
-}
+/* Mission table */
+.dt-missions-table { flex-shrink: 1; min-height: 0; }
+.dt-missions-table > .unity-scroll-view { max-height: 144px; min-height: 40px; flex-shrink: 1; }
 
 .mission-row {
     flex-direction: row;
-    width: 100%;
-    justify-content: space-around;
-    margin-bottom: 2px;
-    padding-top: 2px;
-    padding-bottom: 2px;
-    border-top-left-radius: 2px;
-    border-bottom-left-radius: 2px;
-    border-top-right-radius: 2px;
-    border-bottom-right-radius: 2px;
-    border-left-width: 1px;
-    border-right-width: 1px;
-    border-top-width: 1px;
-    border-bottom-width: 1px;
-}
-
-.mission-row__id {
-    width: 22%;
-    -unity-text-align: middle-left;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.mission-row__name {
-    width: 22%;
-    -unity-text-align: middle-left;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.mission-row__type {
-    width: 11%;
-    -unity-text-align: middle-left;
-}
-
-.mission-row__owner {
-    width: 10%;
-    -unity-text-align: middle-left;
-}
-
-.mission-row__state {
-    width: 12%;
-    -unity-text-align: middle-left;
-    -unity-font-style: bold;
-}
-
-.mission-row__stage-info {
-    width: 8%;
-    -unity-text-align: middle-left;
-}
-
-.mission-row__select-button {
-    width: 12%;
-}
-
-.mission-row__selected {
-    background-color: rgba(192, 199, 213, 0.25);
-    border-left-color: rgb(192, 199, 213);
-    border-right-color: rgb(192, 199, 213);
-    border-top-color: rgb(192, 199, 213);
-    border-bottom-color: rgb(192, 199, 213);
-}
-
-.mission-row__header {
-    color: rgb(154, 158, 167);
-}
-
-.mission-row__state--active .mission-row__state {
-    color: rgb(90, 180, 120);
-}
-
-.mission-row__state--complete .mission-row__state {
-    color: rgb(120, 160, 220);
-}
-
-.mission-row__state--failed .mission-row__state {
-    color: rgb(194, 41, 25);
-}
-
-.mission-row__state--inactive .mission-row__state {
-    color: rgb(154, 158, 167);
-}
-
-.stage-row {
-    flex-direction: row;
-    width: 100%;
-    justify-content: space-between;
-    margin-bottom: 2px;
-    padding-top: 2px;
-    padding-bottom: 2px;
-    padding-left: 4px;
-    padding-right: 4px;
-    border-top-left-radius: 2px;
-    border-bottom-left-radius: 2px;
-    border-top-right-radius: 2px;
-    border-bottom-right-radius: 2px;
-    border-left-width: 1px;
-    border-right-width: 1px;
-    border-top-width: 1px;
-    border-bottom-width: 1px;
+    align-items: center;
+    height: 20px;
+    padding: 0 4px;
+    border-left-width: 3px;
     border-left-color: rgba(0, 0, 0, 0);
-    border-right-color: rgba(0, 0, 0, 0);
-    border-top-color: rgba(0, 0, 0, 0);
-    border-bottom-color: rgba(0, 0, 0, 0);
 }
 
-.stage-row__index {
-    width: 6%;
-    -unity-text-align: middle-left;
-    color: rgb(154, 158, 167);
-}
+.mission-row:hover { background-color: rgba(123, 124, 240, 0.06); }
 
-.stage-row__name {
-    width: 18%;
-    -unity-text-align: middle-left;
-    -unity-font-style: bold;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.stage-row__objective {
-    width: 32%;
-    -unity-text-align: middle-left;
-    color: rgb(192, 199, 213);
+.mission-row > .unity-label,
+.mission-row > Label {
+    margin: 0;
+    padding: 0 4px 0 0;
+    font-size: 12px;
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-shrink: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.stage-row__status {
-    width: 14%;
     -unity-text-align: middle-left;
-    -unity-font-style: bold;
 }
 
-.stage-row__activate {
-    width: 13%;
+.mission-row__id { flex-grow: 3; }
+.mission-row__name { flex-grow: 3; }
+.mission-row__type { flex-grow: 2; }
+.mission-row__owner { flex-grow: 2; }
+.mission-row__state { flex-grow: 2; -unity-font-style: bold; }
+.mission-row__stage-info { flex-grow: 1; }
+.mission-row__select-button { display: none; }
+
+/* The table header is a MissionRow too. It leaves room for the scroll bar of the list under it. */
+.dt-table__header.mission-row {
+    background-color: rgb(46, 53, 64);
+    color: rgb(154, 158, 167);
+    padding-right: 13px;
 }
 
-.stage-row__complete {
-    width: 13%;
+.dt-table__header.mission-row > .unity-label { color: rgb(154, 158, 167); -unity-font-style: normal; }
+
+.mission-row__selected,
+.mission-row__selected:hover {
+    background-color: rgb(42, 45, 60);
+    border-left-color: rgb(123, 124, 240);
+}
+
+.mission-row__state--active .mission-row__state { color: rgb(90, 180, 120); }
+.mission-row__state--complete .mission-row__state { color: rgb(120, 160, 220); }
+.mission-row__state--failed .mission-row__state { color: rgb(194, 41, 25); }
+.mission-row__state--inactive .mission-row__state { color: rgb(154, 158, 167); }
+
+/* Selected mission */
+.dt-missions-details { flex-shrink: 0; }
+.dt-missions-stat { padding: 0 8px; }
+.dt-missions-stat > .kui-stat__name { flex-grow: 0; flex-shrink: 0; width: 64px; }
+.dt-missions-stat > .kui-stat__value { flex-grow: 1; flex-shrink: 1; min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.dt-missions-actions { flex-direction: row; margin: 4px 0 4px 0; }
+.dt-missions-action { flex-grow: 1; flex-basis: 0; flex-shrink: 1; min-width: 0; margin: 0 2px 0 0; }
+.dt-missions-action--wide { flex-grow: 1.6; }
+
+.dt-missions-dump-group { margin-top: 2px; }
+.dt-missions-dump { margin: 0; padding: 0; }
+.dt-missions-dump.unity-base-text-field,
+.kui-dense .dt-missions-dump.unity-base-text-field {
+    height: auto;
+    min-height: 100px;
+    max-height: 160px;
+}
+.dt-missions-dump.unity-base-text-field > .unity-base-field__input.unity-base-text-field__input,
+.kui-dense .dt-missions-dump.unity-base-text-field > .unity-base-field__input.unity-base-text-field__input {
+    height: auto;
+    min-height: 100px;
+    max-height: 160px;
+    white-space: normal;
+    font-size: 12px;
+}
+
+/* Stages: one 20px line each */
+.dt-missions-stages { max-height: 120px; min-height: 24px; flex-shrink: 1; }
+
+.stage-row {
+    flex-direction: row;
+    align-items: center;
+    height: 20px;
+    min-height: 20px;
+    padding: 0 4px;
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+}
+
+.stage-row > .unity-label,
+.stage-row > Label {
+    margin: 0;
+    padding: 0 4px 0 0;
+    font-size: 12px;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    -unity-text-align: middle-left;
+}
+
+.stage-row__index { width: 28px; flex-shrink: 0; color: rgb(154, 158, 167); }
+.stage-row__name { flex-grow: 2; flex-basis: 0; -unity-font-style: bold; }
+.stage-row__objective { flex-grow: 3; flex-basis: 0; color: rgb(192, 199, 213); }
+.stage-row__status { width: 86px; flex-shrink: 0; -unity-font-style: bold; }
+
+.stage-row__btn.kui-button.unity-button.unity-text-element {
+    height: 18px;
+    min-height: 18px;
+    min-width: 44px;
+    margin: 0 0 0 4px;
+    padding: 0 6px;
+    font-size: 11px;
 }
 
 .stage-row__current {
     background-color: rgba(90, 180, 120, 0.15);
     border-left-color: rgb(90, 180, 120);
-    border-right-color: rgb(90, 180, 120);
-    border-top-color: rgb(90, 180, 120);
-    border-bottom-color: rgb(90, 180, 120);
 }
 
-.stage-row__completed .stage-row__status {
-    color: rgb(120, 160, 220);
-}
-
-.stage-row__active .stage-row__status {
-    color: rgb(90, 180, 120);
-}
-
-.stage-row__inactive .stage-row__status {
-    color: rgb(154, 158, 167);
-}
+.stage-row__completed > .stage-row__status { color: rgb(120, 160, 220); }
+.stage-row__active > .stage-row__status { color: rgb(90, 180, 120); }
+.stage-row__inactive > .stage-row__status { color: rgb(154, 158, 167); }

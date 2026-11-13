@@ -1,81 +1,13 @@
-.root {
-    width: 600px;
-    max-height: 500px;
-    background-color: rgba(34, 38, 46, 0.95);
-}
+.dt-roster-input { flex-grow: 1; flex-basis: 0; min-width: 0; margin-right: 8px; }
+.dt-roster-table { max-height: 200px; min-height: 60px; flex-shrink: 1; }
+.dt-roster-table .dt-table__row, .dt-roster-table .dt-table__header { min-height: 20px; flex-shrink: 0; align-items: center; }
+.dt-roster-table .dt-table__cell { margin: 0; padding: 0 3px; white-space: nowrap; text-overflow: ellipsis; }
+.dt-roster-table .dt-roster-name { flex-grow: 3; }
+.dt-roster-table .dt-roster-object { flex-grow: 2; }
+.dt-roster-table .dt-roster-seat { flex-grow: 0; flex-basis: 48px; }
+.dt-roster-table .dt-roster-date { flex-grow: 0; flex-basis: 82px; }
+.dt-roster-table .dt-roster-action { flex-grow: 0; flex-basis: 38px; }
+.kui-dense .dt-roster-table .dt-roster-action.unity-button { height: 18px; min-height: 18px; min-width: 0; padding: 0 3px; margin: 0; font-size: 12px; }
 
-#title-bar {
-    justify-content: space-between;
-    margin-bottom: 8px;
-    margin-top: 0;
-}
-
-#close-button {
-    margin-left: 0;
-    margin-right: 4px;
-    margin-top: 0;
-    margin-bottom: 0;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 9px;
-    padding-bottom: 10px;
-    font-size: 25px;
-    max-width: 20px;
-    max-height: 20px;
-}
-
-#close-button:hover {
-    color: rgb(194, 41, 25);
-    border-left-color: rgb(194, 41, 25);
-    border-right-color: rgb(194, 41, 25);
-    border-top-color: rgb(194, 41, 25);
-    border-bottom-color: rgb(194, 41, 25);
-}
-
-.field {
-    flex-direction: row;
-    justify-content: space-between;
-    padding-right: 10px;
-    margin-bottom: 6px;
-}
-
-.unity-base-field__label {
-    min-width: 180px;
-}
-
-.kerbal-roster-row {
-    flex-direction: row;
-    width: 100%;
-    justify-content: space-around;
-    margin-bottom: 2px;
-}
-
-.kerbal-roster-row__kerbal-name {
-    width: 25%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.kerbal-roster-row__sim-object {
-    width: 30%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.kerbal-roster-row__seat {
-    width: 10%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.kerbal-roster-row__enrollment-date {
-    width: 15%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.kerbal-roster-row__delete-button {
-    width: 10%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+#add-random-kerbal, #reset-kerbal-roster { width: 116px; margin-left: 4px; }
+.dt-tool > .kui-row > .kui-row__label { flex-basis: 0; min-width: 0; }

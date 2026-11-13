@@ -21,11 +21,13 @@ namespace DebugTools.Runtime.UI.VesselTools
             set
             {
                 _isHeader = value;
+                EnableInClassList("dt-table__header", value);
+                EnableInClassList("dt-table__row", !value);
                 if (value)
                 {
                     NodeName.text = "Name";
-                    UniversalTime.text = "UT";
-                    DeltaV.text = "Δv";
+                    UniversalTime.text = "UT (s)";
+                    DeltaV.text = "Δv (m/s)";
                     GUID.text = "GUID";
                 }
                 else
@@ -43,21 +45,28 @@ namespace DebugTools.Runtime.UI.VesselTools
         public ManeuverNodeRow()
         {
             AddToClassList(ClassName);
+            AddToClassList("dt-table__row");
 
             NodeName = new Label();
             NodeName.AddToClassList(PartNameClassName);
+            NodeName.AddToClassList("dt-table__cell");
             hierarchy.Add(NodeName);
 
             UniversalTime = new Label();
             UniversalTime.AddToClassList(SubItemClassName);
+            UniversalTime.AddToClassList("dt-table__cell");
             hierarchy.Add(UniversalTime);
 
             DeltaV = new Label();
+            DeltaV.AddToClassList("dt-vector");
             DeltaV.AddToClassList(SubItemClassName);
+            DeltaV.AddToClassList("dt-table__cell");
             hierarchy.Add(DeltaV);
 
             GUID = new Label();
+            GUID.AddToClassList("dt-guid");
             GUID.AddToClassList(SubItemClassName);
+            GUID.AddToClassList("dt-table__cell");
             hierarchy.Add(GUID);
 
             IsHeader = true;

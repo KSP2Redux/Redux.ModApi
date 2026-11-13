@@ -1,50 +1,120 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/MissionsDebugWindow.uss?fileID=7433441132597879392#MissionsDebugWindow" />
-    <ui:VisualElement name="root" class="root" style="max-height: 700px;">
-        <ui:VisualElement name="title-bar">
-            <ui:Label text="Missions" />
-            <ui:Button text="×" name="close-button" />
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/MissionsDebugWindow.uss?fileID=7433441132597879392&amp;guid=6ad7ca954cecbf64499d9c5d1432af83&amp;type=3#MissionsDebugWindow" />
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/DebugWindow.uss?fileID=7433441132597879392&amp;guid=3b02df7e5905e8746a5ed673f30eb0be&amp;type=3#DebugWindow" />
+    <ui:VisualElement name="root" class="dt-tool dt-missions">
+        <ui:VisualElement name="filter-bar" class="dt-tool__bar dt-missions-bar">
+            <ui:DropdownField label="Filter" index="0" name="type-filter" class="kui-field dt-missions-filter" />
+            <ui:TextField picking-mode="Ignore" label="Search" value="" name="search" class="kui-field dt-missions-search" />
+            <UitkForKsp2.Controls.OabButton text="Refresh" display-tooltip-when-elided="true" name="refresh" class="kui-button dt-missions-refresh" />
         </ui:VisualElement>
-        <ui:VisualElement name="content">
-            <ui:VisualElement name="filter-bar" class="field" style="flex-direction: row; justify-content: space-between; align-items: center; height: 35px;">
-                <ui:DropdownField label="Filter" index="0" name="type-filter" style="width: 45%; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0;" />
-                <ui:TextField picking-mode="Ignore" label="Search" value="" name="search" style="width: 40%; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;" />
-                <ui:Button text="Refresh" display-tooltip-when-elided="true" name="refresh" style="height: 30px; width: 12%;" />
-            </ui:VisualElement>
 
-            <ui:Label tabindex="-1" text="Missions =============================================================" display-tooltip-when-elided="true" style="overflow: hidden; color: rgb(154, 158, 167);" />
-            <ui:ScrollView scroll-deceleration-rate="0,135" elasticity="0,1" name="missions-list" style="width: 100%; height: auto; max-height: 220px; background-color: rgba(34, 38, 46, 0.5); padding-left: 4px; padding-right: 4px; padding-top: 4px; padding-bottom: 4px;">
-                <DebugTools.Runtime.UI.MissionRow />
-                <DebugTools.Runtime.UI.MissionRow IsHeader="false" class="mission-row__selected" />
-                <DebugTools.Runtime.UI.MissionRow IsHeader="false" />
+        <ui:VisualElement class="kui-section">
+            <ui:Label text="//" class="kui-section__slashes" />
+            <ui:Label text="Missions" class="kui-section__title" />
+        </ui:VisualElement>
+        <ui:VisualElement class="dt-table dt-missions-table">
+            <ui:VisualElement class="dt-table__header mission-row">
+                <ui:Label text="ID" class="dt-table__cell mission-row__id" />
+                <ui:Label text="Name" class="dt-table__cell mission-row__name" />
+                <ui:Label text="Type" class="dt-table__cell mission-row__type" />
+                <ui:Label text="Owner" class="dt-table__cell mission-row__owner" />
+                <ui:Label text="State" class="dt-table__cell mission-row__state" />
+                <ui:Label text="Stage" class="dt-table__cell mission-row__stage-info" />
+            </ui:VisualElement>
+            <ui:ScrollView name="missions-list" vertical-scroller-visibility="AlwaysVisible" class="dt-missions-list">
+                <ui:VisualElement class="dt-table__row mission-row mission-row__state--active">
+                    <ui:Label text="mission_id" class="dt-table__cell mission-row__id" />
+                    <ui:Label text="Mission Name" class="dt-table__cell mission-row__name" />
+                    <ui:Label text="Primary" class="dt-table__cell mission-row__type" />
+                    <ui:Label text="Agency" class="dt-table__cell mission-row__owner" />
+                    <ui:Label text="Active" class="dt-table__cell mission-row__state" />
+                    <ui:Label text="1/3" class="dt-table__cell mission-row__stage-info" />
+                </ui:VisualElement>
+                <ui:VisualElement class="dt-table__row mission-row mission-row__state--complete mission-row__selected">
+                    <ui:Label text="mission_id" class="dt-table__cell mission-row__id" />
+                    <ui:Label text="Mission Name" class="dt-table__cell mission-row__name" />
+                    <ui:Label text="Secondary" class="dt-table__cell mission-row__type" />
+                    <ui:Label text="Agency" class="dt-table__cell mission-row__owner" />
+                    <ui:Label text="Complete" class="dt-table__cell mission-row__state" />
+                    <ui:Label text="3/3" class="dt-table__cell mission-row__stage-info" />
+                </ui:VisualElement>
+                <ui:VisualElement class="dt-table__row mission-row mission-row__state--inactive">
+                    <ui:Label text="mission_id" class="dt-table__cell mission-row__id" />
+                    <ui:Label text="Mission Name" class="dt-table__cell mission-row__name" />
+                    <ui:Label text="Tutorial" class="dt-table__cell mission-row__type" />
+                    <ui:Label text="Agency" class="dt-table__cell mission-row__owner" />
+                    <ui:Label text="Inactive" class="dt-table__cell mission-row__state" />
+                    <ui:Label text="-" class="dt-table__cell mission-row__stage-info" />
+                </ui:VisualElement>
             </ui:ScrollView>
-
-            <ui:Label tabindex="-1" text="Selected Mission =========================================================" display-tooltip-when-elided="true" style="overflow: hidden; color: rgb(154, 158, 167); margin-top: 6px;" />
-            <ui:VisualElement name="details" style="flex-direction: column; background-color: rgba(34, 38, 46, 0.5); padding-left: 6px; padding-right: 6px; padding-top: 4px; padding-bottom: 4px;">
-                <ui:Label tabindex="-1" text="ID: -" name="header-id" style="white-space: normal;" />
-                <ui:Label tabindex="-1" text="Name: -" name="header-name" style="white-space: normal;" />
-                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
-                    <ui:Label tabindex="-1" text="Type: -" name="header-type" style="width: 32%;" />
-                    <ui:Label tabindex="-1" text="Owner: -" name="header-owner" style="width: 32%;" />
-                    <ui:Label tabindex="-1" text="State: -" name="header-state" style="width: 32%;" />
-                </ui:VisualElement>
-
-                <ui:VisualElement name="mission-actions" style="flex-direction: row; flex-wrap: wrap; justify-content: space-between; margin-top: 6px;">
-                    <ui:Button text="Activate" name="btn-activate" style="width: 16%; height: 28px;" />
-                    <ui:Button text="Deactivate" name="btn-deactivate" style="width: 16%; height: 28px;" />
-                    <ui:Button text="Complete" name="btn-complete" style="width: 16%; height: 28px;" />
-                    <ui:Button text="Fail" name="btn-fail" style="width: 16%; height: 28px;" />
-                    <ui:Button text="Reset" name="btn-reset" style="width: 16%; height: 28px;" />
-                    <ui:Button text="Remove" name="btn-remove" style="width: 16%; height: 28px;" />
-                </ui:VisualElement>
-
-                <ui:Foldout text="Raw Status Dump" name="status-dump" value="false" style="margin-top: 6px;">
-                    <ui:TextField picking-mode="Ignore" value="" name="status-text" multiline="true" readonly="true" style="min-height: 120px; white-space: normal;" />
-                </ui:Foldout>
-
-                <ui:Label tabindex="-1" text="Stages" display-tooltip-when-elided="true" style="margin-top: 6px; color: rgb(154, 158, 167);" />
-                <ui:ScrollView scroll-deceleration-rate="0,135" elasticity="0,1" name="stages-list" style="width: 100%; height: auto; max-height: 200px; background-color: rgba(34, 38, 46, 0.5); padding-left: 4px; padding-right: 4px; padding-top: 4px; padding-bottom: 4px;" />
-            </ui:VisualElement>
         </ui:VisualElement>
+
+        <ui:VisualElement class="kui-section">
+            <ui:Label text="//" class="kui-section__slashes" />
+            <ui:Label text="Selected Mission" class="kui-section__title" />
+        </ui:VisualElement>
+        <ui:VisualElement name="details" class="dt-missions-details">
+            <ui:VisualElement class="kui-stat dt-missions-stat">
+                <ui:VisualElement class="kui-stat__icon" />
+                <ui:Label text="ID" class="kui-stat__name" />
+                <ui:Label text="mission_id" name="header-id" class="kui-stat__value" />
+            </ui:VisualElement>
+            <ui:VisualElement class="kui-stat dt-missions-stat">
+                <ui:VisualElement class="kui-stat__icon" />
+                <ui:Label text="Name" class="kui-stat__name" />
+                <ui:Label text="Mission Name" name="header-name" class="kui-stat__value" />
+            </ui:VisualElement>
+            <ui:VisualElement class="kui-stat dt-missions-stat">
+                <ui:VisualElement class="kui-stat__icon" />
+                <ui:Label text="Type" class="kui-stat__name" />
+                <ui:Label text="Primary" name="header-type" class="kui-stat__value" />
+            </ui:VisualElement>
+            <ui:VisualElement class="kui-stat dt-missions-stat">
+                <ui:VisualElement class="kui-stat__icon" />
+                <ui:Label text="Owner" class="kui-stat__name" />
+                <ui:Label text="Agency" name="header-owner" class="kui-stat__value" />
+            </ui:VisualElement>
+            <ui:VisualElement class="kui-stat dt-missions-stat">
+                <ui:VisualElement class="kui-stat__icon" />
+                <ui:Label text="State" class="kui-stat__name" />
+                <ui:Label text="Active" name="header-state" class="kui-stat__value" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="mission-actions" class="dt-missions-actions">
+                <UitkForKsp2.Controls.OabButton text="Activate" name="btn-activate" class="kui-button dt-missions-action" />
+                <UitkForKsp2.Controls.OabButton text="Deactivate" name="btn-deactivate" class="kui-button dt-missions-action dt-missions-action--wide" />
+                <UitkForKsp2.Controls.OabButton text="Complete" name="btn-complete" class="kui-button dt-missions-action" />
+                <UitkForKsp2.Controls.OabButton text="Fail" name="btn-fail" class="kui-button dt-missions-action" />
+                <UitkForKsp2.Controls.OabButton text="Reset" name="btn-reset" class="kui-button dt-missions-action" />
+                <UitkForKsp2.Controls.OabButton text="Remove" name="btn-remove" class="kui-button dt-missions-action" />
+            </ui:VisualElement>
+
+            <ui:Foldout text="Raw Status Dump" name="status-dump" value="false" class="kui-group dt-missions-dump-group">
+                <ui:TextField picking-mode="Ignore" value="" name="status-text" multiline="true" readonly="true" class="dt-missions-dump" />
+            </ui:Foldout>
+        </ui:VisualElement>
+
+        <ui:VisualElement class="kui-section">
+            <ui:Label text="//" class="kui-section__slashes" />
+            <ui:Label text="Stages" class="kui-section__title" />
+        </ui:VisualElement>
+        <ui:ScrollView name="stages-list" class="dt-missions-list dt-missions-stages">
+            <ui:VisualElement class="stage-row stage-row__completed">
+                <ui:Label text="#0" class="stage-row__index" />
+                <ui:Label text="Stage 0" class="stage-row__name" />
+                <ui:Label text="Objective text" class="stage-row__objective" />
+                <ui:Label text="Completed" class="stage-row__status" />
+                <ui:Button text="Jump" class="kui-button stage-row__btn stage-row__activate" />
+                <ui:Button text="Complete" class="kui-button stage-row__btn stage-row__complete" />
+            </ui:VisualElement>
+            <ui:VisualElement class="stage-row stage-row__active stage-row__current">
+                <ui:Label text="#1" class="stage-row__index" />
+                <ui:Label text="Stage 1" class="stage-row__name" />
+                <ui:Label text="Objective text" class="stage-row__objective" />
+                <ui:Label text="Active" class="stage-row__status" />
+                <ui:Button text="Jump" class="kui-button stage-row__btn stage-row__activate" />
+                <ui:Button text="Complete" class="kui-button stage-row__btn stage-row__complete" />
+            </ui:VisualElement>
+        </ui:ScrollView>
     </ui:VisualElement>
 </ui:UXML>

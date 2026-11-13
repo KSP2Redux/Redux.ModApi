@@ -6,6 +6,7 @@ using KSP.Messages;
 using KSP.Sim;
 using KSP.Sim.impl;
 using KSP.Utilities;
+using UitkForKsp2.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Toggle = UnityEngine.UIElements.Toggle;
@@ -35,8 +36,11 @@ namespace DebugTools.Runtime.Controllers.FlightTools
         // Item type selector
         private DropdownField _itemTypeDropdown;
 
-        // Items view
+        // Item lists, one table for sim objects and one for joint connections
+        private VisualElement _simTable;
+        private VisualElement _jointTable;
         private ScrollView _itemsView;
+        private ScrollView _jointItemsView;
 
         private List<SimObjectItemController> _simObjects;
         private List<JointConnectionItemController> _jointConnections;
@@ -91,9 +95,40 @@ namespace DebugTools.Runtime.Controllers.FlightTools
             _itemTypeDropdown.value = ItemType.Vessel.ToString();
             _itemTypeDropdown.RegisterValueChangedCallback(OnItemTypeChanged);
 
+            _simTable = RootElement.Q<VisualElement>("sim-table");
+            _jointTable = RootElement.Q<VisualElement>("joint-table");
             _itemsView = RootElement.Q<ScrollView>("items-view");
+            _jointItemsView = RootElement.Q<ScrollView>("joint-items-view");
+
+            // Drop the design-time sample rows
+            _itemsView.Clear();
+            _jointItemsView.Clear();
+            ShowTableForFilter();
+
+            AttachTooltip(RootElement.Q<VisualElement>("body-collision-label"));
 
             _forceRefresh = true;
+        }
+
+        private void ShowTableForFilter()
+        {
+            bool showJoints = _filterType == ItemType.JointConnection;
+            _simTable.style.display = showJoints ? DisplayStyle.None : DisplayStyle.Flex;
+            _jointTable.style.display = showJoints ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        private Tooltip FindTooltip()
+        {
+            return RootElement?.panel?.visualTree.Q<Tooltip>();
+        }
+
+        private void AttachTooltip(VisualElement element)
+        {
+            element.RegisterCallback<PointerEnterEvent>(_ =>
+            {
+                if (!string.IsNullOrEmpty(element.tooltip)) FindTooltip()?.Show(element);
+            });
+            element.RegisterCallback<PointerLeaveEvent>(_ => FindTooltip()?.Close(element));
         }
 
         private void LateUpdate()
@@ -150,7 +185,7 @@ namespace DebugTools.Runtime.Controllers.FlightTools
 
         private void RefreshJointConnections(IGGuid activeIGGuid)
         {
-            _itemsView.Clear();
+            _jointItemsView.Clear();
             _jointConnections.Clear();
 
             var universeModel = Game?.UniverseModel;
@@ -174,7 +209,7 @@ namespace DebugTools.Runtime.Controllers.FlightTools
                     item.Item.RegisterCallback<PointerLeaveEvent>(_ => ClearOutlines());
 
                     item.SyncTo(jointConnection);
-                    _itemsView.Add(item.Item);
+                    _jointItemsView.Add(item.Item);
                 }
             }
         }
@@ -367,6 +402,7 @@ namespace DebugTools.Runtime.Controllers.FlightTools
         private void OnItemTypeChanged(ChangeEvent<string> evt)
         {
             _filterType = (ItemType)Enum.Parse(typeof(ItemType), evt.newValue);
+            ShowTableForFilter();
             _forceRefresh = true;
         }
     }

@@ -1,27 +1,61 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/FlightToolsWindow.uss?fileID=7433441132597879392&amp;guid=c271b0c8167515b4da97332ef65f455a&amp;type=3#FlightToolsWindow" />
-    <ui:VisualElement name="root" class="root">
-        <ui:VisualElement name="title-bar">
-            <ui:Label text="Flight Tools" />
-            <ui:Button text="×" name="close-button" />
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/DebugWindow.uss?fileID=7433441132597879392&amp;guid=3b02df7e5905e8746a5ed673f30eb0be&amp;type=3#DebugWindow" />
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/FlightToolsWindow.uss?fileID=7433441132597879392&amp;guid=c271b0c8167515b4da97332ef65f455a&amp;type=3#FlightToolsWindow" />
+    <ui:VisualElement name="root" class="dt-tool ft-tool">
+        <ui:VisualElement class="kui-section">
+            <ui:Label text="//" class="kui-section__slashes" />
+            <ui:Label text="Simulation" class="kui-section__title" />
         </ui:VisualElement>
-        <ui:VisualElement name="settings" class="settings">
-            <ui:VisualElement name="game-settings" class="settings-row">
-                <ui:Toggle label="Proximity Load/Unload" name="proximity-load-unload" class="toggle" />
-                <ui:Toggle label="Celestial Body Collision Approx." name="celestial-body-col-approx" class="toggle" />
+        <ui:VisualElement name="settings" class="dt-grid-2">
+            <ui:VisualElement class="kui-row dt-row">
+                <ui:Label text="Proximity Load/Unload" class="kui-row__label dt-row__text" />
+                <ui:Toggle name="proximity-load-unload" class="switch" />
             </ui:VisualElement>
-            <ui:VisualElement name="items-settings" class="settings-row">
-                <ui:Toggle label="Higlight Items" name="highlight-items" class="toggle" />
-                <ui:Toggle label="Active Vessel Only" name="active-only" class="toggle" />
+            <ui:VisualElement class="kui-row dt-row">
+                <ui:Label name="body-collision-label" text="Body Collision Approx." tooltip="Celestial Body Collision Approximation" class="kui-row__label dt-row__text" />
+                <ui:Toggle name="celestial-body-col-approx" class="switch" />
             </ui:VisualElement>
-            <ui:VisualElement name="items-settings" class="settings-row">
-                <ui:DropdownField label="Item Type" index="-1" choices="System.Collections.Generic.List`1[System.String]" name="item-type" class="item-type" />
+            <ui:VisualElement class="kui-row dt-row">
+                <ui:Label text="Highlight Items" class="kui-row__label dt-row__text" />
+                <ui:Toggle name="highlight-items" class="switch" />
+            </ui:VisualElement>
+            <ui:VisualElement class="kui-row dt-row">
+                <ui:Label text="Active Vessel Only" class="kui-row__label dt-row__text" />
+                <ui:Toggle name="active-only" class="switch" />
+            </ui:VisualElement>
+            <ui:VisualElement class="kui-row dt-row">
+                <ui:Label text="Item Type" class="kui-row__label dt-row__text" />
+                <ui:DropdownField name="item-type" index="0" choices="Vessel,Part,JointConnection,CelestialBody" class="kui-field ft-dropdown" />
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement name="divider" class="divider" />
-        <ui:ScrollView scroll-deceleration-rate="0,135" elasticity="0,1" name="items-view" class="items-view" style="background-color: rgba(34, 38, 46, 0.5);">
-            <DebugTools.Runtime.UI.FlightTools.SimObjectItem IsLoaded="false" />
-            <DebugTools.Runtime.UI.FlightTools.JointConnectionItem />
-        </ui:ScrollView>
+        <ui:VisualElement class="kui-section">
+            <ui:Label text="//" class="kui-section__slashes" />
+            <ui:Label text="Items" class="kui-section__title" />
+        </ui:VisualElement>
+        <ui:VisualElement name="sim-table" class="dt-table ft-table">
+            <ui:VisualElement class="dt-table__header">
+                <ui:Label text="Name" class="dt-table__cell ft-head-name" />
+                <ui:Label text="Physics" class="dt-table__cell ft-head-physics" />
+                <ui:Label text="Parent frame" class="dt-table__cell ft-head-frame" />
+                <ui:Label text="Actions" class="dt-table__cell ft-head-actions" />
+            </ui:VisualElement>
+            <ui:ScrollView name="items-view" scroll-deceleration-rate="0.135" elasticity="0.1" class="ft-items">
+                <DebugTools.Runtime.UI.FlightTools.SimObjectItem IsLoaded="false" />
+                <DebugTools.Runtime.UI.FlightTools.SimObjectItem IsLoaded="true" />
+            </ui:ScrollView>
+        </ui:VisualElement>
+        <ui:VisualElement name="joint-table" class="dt-table ft-table">
+            <ui:VisualElement class="dt-table__header">
+                <ui:Label text="Joints" class="dt-table__cell ft-head-small" />
+                <ui:Label text="Host" class="dt-table__cell ft-head-joint-name" />
+                <ui:Label text="Target" class="dt-table__cell ft-head-joint-name" />
+                <ui:Label text="Node" class="dt-table__cell ft-head-small" />
+                <ui:Label text="Type" class="dt-table__cell ft-head-small" />
+                <ui:Label text="Actions" class="dt-table__cell ft-head-small" />
+            </ui:VisualElement>
+            <ui:ScrollView name="joint-items-view" scroll-deceleration-rate="0.135" elasticity="0.1" class="ft-items">
+                <DebugTools.Runtime.UI.FlightTools.JointConnectionItem />
+            </ui:ScrollView>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

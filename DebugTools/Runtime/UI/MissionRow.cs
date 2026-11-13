@@ -4,19 +4,19 @@ using UnityEngine.UIElements;
 // ReSharper disable once CheckNamespace
 namespace DebugTools.Runtime.UI
 {
-    [UxmlElement]
-    public partial class MissionRow : VisualElement
+    /// <summary>
+    /// One mission in the Missions table. A click anywhere on the row selects the mission.
+    /// </summary>
+    public class MissionRow : VisualElement
     {
         private const string ClassName = "mission-row";
         private const string SelectedClassName = ClassName + "__selected";
-        private const string HeaderClassName = ClassName + "__header";
         private const string IdClassName = ClassName + "__id";
         private const string NameClassName = ClassName + "__name";
         private const string TypeClassName = ClassName + "__type";
         private const string OwnerClassName = ClassName + "__owner";
         private const string StateClassName = ClassName + "__state";
         private const string StageInfoClassName = ClassName + "__stage-info";
-        private const string SelectButtonClassName = ClassName + "__select-button";
 
         private const string StateActiveClass = ClassName + "__state--active";
         private const string StateInactiveClass = ClassName + "__state--inactive";
@@ -30,78 +30,30 @@ namespace DebugTools.Runtime.UI
         public readonly Label State;
         public readonly Label StageInfo;
 
-        private readonly Button _selectButton;
-
         public Action OnSelect;
-
-        [UxmlAttribute]
-        public bool IsHeader
-        {
-            get => _isHeaderValue;
-            set
-            {
-                _isHeaderValue = value;
-                if (value)
-                {
-                    AddToClassList(HeaderClassName);
-                    Id.text = "<b>ID</b>";
-                    Name.text = "<b>Name</b>";
-                    Type.text = "<b>Type</b>";
-                    Owner.text = "<b>Owner</b>";
-                    State.text = "<b>State</b>";
-                    StageInfo.text = "<b>Stage</b>";
-                    _selectButton.visible = false;
-                }
-                else
-                {
-                    RemoveFromClassList(HeaderClassName);
-                    Id.text = "mission_id";
-                    Name.text = "Mission Name";
-                    Type.text = "Primary";
-                    Owner.text = "Agency";
-                    State.text = "Active";
-                    StageInfo.text = "1/3";
-                    _selectButton.visible = true;
-                }
-            }
-        }
-
-        private bool _isHeaderValue;
 
         public MissionRow()
         {
+            AddToClassList("dt-table__row");
             AddToClassList(ClassName);
 
-            Id = new Label();
-            Id.AddToClassList(IdClassName);
-            hierarchy.Add(Id);
+            Id = AddCell(IdClassName);
+            Name = AddCell(NameClassName);
+            Type = AddCell(TypeClassName);
+            Owner = AddCell(OwnerClassName);
+            State = AddCell(StateClassName);
+            StageInfo = AddCell(StageInfoClassName);
 
-            Name = new Label();
-            Name.AddToClassList(NameClassName);
-            hierarchy.Add(Name);
+            RegisterCallback<ClickEvent>(_ => OnSelect?.Invoke());
+        }
 
-            Type = new Label();
-            Type.AddToClassList(TypeClassName);
-            hierarchy.Add(Type);
-
-            Owner = new Label();
-            Owner.AddToClassList(OwnerClassName);
-            hierarchy.Add(Owner);
-
-            State = new Label();
-            State.AddToClassList(StateClassName);
-            hierarchy.Add(State);
-
-            StageInfo = new Label();
-            StageInfo.AddToClassList(StageInfoClassName);
-            hierarchy.Add(StageInfo);
-
-            _selectButton = new Button { text = "Select" };
-            _selectButton.AddToClassList(SelectButtonClassName);
-            _selectButton.clicked += () => OnSelect?.Invoke();
-            hierarchy.Add(_selectButton);
-
-            IsHeader = true;
+        private Label AddCell(string className)
+        {
+            var cell = new Label();
+            cell.AddToClassList("dt-table__cell");
+            cell.AddToClassList(className);
+            Add(cell);
+            return cell;
         }
 
         public void SetStateClass(string stateText)

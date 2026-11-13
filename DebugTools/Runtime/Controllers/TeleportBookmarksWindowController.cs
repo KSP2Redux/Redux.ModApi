@@ -121,7 +121,10 @@ namespace DebugTools.Runtime.Controllers
 
             // Sanitize user-input list name as it will be used as a file name for storage
             var listName = MakeValidFileName(_newListField.value);
-            
+
+            // The field starts empty with a placeholder, and an empty name or a duplicate cannot be a list
+            if (string.IsNullOrWhiteSpace(listName) || _bookmarksLists.ContainsKey(listName)) return;
+
             _bookmarksLists.Add(listName, new BookmarksList());
             UpdateBookmarksListsDropdown(listName);
             
@@ -374,7 +377,17 @@ namespace DebugTools.Runtime.Controllers
             if (startingList != null)
                 _selectedList.value = startingList;
             else
-                _selectedList.index = 0;
+            {
+                // Setting index to 0 does nothing when the dropdown already reports index 0, which leaves a stale value
+                string? firstList = null;
+                foreach (var listName in _bookmarksLists.Keys)
+                {
+                    firstList = listName;
+                    break;
+                }
+
+                _selectedList.value = firstList;
+            }
         }
 
         /// <summary>
@@ -443,7 +456,13 @@ namespace DebugTools.Runtime.Controllers
             _teleportBookmarksView.Clear();
             _teleportBookmarks.Clear();
 
-            foreach (var bookmark in _bookmarksLists[_selectedList.value].Values)
+            if (_selectedList.value == null || !_bookmarksLists.TryGetValue(_selectedList.value, out var selectedBookmarks))
+            {
+                UpdateSelectedBookmark();
+                return;
+            }
+
+            foreach (var bookmark in selectedBookmarks.Values)
             {
                 var row = new TeleportBookmarkRow();
                 row.Name.text = bookmark.BookmarkName;

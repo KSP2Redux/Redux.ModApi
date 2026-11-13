@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using KSP.Game;
@@ -7,6 +8,7 @@ using KSP.Sim;
 using KSP.Sim.impl;
 using KSP.Utilities;
 using Redux.Ecs.Structural;
+using UitkForKsp2.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -18,9 +20,19 @@ namespace DebugTools.Runtime.Controllers
         private const float RefreshInterval = 0.15f;
 
         private Label _vesselName;
-        private Label _physicsSummary;
-        private Label _jointSummary;
-        private Label _stressSummary;
+        private Label _statPhysics;
+        private Label _statSituation;
+        private Label _statParts;
+        private Label _statMode;
+        private Label _statAnalytical;
+        private Label _statLegacy;
+        private Label _statPhysx;
+        private Label _statRigidbodies;
+        private Label _statMax;
+        private Label _statSolved;
+        private Label _statOverride;
+        private Label _statGraph;
+        private Label _statSelected;
         private Label _mode;
         private Label _rigidityValue;
         private Label _stackRigidityValue;
@@ -33,7 +45,12 @@ namespace DebugTools.Runtime.Controllers
         private Toggle _showStressGauges;
         private Toggle _multiJoints;
         private Toggle _inertiaTensorFix;
+        private Toggle _dynamicTensorSolution;
+        private Toggle _scaledSolverIteration;
+        private Toggle _jointsEnabled;
         private Toggle _extraJoints;
+
+        private VisualElement _headerGauges;
 
         private DropdownField _sortMode;
         private DropdownField _extraJointsMode;
@@ -74,9 +91,19 @@ namespace DebugTools.Runtime.Controllers
             Enable();
 
             _vesselName = RootElement.Q<Label>("vessel-name");
-            _physicsSummary = RootElement.Q<Label>("physics-summary");
-            _jointSummary = RootElement.Q<Label>("joint-summary");
-            _stressSummary = RootElement.Q<Label>("stress-summary");
+            _statPhysics = RootElement.Q<Label>("stat-physics");
+            _statSituation = RootElement.Q<Label>("stat-situation");
+            _statParts = RootElement.Q<Label>("stat-parts");
+            _statMode = RootElement.Q<Label>("stat-mode");
+            _statAnalytical = RootElement.Q<Label>("stat-analytical");
+            _statLegacy = RootElement.Q<Label>("stat-legacy");
+            _statPhysx = RootElement.Q<Label>("stat-physx");
+            _statRigidbodies = RootElement.Q<Label>("stat-rigidbodies");
+            _statMax = RootElement.Q<Label>("stat-max");
+            _statSolved = RootElement.Q<Label>("stat-solved");
+            _statOverride = RootElement.Q<Label>("stat-override");
+            _statGraph = RootElement.Q<Label>("stat-graph");
+            _statSelected = RootElement.Q<Label>("stat-selected");
             _mode = RootElement.Q<Label>("mode-value");
             _rigidityValue = RootElement.Q<Label>("rigidity-value");
             _stackRigidityValue = RootElement.Q<Label>("stack-rigidity-value");
@@ -90,7 +117,12 @@ namespace DebugTools.Runtime.Controllers
             _showStressGauges = RootElement.Q<Toggle>("show-stress-gauges");
             _multiJoints = RootElement.Q<Toggle>("multi-joints");
             _inertiaTensorFix = RootElement.Q<Toggle>("inertia-tensor-fix");
+            _dynamicTensorSolution = RootElement.Q<Toggle>("dynamic-tensor-solution");
+            _scaledSolverIteration = RootElement.Q<Toggle>("scaled-solver-iteration");
+            _jointsEnabled = RootElement.Q<Toggle>("joints-enabled");
             _extraJoints = RootElement.Q<Toggle>("extra-joints");
+
+            _headerGauges = RootElement.Q<VisualElement>("header-gauges");
 
             _sortMode = RootElement.Q<DropdownField>("sort-mode");
             _extraJointsMode = RootElement.Q<DropdownField>("extra-joints-mode");
@@ -118,6 +150,9 @@ namespace DebugTools.Runtime.Controllers
             _showStressGauges.RegisterValueChangedCallback(OnShowStressGaugesChanged);
             _multiJoints.RegisterValueChangedCallback(MultiJointsChanged);
             _inertiaTensorFix.RegisterValueChangedCallback(InertiaTensorFixChanged);
+            _dynamicTensorSolution.RegisterValueChangedCallback(DynamicTensorSolutionChanged);
+            _scaledSolverIteration.RegisterValueChangedCallback(ScaledSolverIterationChanged);
+            _jointsEnabled.RegisterValueChangedCallback(JointsEnabledChanged);
             _extraJoints.RegisterValueChangedCallback(ExtraJointsChanged);
 
             _sortMode.choices = Enum.GetNames(typeof(JointDebugSortMode)).ToList();
@@ -139,8 +174,14 @@ namespace DebugTools.Runtime.Controllers
 
             RootElement.RegisterCallback<PointerEnterEvent>(OnWindowPointerEnter);
             RootElement.RegisterCallback<PointerLeaveEvent>(OnWindowPointerLeave);
+            AttachTooltip(RootElement.Q<VisualElement>("stress-override"));
             JointDebugState.Changed -= OnJointDebugStateChanged;
             JointDebugState.Changed += OnJointDebugStateChanged;
+
+            // Drop the design-time sample rows
+            _rowsView.Clear();
+            _rows.Clear();
+            _lastRowsSignature = string.Empty;
 
             SyncControlsFromState();
             _forceRebuild = true;
@@ -191,10 +232,17 @@ namespace DebugTools.Runtime.Controllers
 
             if (!_hasVessel || _activeVessel == null || _activeBehavior == null)
             {
-                _vesselName!.text = "<b>No active vessel</b>";
-                _physicsSummary!.text = "Physics: n/a";
-                _jointSummary!.text = "Joints: n/a";
-                _stressSummary!.text = "Stress: n/a";
+                _vesselName!.text = "No active vessel";
+                foreach (Label stat in new[]
+                         {
+                             _statPhysics, _statSituation, _statParts, _statMode, _statAnalytical, _statLegacy,
+                             _statPhysx, _statRigidbodies, _statMax, _statSolved, _statOverride, _statGraph
+                         })
+                {
+                    stat!.text = "n/a";
+                }
+
+                _statSelected!.text = "Selected: n/a";
                 _mode!.text = "RigidBody Mode: n/a";
                 return;
             }
@@ -208,23 +256,30 @@ namespace DebugTools.Runtime.Controllers
             int configJoints = _activeBehavior.GetComponentsInChildren<ConfigurableJoint>(true).Length;
             int legacyConnections = partOwner.JointConnections.Count();
 
-            _vesselName!.text = $"<b>{_activeVessel.DisplayName}</b>";
-            _physicsSummary!.text =
-                $"Physics:<b>{_activeVessel.Physics}</b>  Situation:<b>{_activeVessel.Situation}</b>  Parts:<b>{partOwner.Model.PartCount:0}</b>";
-            _jointSummary!.text =
-                $"Mode:<b>{snapshot?.Mode.ToString() ?? "Unavailable"}</b>  Analytical:<b>{(snapshot?.ConnectionCount ?? 0):0}</b>  Legacy:<b>{legacyConnections:0}</b>  PhysX CJ:<b>{configJoints:0}</b>  RB owner/parts:<b>{ownerRb:0}/{partRootRb:0}</b>";
-            _stressSummary!.text =
-                $"Max:<b>{JointDebugState.FormatPercent(snapshot?.MaximumUtilization ?? 0f)}</b>  Solved:<b>{JointDebugState.FormatPercent(snapshot?.SolvedMaximumUtilization ?? 0f)}</b>  Override:<b>{(snapshot?.PresentationStressOverrideActive == true ? "active" : "off")}</b>  Graph:<b>{(snapshot?.GraphValid == true ? "valid" : "rebuilding")}</b>  Selected:<b>{JointDebugState.SelectedConnectionId ?? "none"}</b>";
+            _vesselName!.text = _activeVessel.DisplayName;
+            _statPhysics!.text = _activeVessel.Physics.ToString();
+            _statSituation!.text = _activeVessel.Situation.ToString();
+            _statParts!.text = $"{partOwner.Model.PartCount:0}";
+            _statMode!.text = snapshot?.Mode.ToString() ?? "Unavailable";
+            _statAnalytical!.text = $"{(snapshot?.ConnectionCount ?? 0):0}";
+            _statLegacy!.text = $"{legacyConnections:0}";
+            _statPhysx!.text = $"{configJoints:0}";
+            _statRigidbodies!.text = $"{ownerRb:0}/{partRootRb:0}";
+            _statMax!.text = JointDebugState.FormatPercent(snapshot?.MaximumUtilization ?? 0f);
+            _statSolved!.text = JointDebugState.FormatPercent(snapshot?.SolvedMaximumUtilization ?? 0f);
+            _statOverride!.text = snapshot?.PresentationStressOverrideActive == true ? "active" : "off";
+            _statGraph!.text = snapshot?.GraphValid == true ? "valid" : "rebuilding";
+            _statSelected!.text = $"Selected: {JointDebugState.SelectedConnectionId ?? "none"}";
             _mode!.text = _activeVessel.Physics == PhysicsMode.RigidBody
-                ? $"RigidBody Mode: <b>{(_activeBehavior.IsUnpacked() ? "Unpacked" : "Packed")}</b>"
+                ? $"RigidBody Mode: {(_activeBehavior.IsUnpacked() ? "Unpacked" : "Packed")}"
                 : "RigidBody Mode: n/a";
         }
 
         private void UpdateSettingsLabels()
         {
-            _rigidityValue!.text = $"Rigidity: <b>{PhysicsSettings.JOINT_RIGIDITY:0.0}</b>";
-            _stackRigidityValue!.text = $"Stack: <b>{PhysicsSettings.JOINT_STACK_NODE_FACTOR:0.0}</b>";
-            _surfaceRigidityValue!.text = $"Surface: <b>{PhysicsSettings.JOINT_SURFACE_NODE_FACTOR:0.0}</b>";
+            _rigidityValue!.text = $"Rigidity: {PhysicsSettings.JOINT_RIGIDITY:0.0}";
+            _stackRigidityValue!.text = $"Stack: {PhysicsSettings.JOINT_STACK_NODE_FACTOR:0.0}";
+            _surfaceRigidityValue!.text = $"Surface: {PhysicsSettings.JOINT_SURFACE_NODE_FACTOR:0.0}";
         }
 
         private void RefreshRows()
@@ -344,10 +399,25 @@ namespace DebugTools.Runtime.Controllers
                 }
             }
 
+            _headerGauges!.style.display = JointDebugState.ShowStressGauges ? DisplayStyle.Flex : DisplayStyle.None;
             for (int i = 0; i < _rows.Count; i++)
             {
                 _rows[i].SyncTo(models[i], JointDebugState.ShowStressGauges);
             }
+        }
+
+        private Tooltip FindTooltip()
+        {
+            return RootElement?.panel?.visualTree.Q<Tooltip>();
+        }
+
+        private void AttachTooltip(VisualElement element)
+        {
+            element.RegisterCallback<PointerEnterEvent>(_ =>
+            {
+                if (!string.IsNullOrEmpty(element.tooltip)) FindTooltip()?.Show(element);
+            });
+            element.RegisterCallback<PointerLeaveEvent>(_ => FindTooltip()?.Close(element));
         }
 
         private void ApplySelectionAndHover()
@@ -405,6 +475,9 @@ namespace DebugTools.Runtime.Controllers
             _sortMode!.SetValueWithoutNotify(JointDebugState.SortMode.ToString());
             _multiJoints!.SetValueWithoutNotify(PersistentProfileManager.MultiJointsEnabled);
             _inertiaTensorFix!.SetValueWithoutNotify(PhysicsSettings.ENABLE_INERTIA_TENSOR_SCALING);
+            _dynamicTensorSolution!.SetValueWithoutNotify(PhysicsSettings.ENABLE_DYNAMIC_TENSOR_SOLUTION);
+            _scaledSolverIteration!.SetValueWithoutNotify(PhysicsSettings.ENABLE_SCALED_SOLVER_ITERATION);
+            _jointsEnabled!.SetValueWithoutNotify(!PhysicsSettings.DEBUG_DISABLE_JOINTS);
             _extraJoints!.SetValueWithoutNotify(PersistentProfileManager.EnhancedJointsEnabled);
             _extraJointsMode!.SetValueWithoutNotify(PersistentProfileManager.EnhancedJointsMode.ToString());
             _ignoreControlEvents = false;
@@ -428,10 +501,12 @@ namespace DebugTools.Runtime.Controllers
         private void OnRowPointerEnter(JointRowController row)
         {
             JointDebugState.SetHoveredConnection(row.Model.Id);
+            FindTooltip()?.Show(row.Root);
         }
 
         private void OnRowPointerLeave(JointRowController row)
         {
+            FindTooltip()?.Close(row.Root);
             if (JointDebugState.HoveredConnectionId == row.Model.Id)
             {
                 JointDebugState.SetHoveredConnection(null);
@@ -516,14 +591,76 @@ namespace DebugTools.Runtime.Controllers
                     evt.newValue);
         }
 
-        private static void MultiJointsChanged(ChangeEvent<bool> evt)
+        // The handler of the Vessel Tools Multi Joints switch, which also rebuilds the unpacked vessels
+        private void MultiJointsChanged(ChangeEvent<bool> evt)
         {
+            if (_ignoreControlEvents) return;
+
             PersistentProfileManager.MultiJointsEnabled = evt.newValue;
+            if (Game?.ViewController == null) return;
+
+            RebuildUnpackedVessels();
         }
 
         private static void InertiaTensorFixChanged(ChangeEvent<bool> evt)
         {
             PhysicsSettings.ENABLE_INERTIA_TENSOR_SCALING = evt.newValue;
+        }
+
+        // Moved from the Vessel Tools window with its handler
+        private void DynamicTensorSolutionChanged(ChangeEvent<bool> evt)
+        {
+            if (!_ignoreControlEvents)
+                PhysicsSettings.ENABLE_DYNAMIC_TENSOR_SOLUTION = evt.newValue;
+        }
+
+        // Moved from the Vessel Tools window with its handler
+        private void ScaledSolverIterationChanged(ChangeEvent<bool> evt)
+        {
+            if (_ignoreControlEvents || Game?.ViewController == null) return;
+
+            PhysicsSettings.ENABLE_SCALED_SOLVER_ITERATION = evt.newValue;
+            RebuildUnpackedVessels();
+        }
+
+        // Moved from the Vessel Tools window with its handler
+        private void JointsEnabledChanged(ChangeEvent<bool> evt)
+        {
+            if (_ignoreControlEvents || Game?.ViewController == null) return;
+
+            PhysicsSettings.DEBUG_DISABLE_JOINTS = !evt.newValue;
+
+            foreach (VesselComponent vessel in Game.ViewController.Universe.GetAllVessels())
+            {
+                if (Game.SpaceSimulation.TryGetViewObjectComponent<PartOwnerBehavior>(vessel.SimulationObject,
+                        out var partOwner) &&
+                    partOwner.ViewObject.Vessel.IsUnpacked())
+                {
+                    partOwner.ViewObject.Vessel.DebugForcePackVessel();
+                }
+            }
+
+            Game.UniverseView.PhysicsSpace.FloatingOrigin.IsPendingForceSnap = true;
+        }
+
+        private void RebuildUnpackedVessels()
+        {
+            foreach (VesselComponent vessel in Game.ViewController.Universe.GetAllVessels())
+            {
+                if (Game.SpaceSimulation.TryGetViewObjectComponent<PartOwnerBehavior>(vessel.SimulationObject,
+                        out var partOwner) &&
+                    partOwner.ViewObject.Vessel.IsUnpacked())
+                {
+                    StartCoroutine(CoroutineRebuildVessel(partOwner.ViewObject.Vessel));
+                }
+            }
+        }
+
+        private static IEnumerator CoroutineRebuildVessel(VesselBehavior vessel)
+        {
+            vessel.DebugForcePackVessel();
+            yield return null;
+            vessel.DebugForceUnpackVessel();
         }
 
         private sealed class JointRowModel
@@ -639,7 +776,6 @@ namespace DebugTools.Runtime.Controllers
             private readonly Label _kind = new();
             private readonly Label _name = new();
             private readonly Label _node = new();
-            private readonly Label _limits = new();
             private readonly Label _magnitudes = new();
             private readonly VisualElement _gauges = new();
             private readonly Gauge _forceGauge = new("F");
@@ -648,35 +784,30 @@ namespace DebugTools.Runtime.Controllers
 
             public JointRowModel Model { get; private set; }
 
+            // One 20px dt-table line. The limits and the full load text sit in the row tooltip.
             public JointRowController(JointRowModel model)
             {
                 Model = model;
                 Root.AddToClassList("joint-row");
+                Root.AddToClassList("dt-table__row");
 
-                VisualElement top = new();
-                top.AddToClassList("joint-row-top");
-                _kind.AddToClassList("joint-kind");
-                _name.AddToClassList("joint-name");
-                _node.AddToClassList("joint-node");
-                top.Add(_kind);
-                top.Add(_name);
-                top.Add(_node);
-
-                VisualElement bottom = new();
-                bottom.AddToClassList("joint-row-bottom");
-                _limits.AddToClassList("joint-limits");
-                _magnitudes.AddToClassList("joint-magnitudes");
+                AddCell(_kind, "joint-kind");
+                AddCell(_name, "joint-name");
+                AddCell(_node, "joint-node");
+                AddCell(_magnitudes, "joint-magnitudes");
                 _gauges.AddToClassList("joint-gauges");
                 _gauges.Add(_forceGauge.Root);
                 _gauges.Add(_torqueGauge.Root);
                 _gauges.Add(_maxGauge.Root);
-                bottom.Add(_limits);
-                bottom.Add(_gauges);
-                bottom.Add(_magnitudes);
-
-                Root.Add(top);
-                Root.Add(bottom);
+                Root.Add(_gauges);
                 SyncTo(model, true);
+            }
+
+            private void AddCell(Label cell, string className)
+            {
+                cell.AddToClassList("dt-table__cell");
+                cell.AddToClassList(className);
+                Root.Add(cell);
             }
 
             public void SyncTo(JointRowModel model, bool showGauges)
@@ -686,9 +817,11 @@ namespace DebugTools.Runtime.Controllers
                 _name.text = $"{model.ParentName} -> {model.ChildName}";
                 _node.text = $"{model.NodeType}  #{model.TreeOrder:0}";
                 if (!model.IsAnalytical) _node.text += $"  joints:{model.JointCount:0}";
-                _limits.text = GetLimitText(model);
-                _magnitudes.text =
-                    $"Load F:{model.ForceMagnitude:0}N T:{model.TorqueMagnitude:0}Nm Max:{JointDebugState.FormatPercent(model.Utilization)}";
+                string load = $"F:{model.ForceMagnitude:0}N T:{model.TorqueMagnitude:0}Nm";
+                string max = $"Max:{JointDebugState.FormatPercent(model.Utilization)}";
+                _magnitudes.text = showGauges ? load : $"{load} {max}";
+                // The B: prefix keeps the tooltip from reading a part name as a position hint
+                Root.tooltip = $"B:{_name.text}\n{GetLimitText(model)}\nLoad {load} {max}";
                 _gauges.style.display = showGauges ? DisplayStyle.Flex : DisplayStyle.None;
                 _forceGauge.Set(model.ForceUtilization);
                 _torqueGauge.Set(model.TorqueUtilization);

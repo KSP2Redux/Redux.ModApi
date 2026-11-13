@@ -1,14 +1,3 @@
-
-
-.root {
-    max-height: 800px;
-    width: 600px;
-}
-
-
-
-#title-bar {
-    justify-content: space-between;
-    margin-bottom: 6px;
-    margin-top: 0;
-}
+.SASChartsWindow .sas-chart { height: 175px; min-height: 175px; padding: 0; }
+.SASChartsWindow .nb-chart__legend__label { font-size: 12px; }
+.SASChartsWindow .nb-chart__legend__entry { height: 20px; padding: 0 5px; }

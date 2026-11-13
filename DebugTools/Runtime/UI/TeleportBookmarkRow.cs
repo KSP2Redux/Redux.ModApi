@@ -8,6 +8,8 @@ namespace DebugTools.Runtime.UI
     public partial class TeleportBookmarkRow : VisualElement
     {
         private const string ClassName = "teleport-bookmark-row";
+        private const string TableRowClassName = "dt-table__row";
+        private const string ButtonClassName = "kui-button";
         private const string SelectedClassName = ClassName + "__selected";
         private const string NameClassName = ClassName + "__name";
         private const string BodyNameClassName = ClassName + "__body-name";
@@ -28,6 +30,7 @@ namespace DebugTools.Runtime.UI
         public TeleportBookmarkRow()
         {
             AddToClassList(ClassName);
+            AddToClassList(TableRowClassName);
 
             Name = new Label();
             Name.AddToClassList(NameClassName);
@@ -45,6 +48,7 @@ namespace DebugTools.Runtime.UI
             {
                 text = "TP"
             };
+            _teleportButton.AddToClassList(ButtonClassName);
             _teleportButton.AddToClassList(TeleportButtonClassName);
             _teleportButton.clicked += () => OnTeleport?.Invoke(Name.text);
             hierarchy.Add(_teleportButton);
@@ -53,6 +57,7 @@ namespace DebugTools.Runtime.UI
             {
                 text = "Del"
             };
+            _deleteButton.AddToClassList(ButtonClassName);
             _deleteButton.AddToClassList(DeleteButtonClassName);
             _deleteButton.clicked += () => OnDelete?.Invoke(Name.text);
             hierarchy.Add(_deleteButton);

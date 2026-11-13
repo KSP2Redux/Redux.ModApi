@@ -38,6 +38,7 @@ namespace DebugTools.Runtime.UI.FlightTools
             hierarchy.Add(JointType);
 
             Destroy = new Button { text = "Destroy" };
+            Destroy.AddToClassList("kui-button");
             hierarchy.Add(Destroy);
 
             // Set default preview values for UI Builder

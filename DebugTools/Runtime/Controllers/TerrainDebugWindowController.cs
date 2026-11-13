@@ -30,6 +30,8 @@ namespace DebugTools.Runtime.Controllers
 
         private Label _timeSinceTriplanarBasisUpdate;
         private Label _pqsStats;
+        private Label _pqsSlots;
+        private Label _pqsColliders;
 
         private Button _selectQuad;
         private Label _debugQuadStatus;
@@ -74,6 +76,9 @@ namespace DebugTools.Runtime.Controllers
 
             _timeSinceTriplanarBasisUpdate = RootElement.Q<Label>("time-since-tp-update");
             _pqsStats = RootElement.Q<Label>("pqs-stats");
+            _pqsSlots = RootElement.Q<Label>("pqs-slots");
+            _pqsColliders = RootElement.Q<Label>("pqs-colliders");
+            _timeSinceTriplanarBasisUpdate.text = _secondsSinceTriplanarBasisUpdated.ToString();
 
             _selectQuad = RootElement.Q<Button>("select-quad");
             _selectQuad.clicked += () => { _selectQuadForDebugging = true; };
@@ -165,16 +170,16 @@ namespace DebugTools.Runtime.Controllers
             if (num != _secondsSinceTriplanarBasisUpdated)
             {
                 _secondsSinceTriplanarBasisUpdated = num;
-                _timeSinceTriplanarBasisUpdate.text =
-                    $"{_secondsSinceTriplanarBasisUpdated}s since triplanar basis updated.";
+                _timeSinceTriplanarBasisUpdate.text = _secondsSinceTriplanarBasisUpdated.ToString();
             }
 
             PQS pqs = Game.GraphicsManager.GetSOIBodyPQS();
             PQSRenderer terrainRenderer = pqs != null ? pqs.PQSRenderer : null;
             int usedSlots = terrainRenderer != null ? terrainRenderer.UsedMeshSlotCount : 0;
             int slotCount = terrainRenderer != null ? terrainRenderer.MeshSlotCount : 0;
-            _pqsStats.text =
-                $"PQS Stats: Quads: {PQSRenderer.DebugVisiblePQSQuadCount} | Slots: {usedSlots} / {slotCount} | Colliders: {PQSRenderer.DebugActivePQSColliderCount}";
+            _pqsStats.text = PQSRenderer.DebugVisiblePQSQuadCount.ToString();
+            _pqsSlots.text = $"{usedSlots} / {slotCount}";
+            _pqsColliders.text = PQSRenderer.DebugActivePQSColliderCount.ToString();
 
             _debugQuadStatus.text = _selectQuadForDebugging
                 ? "Click on a piece of terrain"

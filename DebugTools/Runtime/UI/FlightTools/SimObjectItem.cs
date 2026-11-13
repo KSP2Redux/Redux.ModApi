@@ -49,12 +49,15 @@ namespace DebugTools.Runtime.UI.FlightTools
 
             ToggleLoadUnload = new Button { text = "Load" };
             ToggleLoadUnload.AddToClassList(ToggleLoadUnloadClassName);
+            ToggleLoadUnload.AddToClassList("kui-button");
             hierarchy.Add(ToggleLoadUnload);
 
             SetActive = new Button { text = "Set Active" };
+            SetActive.AddToClassList("kui-button");
             hierarchy.Add(SetActive);
 
             Destroy = new Button { text = "Destroy" };
+            Destroy.AddToClassList("kui-button");
             hierarchy.Add(Destroy);
 
             // Set default preview values for UI Builder

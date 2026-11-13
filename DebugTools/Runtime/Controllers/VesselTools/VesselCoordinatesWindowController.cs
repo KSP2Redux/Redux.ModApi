@@ -1,4 +1,5 @@
 using KSP.Sim.impl;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DebugTools.Runtime.Controllers.VesselTools
@@ -6,6 +7,11 @@ namespace DebugTools.Runtime.Controllers.VesselTools
     public class VesselCoordinatesWindowController : BaseWindowController
     {
         private const string FP6Places = "F6";
+
+        private Label? _pitch;
+        private Label? _yaw;
+        private Label? _roll;
+        private Label? _controlState;
 
         private Toggle? _toggleHandOfKraken;
 
@@ -41,9 +47,41 @@ namespace DebugTools.Runtime.Controllers.VesselTools
         private Label? _hokUnderAccel;
         private Label? _hokOrbitStandoff;
 
+        private float _refreshRemaining;
+
+        private void LateUpdate()
+        {
+            if (!IsWindowOpen)
+                return;
+
+            _refreshRemaining -= Time.unscaledDeltaTime;
+            if (_refreshRemaining > 0f)
+                return;
+            _refreshRemaining = 0.5f;
+
+            var view = Game.ViewController;
+            if (view == null)
+                return;
+
+            var vessel = view.GetActiveSimVessel();
+            if (vessel == null)
+                return;
+
+            var behavior = view.GetBehaviorIfLoaded(vessel);
+            if (behavior == null)
+                return;
+
+            SyncTo(vessel, behavior);
+        }
+
         private void OnEnable()
         {
             Enable();
+
+            _pitch = RootElement.Q<Label>("pitch");
+            _yaw = RootElement.Q<Label>("yaw");
+            _roll = RootElement.Q<Label>("roll");
+            _controlState = RootElement.Q<Label>("control-state");
 
             _toggleHandOfKraken = RootElement.Q<Toggle>("toggle-hok");
             _toggleHandOfKraken.RegisterValueChangedCallback(ToggleHandOfKraken);
@@ -83,59 +121,62 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
         public void SyncTo(VesselComponent vessel, VesselBehavior behavior)
         {
-            _latitude!.text = $"Latitude: <b>{vessel.Latitude.ToString(FP6Places)}</b>";
-            _longitude!.text = $"Longitude: <b>{vessel.Longitude.ToString(FP6Places)}</b>";
-            _heading!.text = $"Heading: <b>{vessel.Heading.ToString(FP6Places)}</b>";
-            _zenith!.text = $"Zenith: <b>{vessel.Zenith.ToString(FP6Places)}</b>";
-            _horizonPitch!.text = $"Pitch: <b>{vessel.Pitch_HorizonRelative.ToString(FP6Places)}</b>";
+            _pitch!.text = behavior.flightCtrlState.pitch.ToString("0.00");
+            _yaw!.text = behavior.flightCtrlState.yaw.ToString("0.00");
+            _roll!.text = behavior.flightCtrlState.roll.ToString("0.00");
+            _controlState!.text = vessel.ControlStatus.ToString();
 
-            _celestialBody!.text = $"Body: <b>{vessel.mainBody.bodyName}</b>";
+            _latitude!.text = $"{vessel.Latitude.ToString(FP6Places)}°";
+            _longitude!.text = $"{vessel.Longitude.ToString(FP6Places)}°";
+            _heading!.text = $"{vessel.Heading.ToString(FP6Places)}°";
+            _zenith!.text = $"{vessel.Zenith.ToString(FP6Places)}°";
+            _horizonPitch!.text = $"{vessel.Pitch_HorizonRelative.ToString(FP6Places)}°";
+
+            _celestialBody!.text = $"{vessel.mainBody.bodyName}";
             _originDistance!.text =
-                $"Origin: <b>{Game.UniverseView.PhysicsSpace.FloatingOrigin.distanceFromOrigin.ToString(FP6Places)}</b>";
-            _situation!.text = $"Situation: <b>{vessel.Situation}</b>";
-            _landed!.text = $"Landed: <b>{vessel.Landed}</b>";
-            _splashed!.text = $"Landed: <b>{vessel.Splashed}</b>";
+                $"{Game.UniverseView.PhysicsSpace.FloatingOrigin.distanceFromOrigin.ToString(FP6Places)}";
+            _situation!.text = $"{vessel.Situation}";
+            _landed!.text = $"{vessel.Landed}";
+            _splashed!.text = $"{vessel.Splashed}";
 
-            _altitudeRadius!.text = $"Radius: <b>{vessel.AltitudeFromRadius.ToString(FP6Places)}</b>";
-            _altitudeTerrain!.text = $"Terrain: <b>{vessel.AltitudeFromTerrain.ToString(FP6Places)}</b>";
-            _altitudeSeaLevel!.text = $"Sea Level: <b>{vessel.AltitudeFromSeaLevel.ToString(FP6Places)}</b>";
-            _altitudeScenery!.text = $"Scenery: <b>{vessel.AltitudeFromScenery.ToString(FP6Places)}</b>";
-            _altitudeSurface!.text = $"Surface: <b>{vessel.AltitudeFromSurface.ToString(FP6Places)}</b>";
+            _altitudeRadius!.text = $"{vessel.AltitudeFromRadius.ToString(FP6Places)} m";
+            _altitudeTerrain!.text = $"{vessel.AltitudeFromTerrain.ToString(FP6Places)} m";
+            _altitudeSeaLevel!.text = $"{vessel.AltitudeFromSeaLevel.ToString(FP6Places)} m";
+            _altitudeScenery!.text = $"{vessel.AltitudeFromScenery.ToString(FP6Places)} m";
+            _altitudeSurface!.text = $"{vessel.AltitudeFromSurface.ToString(FP6Places)} m";
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             if (vessel.Orbiter != null)
             {
-                _semiMajorAxis!.text = "Semi Major Axis: <b>" +
-                                       $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.SemiMajorAxis.ToString(FP6Places)}</b>";
-                _eccentricity!.text = "Eccentricity: <b>" +
-                                      $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.Eccentricity.ToString(FP6Places)}</b>";
-                _inclination!.text = "Inclination: <b>" +
-                                     $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.Inclination.ToString(FP6Places)}</b>";
-                _longitudeAscendingNode!.text = "Long. Ascending Node: <b>" +
-                                                $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.LongitudeOfAscendingNode.ToString(FP6Places)}</b>";
-                _periapsis!.text = "Arg. Periapsis: <b>" +
-                                   $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.ArgumentOfPeriapsis.ToString(FP6Places)}</b>";
-                _epoch!.text = "Epoch: <b>" +
-                               $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.Epoch.ToString(FP6Places)}</b>";
-                _meanAnomaly!.text = "Mean Anomaly at Epoch: <b>" +
-                                     $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.MeanAnomalyAtEpoch.ToString(FP6Places)}</b>";
+                _semiMajorAxis!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.SemiMajorAxis.ToString(FP6Places)} m";
+                _eccentricity!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.Eccentricity.ToString(FP6Places)}";
+                _inclination!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.Inclination.ToString(FP6Places)}";
+                _longitudeAscendingNode!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.LongitudeOfAscendingNode.ToString(FP6Places)}";
+                _periapsis!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.ArgumentOfPeriapsis.ToString(FP6Places)}";
+                _epoch!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.Epoch.ToString(FP6Places)}";
+                _meanAnomaly!.text = $"{vessel.Orbiter.PatchedConicsOrbit.OrbitalElements.MeanAnomalyAtEpoch.ToString(FP6Places)}";
             }
 
-            _toggleHandOfKraken!.value = behavior.PartOwner.IsHandOfKrakenEnabled;
-            _hokPhysicsMode!.text = $"Physics Mode: <b>{vessel.Physics}</b>";
-            _hokCorrectingOrbit!.text = $"Correcting Orbit: <b>{behavior.PartOwner.IsHandOfKrakenTryingToCorrect}</b>";
+            _toggleHandOfKraken!.SetValueWithoutNotify(behavior.PartOwner.IsHandOfKrakenEnabled);
+            _hokPhysicsMode!.text = $"{vessel.Physics}";
+            _hokCorrectingOrbit!.text = $"{behavior.PartOwner.IsHandOfKrakenTryingToCorrect}";
             _hokGotExpectedOrbit!.text =
-                $"Got Expected Orbit: <b>{behavior.PartOwner.HasHandOfKrakenGotExpectedOrbit}</b>";
+                $"{behavior.PartOwner.HasHandOfKrakenGotExpectedOrbit}";
             _hokUnderAccel!.text =
-                $"Under Acceleration: <b>{behavior.PartOwner.IsHandOfKrakenOrbitUnderAcceleration}</b>";
+                $"{behavior.PartOwner.IsHandOfKrakenOrbitUnderAcceleration}";
             _hokOrbitStandoff!.text =
-                $"Orbit Standoff: <b>{behavior.PartOwner.IsHandOfKrakenOrbitCorrectInStandOff}</b>";
+                $"{behavior.PartOwner.IsHandOfKrakenOrbitCorrectInStandOff}";
         }
 
         private void ToggleHandOfKraken(ChangeEvent<bool> evt)
         {
             var activeVessel = Game.ViewController.GetActiveSimVessel();
+            if (activeVessel == null)
+                return;
+
             var behavior = Game.ViewController.GetBehaviorIfLoaded(activeVessel);
+            if (behavior == null)
+                return;
             
             switch (behavior.PartOwner.IsHandOfKrakenEnabled)
             {

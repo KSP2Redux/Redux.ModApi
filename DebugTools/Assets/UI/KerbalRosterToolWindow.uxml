@@ -1,28 +1,15 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/KerbalRosterToolWindow.uss?fileID=7433441132597879392&amp;guid=950d6e837f92a714fbccbf76c2612da2&amp;type=3#KerbalRosterToolWindow" />
-    <ui:VisualElement name="root" class="root" style="max-height: 600px;">
-        <ui:VisualElement name="title-bar">
-            <ui:Label text="Kerbal Roster Tools" />
-            <ui:Button text="×" name="close-button" />
-        </ui:VisualElement>
-        <ui:VisualElement name="content">
-            <ui:VisualElement name="buttons" class="field" style="flex-direction: row; justify-content: space-around;">
-                <ui:Button text="Add Random Kerbal" display-tooltip-when-elided="true" name="add-random-kerbal" style="width: 40%;" />
-                <ui:Button text="Reset Kerbal Roster" display-tooltip-when-elided="true" name="reset-kerbal-roster" style="width: 40%;" />
-            </ui:VisualElement>
-            <ui:VisualElement name="name" class="field">
-                <ui:TextField picking-mode="Ignore" label="Add Kerbal By Name" value="..." name="add-by-name-field" style="width: 75%; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;" />
-                <ui:Button text="Add" display-tooltip-when-elided="true" name="add-by-name" style="height: 35px; width: 20%;" />
-            </ui:VisualElement>
-            <ui:VisualElement name="number" class="field">
-                <ui:TextField picking-mode="Ignore" label="Add X Kerbals" value="..." name="add-x-field" style="width: 75%; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;" />
-                <ui:Button text="Add" display-tooltip-when-elided="true" name="add-x" style="height: 35px; width: 20%;" />
-            </ui:VisualElement>
-            <ui:Label tabindex="-1" text="Kerbal Roster:" display-tooltip-when-elided="true" />
-            <ui:ScrollView scroll-deceleration-rate="0,135" elasticity="0,1" name="roster" style="width: 100%; height: auto; max-height: 200px; background-color: rgba(34, 38, 46, 0.5);">
-                <DebugTools.Runtime.UI.KerbalRosterRow />
-                <DebugTools.Runtime.UI.KerbalRosterRow IsHeader="false" />
-            </ui:ScrollView>
-        </ui:VisualElement>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/DebugWindow.uss?fileID=7433441132597879392&amp;guid=3b02df7e5905e8746a5ed673f30eb0be&amp;type=3#DebugWindow" />
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/KerbalRosterToolWindow.uss?fileID=7433441132597879392&amp;guid=950d6e837f92a714fbccbf76c2612da2&amp;type=3#KerbalRosterToolWindow" />
+    <ui:VisualElement name="root" class="dt-tool kui-dense">
+        <ui:VisualElement class="kui-row"><ui:Label text="Roster" class="kui-row__label" /><UitkForKsp2.Controls.OabButton name="add-random-kerbal" text="Add random" class="kui-button " /><UitkForKsp2.Controls.OabButton name="reset-kerbal-roster" text="Reset roster" class="kui-button " /></ui:VisualElement>
+        <ui:VisualElement class="kui-row"><ui:Label text="Add by name" class="kui-row__label" /><ui:TextField name="add-by-name-field" class="kui-field dt-roster-input" /><UitkForKsp2.Controls.OabButton name="add-by-name" text="Add" class="kui-button " /></ui:VisualElement>
+        <ui:VisualElement class="kui-row"><ui:Label text="Add count" class="kui-row__label" /><ui:TextField name="add-x-field" class="kui-field dt-roster-input" /><UitkForKsp2.Controls.OabButton name="add-x" text="Add" class="kui-button " /></ui:VisualElement>
+        <ui:VisualElement class="kui-section"><ui:Label text="//" class="kui-section__slashes" /><ui:Label text="CREW" class="kui-section__title" /></ui:VisualElement>
+        <ui:ScrollView name="roster" class="dt-table dt-roster-table" horizontal-scroller-visibility="Hidden">
+            <ui:VisualElement class="dt-table__header"><ui:Label text="Name" class="dt-table__cell dt-roster-name" /><ui:Label text="Sim object" class="dt-table__cell dt-roster-object" /><ui:Label text="Seat" class="dt-table__cell dt-roster-seat" /><ui:Label text="Enrolled" class="dt-table__cell dt-roster-date" /><ui:Label text="" class="dt-table__cell dt-roster-action" /></ui:VisualElement>
+            <ui:VisualElement class="dt-table__row"><ui:Label text="Valentina Kerman" class="dt-table__cell dt-roster-name" /><ui:Label text="c37a9f02" class="dt-table__cell dt-roster-object" /><ui:Label text="0" class="dt-table__cell dt-roster-seat" /><ui:Label text="123456789" class="dt-table__cell dt-roster-date" /><ui:Button text="Del" class="kui-button dt-roster-action" /></ui:VisualElement>
+            <ui:VisualElement class="dt-table__row"><ui:Label text="Bob Kerman" class="dt-table__cell dt-roster-name" /><ui:Label text="9d41be72" class="dt-table__cell dt-roster-object" /><ui:Label text="1" class="dt-table__cell dt-roster-seat" /><ui:Label text="123456790" class="dt-table__cell dt-roster-date" /><ui:Button text="Del" class="kui-button dt-roster-action" /></ui:VisualElement>
+        </ui:ScrollView>
     </ui:VisualElement>
 </ui:UXML>

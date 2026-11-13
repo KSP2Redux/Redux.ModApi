@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DebugTools.Runtime.UI.VesselTools;
 using KSP.Sim.impl;
 using KSP.Sim.Maneuver;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DebugTools.Runtime.Controllers.VesselTools
@@ -12,6 +13,29 @@ namespace DebugTools.Runtime.Controllers.VesselTools
     {
         private ScrollView? _itemsView;
         private List<ManeuverNodeRow>? _rows;
+
+        private float _refreshRemaining;
+
+        private void LateUpdate()
+        {
+            if (!IsWindowOpen)
+                return;
+
+            _refreshRemaining -= Time.unscaledDeltaTime;
+            if (_refreshRemaining > 0f)
+                return;
+            _refreshRemaining = 1f;
+
+            var view = Game.ViewController;
+            if (view == null)
+                return;
+
+            var vessel = view.GetActiveSimVessel();
+            if (vessel == null)
+                return;
+
+            SyncTo(vessel);
+        }
 
         private void OnEnable()
         {
@@ -49,7 +73,8 @@ namespace DebugTools.Runtime.Controllers.VesselTools
 
                 foreach (var node in nodes)
                 {
-                    row = new ManeuverNodeRow();
+                    row = new ManeuverNodeRow(false);
+                    DebugTools.Utils.UITKHelper.ClearLabels(row);
                     FormatNodeData(row, node);
                     _itemsView.Add(row);
                     _rows.Add(row);
