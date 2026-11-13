@@ -1,0 +1,28 @@
+.static-fire {
+    min-width: 540px;
+    max-height: 720px;
+}
+.static-fire-wrap {
+    white-space: normal;
+}
+.static-fire .kui-button {
+    min-width: 150px;
+    flex-grow: 1;
+}
+.static-fire-ticks {
+    height: 20px;
+    margin-left: 6px;
+    margin-right: 6px;
+}
+.static-fire-ticks > Label {
+    position: absolute;
+}
+.static-fire-tick-zero {
+    left: 0;
+}
+.static-fire-tick-one {
+    left: 85.12%;
+}
+.static-fire-tick-four {
+    left: 97.93%;
+}

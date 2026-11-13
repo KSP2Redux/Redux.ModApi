@@ -1,0 +1,12 @@
+/* A fixed width: the pop-out sizes itself to its content, and the status line can hold a long report path that would
+   otherwise stretch the window past the screen edge. */
+.checklist { width: 520px; }
+.checklist-subject { flex-grow: 1; margin-right: 6px; }
+.checklist > .kui-row > .kui-button { flex-shrink: 0; width: 104px; margin-left: 6px; }
+.checklist-instruction { white-space: normal; margin: 4px 0; }
+.checklist-note { min-height: 48px; margin-bottom: 6px; }
+
+/* Three verdict buttons per row at fixed widths. Percentage widths in a wrapped row collapse in an auto-sized pop-out. */
+.checklist-verdicts { flex-wrap: wrap; height: auto; align-items: flex-start; }
+.checklist > .checklist-verdicts > .kui-button { flex-shrink: 0; width: 164px; margin: 0 6px 6px 0; }
+.checklist > .kui-button { align-self: flex-start; width: 148px; }

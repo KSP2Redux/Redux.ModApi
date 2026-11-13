@@ -1,0 +1,23 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="DebugWindow.uss" />
+    <Style src="GuidedChecklistWindow.uss" />
+    <ui:VisualElement name="root" class="dt-tool checklist">
+        <ui:VisualElement class="kui-row">
+            <UitkForKsp2.Controls.PlaceholderTextField name="subject" placeholder="Part ID" class="oab-text-field kui-field checklist-subject" />
+            <UitkForKsp2.Controls.OabButton name="selected" text="Use selected" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="start" text="Start" class="kui-button" />
+        </ui:VisualElement>
+        <ui:Label name="progress" class="kui-section__title" />
+        <ui:Label name="instruction" class="kui-row__label checklist-instruction" />
+        <UitkForKsp2.Controls.PlaceholderTextField name="note" placeholder="Row note" multiline="true" class="oab-text-field kui-field checklist-note" />
+        <ui:VisualElement name="verdicts" class="kui-row checklist-verdicts">
+            <UitkForKsp2.Controls.OabButton name="pass" text="Pass" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="fail" text="Fail" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="review" text="Needs review" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="na" text="Not applicable" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="skip" text="Skip" class="kui-button" />
+        </ui:VisualElement>
+        <ui:Label name="status" class="kui-row__label checklist-instruction" />
+        <UitkForKsp2.Controls.OabButton name="report" text="Open dossier" class="kui-button" />
+    </ui:VisualElement>
+</ui:UXML>

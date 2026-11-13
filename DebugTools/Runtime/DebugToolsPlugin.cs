@@ -81,7 +81,10 @@ namespace DebugTools
             StateChanges.MainMenuStateEntered += OnMainMenuEntered;
 
             // This object only watches the shortcut. The hub window is built the first time it is opened.
-            var pluginObject = new GameObject("DebugTools");
+            // Returning to the main menu destroys every root object except those tagged like the Redux Manager
+            // (GameManager.DestroyAllGameObjectsFlowAction), and Initialize runs only once, so the tag keeps the hub
+            // and its tool windows alive across campaigns.
+            var pluginObject = new GameObject("DebugTools") { tag = "Game Manager" };
             DontDestroyOnLoad(pluginObject);
             _instance = pluginObject.AddComponent<DebugToolsPlugin>();
         }
@@ -239,6 +242,9 @@ namespace DebugTools
                 "Assembly size limit boxes", "oab vab size limit");
 
             // Test benches: run a controlled effect.
+            RegisterWindow<StaticFireStandWindowController>(hub, Section.TestBenches, "Engines", "StaticFireStandWindow",
+                "Static-fire stand", ToolScene.Flight, "Hold, plume pressure, quality and throttle sweep",
+                "engine plume static fire pressure thrust isp", mode: ToolMode.Window);
             hub.RegisterTool(Section.TestBenches, "Effects", "VFX Test Suite", ToolScene.Flight,
                 () => GameManager.Instance.Game.VFXTestSuiteDialog != null &&
                     GameManager.Instance.Game.VFXTestSuiteDialog.IsVisible,
@@ -251,6 +257,9 @@ namespace DebugTools
                 () => Redux.QA.TextInspector.IsPicking, Redux.QA.TextInspector.SetPicking,
                 "Hover text. Alt+F3 opens its key in the workbench", "text hover inspect key pointer");
 
+            RegisterWindow<GuidedChecklistWindowController>(hub, Section.QaRuns, "Checklists", "GuidedChecklistWindow",
+                "Guided part checklist", ToolScene.Campaign, "Manual part checks with screenshots and a per-part dossier",
+                "part checklist pass fail review screenshot report");
             // QA runs: check many things and write it down.
             hub.RegisterAction(Section.QaRuns, "Log", "Log marker", ToolScene.Any, "Place marker",
                 LogMarker.Place, LogMarker.GetHotkeyText, "Write a numbered marker line to the log",
