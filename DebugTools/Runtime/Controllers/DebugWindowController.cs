@@ -432,7 +432,7 @@ namespace DebugTools.Runtime.Controllers
                 sceneReason.AddToClassList("dt-tool__reason");
                 frame.Add(sceneReason);
                 entry.Shell.Add(new Tooltip());
-                entry.Shell.Add(new WindowResizeHandle { TargetName = "tool-shell", MinWidth = 320, MinHeight = 160 });
+                entry.Shell.Add(new WindowResizeHandle { TargetName = "tool-shell", MinWidth = 500, MinHeight = 120 });
                 entry.Renderer = Window.Create(new WindowOptions
                 {
                     WindowId = $"DebugTools_{entry.WindowName}", IsHidingEnabled = true,
@@ -555,9 +555,13 @@ namespace DebugTools.Runtime.Controllers
                 if (entry.PoppedLine != null)
                 {
                     // A popped-out tool takes one line in its group, and its window holds the controls.
+                    // Only a window that exists is shown. A restored pop-out waiting for its scene, or a closed one
+                    // that cannot run here, says why instead, with its Open button disabled.
+                    bool isWindowShown = entry.PopoutOpen && entry.Shell != null;
                     entry.PoppedLine.style.display = entry.PoppedOut ? DisplayStyle.Flex : DisplayStyle.None;
-                    entry.PoppedStatus.text = entry.PopoutOpen ? "Shown in a window" : "Window closed";
-                    entry.PoppedOpen.style.display = entry.PopoutOpen ? DisplayStyle.None : DisplayStyle.Flex;
+                    entry.PoppedStatus.text = isWindowShown ? "Shown in a window" : reason ?? "Window closed";
+                    entry.PoppedOpen.style.display = isWindowShown ? DisplayStyle.None : DisplayStyle.Flex;
+                    entry.PoppedOpen.SetEnabled(reason == null);
                     entry.Slot.style.display = entry.PoppedOut ? DisplayStyle.None : DisplayStyle.Flex;
                 }
                 // A saved pop-out cannot materialize from a scene message while the hub is closed.
