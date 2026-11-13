@@ -17,14 +17,23 @@ function Cheats.QuickDebugEnable() end
 ---Restores all quick-debug cheat items to their default values.
 function Cheats.QuickDebugRestore() end
 
----Sets the no-crash-damage cheat to the specified value.
----@param noCrashDamage boolean Pass `true` to disable crash damage. Pass `false` to re-enable it.
+---Sets the unbreakable-parts cheat to the specified value. Kept for older callers, it sets the same value as `Cheats.SetUnbreakableParts`.
+---@param noCrashDamage boolean Pass `true` to keep parts from breaking. Pass `false` to let them break again.
 ---@return boolean result `true` if the value was applied. Otherwise, `false`.
 function Cheats.SetNoCrashDamage(noCrashDamage) end
 
----Returns a value indicating whether the no-crash-damage cheat is currently enabled.
----@return boolean enabled `true` if no-crash-damage is active. Otherwise, `false`.
+---Returns a value indicating whether the unbreakable-parts cheat is currently enabled. Kept for older callers, it reads the same value as `Cheats.GetUnbreakableParts`.
+---@return boolean enabled `true` if unbreakable parts is active. Otherwise, `false`.
 function Cheats.GetNoCrashDamage() end
+
+---Sets the unbreakable-parts cheat to the specified value.
+---@param unbreakableParts boolean Pass `true` to keep parts from breaking. Pass `false` to let them break again.
+---@return boolean result `true` if the value was applied. Otherwise, `false`.
+function Cheats.SetUnbreakableParts(unbreakableParts) end
+
+---Returns a value indicating whether the unbreakable-parts cheat is currently enabled. While it is on, no part is destroyed by impacts, splashdowns, overheating or aerodynamic stress on deployables. Deliberate removal, such as decoupling, recovery or deleting a vessel, still works.
+---@return boolean enabled `true` if unbreakable parts is active. Otherwise, `false`.
+function Cheats.GetUnbreakableParts() end
 
 ---Sets the infinite-propellant difficulty option to the specified value.
 ---@param infinitePropellant boolean Pass `true` to enable infinite propellant. Pass `false` to disable it.
