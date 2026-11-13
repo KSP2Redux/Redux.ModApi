@@ -6,6 +6,8 @@ namespace DebugTools.Utils
 {
     public static class Configuration
     {
+        private static IConfigSection _toolSection;
+
         private const string HUB_SECTION = "Dev Tools";
 
         public static ConfigValue<KeyboardShortcut> KeyboardShortcut;
@@ -25,6 +27,7 @@ namespace DebugTools.Utils
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
+            _toolSection = null;
             KeyboardShortcut = null;
             StructuralStressGauges = null;
             HubLastSection = null;
@@ -43,6 +46,7 @@ namespace DebugTools.Utils
                 "Show structural stress gauges over loaded vessel attachment points"));
 
             // Window state, not a setting, so it stays out of the settings menu.
+            _toolSection = config.GetOrCreateSection("Dev Tools windows");
             IConfigSection hubSection = config.GetOrCreateSection(HUB_SECTION);
             HubLastSection = new ConfigValue<string>(hubSection.BindEntry(
                 "Last section",
@@ -59,6 +63,14 @@ namespace DebugTools.Utils
             PhysicsSettingsManager.OnPhysicsSettingsLoaded += ApplyStructuralStressGaugeSetting;
             ApplyStructuralStressGaugeSetting();
         }
+
+        /// <summary>
+        /// Bind hidden placement and host state for a tool.
+        /// </summary>
+        /// <param name="name">The tool asset name.</param>
+        /// <returns>The saved rect followed by the host state.</returns>
+        public static ConfigValue<string> BindToolWindowRect(string name) => new(_toolSection.BindEntry(
+            name, string.Empty, "Window rect and popped-out state", tags: new[] { ConfigTags.Hidden }));
 
         public static void ApplyStructuralStressGaugeSetting()
         {

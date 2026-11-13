@@ -15,12 +15,19 @@ namespace DebugTools.Runtime.Controllers
     
         // The backing field for the IsWindowOpen property
         private bool _isWindowOpen = false;
+        private bool _isBound;
+
+        internal void Bind(VisualElement toolRoot)
+        {
+            RootElement = toolRoot;
+            _isBound = true;
+        }
     
         // Close button
         public Button CloseButton;
 
         /// <summary>
-        /// The state of the window. Setting this value will open or close the window.
+        /// Gets or sets whether the tool is shown in its current host.
         /// </summary>
         public bool IsWindowOpen
         {
@@ -33,7 +40,10 @@ namespace DebugTools.Runtime.Controllers
                 // Every panel is updated and repainted on every frame, shown or not, and the closed debug windows cost
                 // a third of a millisecond a frame between them. A closed window's renderer is switched off, which
                 // keeps its tree as it is.
-                Window.enabled = value;
+                if (Window != null)
+                {
+                    Window.enabled = value;
+                }
             }
         }
 
@@ -54,6 +64,9 @@ namespace DebugTools.Runtime.Controllers
         /// </summary>
         protected void Enable()
         {
+            if (_isBound)
+                return;
+
             // Get the PanelRenderer component from the game object
             Window = GetComponent<PanelRenderer>();
 

@@ -4,7 +4,6 @@ using UitkForKsp2.API;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using Object = UnityEngine.Object;
 
 // ReSharper disable once CheckNamespace
 namespace DebugTools.Utils
@@ -36,13 +35,12 @@ namespace DebugTools.Utils
                 {
                     IsResizingEnabled = true,
                     CheckScreenBounds = true,
-                    MinWidth = MinResizableWindowWidth,
-                    MinHeight = MinResizableWindowHeight
+                    MinWidth = name == "DebugWindow" ? 560f : MinResizableWindowWidth,
+                    MinHeight = name == "DebugWindow" ? 360f : MinResizableWindowHeight
                 }
             };
 
             // Create the window
-            Object.Instantiate(uxml);
             PanelRenderer window = Window.Create(windowOptions, uxml);
             window.panelSettings.sortingOrder = 9999;
             return window;

@@ -4,6 +4,7 @@ using System.Globalization;
 using DebugTools.Utils;
 using KSP.Game;
 using KSP.Messages;
+using SpaceWarp2.API.Configuration;
 using UitkForKsp2.API;
 using UitkForKsp2.Controls;
 using UnityEngine;
@@ -90,6 +91,8 @@ namespace DebugTools.Runtime.Controllers
             Assembly
         }
 
+        internal enum ToolMode { Inline, Window }
+
         private const int SECTION_COUNT = 9;
         private const float REFRESH_INTERVAL = 0.25f;
         private const float CONFIRM_SECONDS = 3f;
@@ -137,6 +140,27 @@ namespace DebugTools.Runtime.Controllers
             public Func<bool> IsSupported;
             public Action Toggle;
             public Action<bool> SetActive;
+            public ToolMode Mode;
+            public bool Detachable;
+            public bool Collapsed;
+            public bool Loading;
+            public bool OpenRequested;
+            public bool LegacyDetected;
+            public bool PoppedOut;
+            public bool PopoutOpen;
+            public string WindowName;
+            public BaseWindowController Controller;
+            public TemplateContainer Container;
+            public Foldout ToolGroup;
+            public Foldout SectionGroup;
+            public VisualElement Slot;
+            public Label ToolReason;
+            public OabButton DetachButton;
+            public AppShell Shell;
+            public PanelRenderer Renderer;
+            public VisualElement LegacyRoot;
+            public ConfigValue<string> Placement;
+            public Action<bool> Load;
             public EntryRow SectionView;
             public EntryRow SearchView;
         }
@@ -220,6 +244,8 @@ namespace DebugTools.Runtime.Controllers
                 {
                     OnClosed();
                 }
+
+                RefreshToolVisibility();
             }
         }
 
@@ -280,6 +306,247 @@ namespace DebugTools.Runtime.Controllers
             }, keywords);
         }
 
+        internal void RegisterHostedTool<T>(Section section, string group, string windowName, string label,
+            ToolScene scene, ToolMode mode, bool detachable, bool collapsed, string note, string keywords,
+            Transform owner) where T : BaseWindowController
+        {
+            var entry = new HubEntry
+            {
+                Section = section, Group = group, WindowName = windowName, Label = label, Scene = scene,
+                Mode = mode, Detachable = detachable, Collapsed = collapsed, Note = note,
+                Placement = Configuration.BindToolWindowRect(windowName)
+            };
+            entry.PoppedOut = entry.Placement.Value.EndsWith("|1", StringComparison.Ordinal);
+            entry.PopoutOpen = entry.PoppedOut;
+            entry.IsActive = () => entry.Controller != null && entry.Controller.IsWindowOpen;
+            entry.Toggle = () => OpenHostedTool(entry);
+            entry.Load = open =>
+            {
+                entry.OpenRequested |= open;
+                if (entry.Loading || entry.Controller != null)
+                    return;
+
+                entry.Loading = true;
+                UITKHelper.LoadUxml(windowName, asset =>
+                {
+                    entry.Loading = false;
+                    TemplateContainer container = asset.Instantiate();
+                    if (container.Q("title-bar") != null)
+                    {
+                        // Keep old controllers attached to their own renderer until their UXML is converted.
+                        entry.LegacyDetected = true;
+                        if (!entry.OpenRequested)
+                            return;
+
+                        PanelRenderer legacy = UITKHelper.CreateWindowFromUxml(asset, windowName);
+                        entry.Controller = legacy.gameObject.AddComponent<T>();
+                        entry.LegacyRoot = legacy.GetWindowRoot();
+                        RestoreRect(entry.LegacyRoot, entry.Placement.Value.Split('|')[0], GetToolWindowPosition);
+                        entry.LegacyRoot.RegisterCallback<PointerUpEvent>(
+                            _ => entry.LegacyRoot.schedule.Execute(() => SaveToolPlacement(entry)), TrickleDown.TrickleDown);
+                        entry.Controller.CatchUpWithLoadedGame();
+                        if (entry.Controller.CloseButton != null)
+                        {
+                            entry.Controller.CloseButton.clicked += () =>
+                            {
+                                SaveToolPlacement(entry);
+                                entry.Controller.IsWindowOpen = false;
+                            };
+                        }
+                        entry.Controller.IsWindowOpen = true;
+                        return;
+                    }
+
+                    entry.Container = container;
+                    container.AddToClassList("dt-tool-template");
+                    var toolObject = new GameObject(windowName);
+                    toolObject.SetActive(false);
+                    toolObject.transform.SetParent(owner, false);
+                    entry.Controller = toolObject.AddComponent<T>();
+                    entry.Controller.Bind(container.Q("root"));
+                    toolObject.SetActive(true);
+                    container.Query<TextField>().ForEach(field => field.DisableGameInputOnFocus());
+                    entry.Controller.CatchUpWithLoadedGame();
+                    if (entry.Mode == ToolMode.Window || entry.PoppedOut)
+                    {
+                        ShowPopout(entry);
+                    }
+                    else if (entry.Slot != null)
+                    {
+                        entry.Slot.Add(container);
+                    }
+                    RefreshToolVisibility();
+                });
+            };
+            AddEntry(entry, keywords);
+        }
+
+        private void OpenHostedTool(HubEntry entry)
+        {
+            if (entry.LegacyDetected)
+            {
+                if (entry.Controller == null)
+                {
+                    entry.Load(true);
+                }
+                else
+                {
+                    SaveToolPlacement(entry);
+                    entry.Controller.IsWindowOpen = !entry.Controller.IsWindowOpen;
+                }
+                return;
+            }
+
+            if (entry.Mode == ToolMode.Inline && !entry.PoppedOut)
+            {
+                entry.OpenRequested = true;
+                SelectSection(entry.Section);
+                entry.SectionGroup.value = true;
+                entry.ToolGroup.value = true;
+                if (GetUnavailableReason(entry) == null)
+                {
+                    entry.Load(true);
+                }
+                _content.schedule.Execute(() => _content.ScrollTo(entry.ToolGroup));
+            }
+            else if (entry.Controller == null)
+            {
+                entry.Load(true);
+            }
+            else
+            {
+                entry.PopoutOpen = !entry.PopoutOpen;
+                if (entry.PopoutOpen)
+                {
+                    ShowPopout(entry);
+                }
+                RefreshToolVisibility();
+            }
+        }
+
+        private void ShowPopout(HubEntry entry)
+        {
+            entry.PoppedOut = true;
+            entry.PopoutOpen = true;
+            if (entry.Shell == null)
+            {
+                entry.Shell = new AppShell { Title = entry.Label, name = "tool-shell" };
+                entry.Shell.AddToClassList("kui-dense");
+                entry.Shell.AddToClassList("dt-popout");
+                for (int index = 0; index < entry.Container.styleSheets.count; index++)
+                {
+                    entry.Shell.styleSheets.Add(entry.Container.styleSheets[index]);
+                }
+                // The tool sits in a notched box like the content of the Redux windows. Its defaults are the standard
+                // values: border thickness 1, notch size 5, border #747680 and fill #1B1E24.
+                var frame = new InvertedCornerBox { name = "popout-frame" };
+                frame.AddToClassList("oab-window-body");
+                frame.AddToClassList("dt-popout-frame");
+                entry.Shell.Add(frame);
+                if (entry.Mode == ToolMode.Inline)
+                {
+                    var dock = new OabButton(() => DockTool(entry)) { text = "Dock" };
+                    dock.AddToClassList("kui-button");
+                    frame.Add(dock);
+                }
+                var sceneReason = new Label { name = "scene-reason" };
+                sceneReason.AddToClassList("dt-tool__reason");
+                frame.Add(sceneReason);
+                entry.Shell.Add(new Tooltip());
+                entry.Shell.Add(new WindowResizeHandle { TargetName = "tool-shell", MinWidth = 320, MinHeight = 160 });
+                entry.Renderer = Window.Create(new WindowOptions
+                {
+                    WindowId = $"DebugTools_{entry.WindowName}", IsHidingEnabled = false,
+                    MoveOptions = new MoveOptions { IsMovingEnabled = true, CheckScreenBounds = true, HandleElementName = "header" },
+                    ResizeOptions = new ResizeOptions { IsResizingEnabled = false }
+                }, entry.Shell);
+                entry.Renderer.panelSettings.sortingOrder = 9999;
+                RestoreRect(entry.Shell, entry.Placement.Value.Split('|')[0], GetToolWindowPosition);
+                entry.Shell.CloseClicked += () =>
+                {
+                    entry.PopoutOpen = false;
+                    SaveToolPlacement(entry);
+                    RefreshToolVisibility();
+                };
+                entry.Shell.RegisterCallback<PointerUpEvent>(
+                    _ => entry.Shell.schedule.Execute(() => SaveToolPlacement(entry)), TrickleDown.TrickleDown);
+            }
+            entry.Shell.Q<VisualElement>("popout-frame").Add(entry.Container);
+            SaveToolPlacement(entry);
+            RefreshToolVisibility();
+        }
+
+        private void DockTool(HubEntry entry)
+        {
+            entry.PoppedOut = false;
+            entry.PopoutOpen = false;
+            SaveToolPlacement(entry);
+            SelectSection(entry.Section);
+            entry.SectionGroup.value = true;
+            entry.ToolGroup.value = true;
+            entry.Slot.Add(entry.Container);
+            RefreshToolVisibility();
+        }
+
+        private void SaveToolPlacement(HubEntry entry)
+        {
+            VisualElement root = entry.Shell ?? entry.LegacyRoot;
+            string rect = root == null ? entry.Placement.Value.Split('|')[0] : FormatWindowRect(root);
+            if (string.IsNullOrEmpty(rect))
+            {
+                rect = entry.Placement.Value.Split('|')[0];
+            }
+            entry.Placement.Value = $"{rect}|{(entry.PoppedOut ? 1 : 0)}";
+        }
+
+        private void RefreshToolVisibility()
+        {
+            _gameState = Game != null && Game.GlobalGameState != null
+                ? Game.GlobalGameState.GetGameState().GameState
+                : GameState.Invalid;
+            foreach (HubEntry entry in _entries)
+            {
+                if (entry.Load == null || entry.LegacyDetected)
+                    continue;
+
+                string reason = GetUnavailableReason(entry);
+                bool dockedShown = _isWindowOpen && string.IsNullOrEmpty(_search.value) && entry.Section == _section &&
+                    entry.SectionGroup is { value: true } && entry.ToolGroup is { value: true };
+                bool shown = entry.PoppedOut ? entry.PopoutOpen : dockedShown;
+                if (entry.ToolReason != null)
+                {
+                    // Before the tool exists its Open row says the reason, and a pop-out says it in its own window. So
+                    // only a loaded tool docked in the pane needs this line.
+                    entry.ToolReason.text = reason;
+                    entry.ToolReason.style.display = reason != null && entry.Container != null && !entry.PoppedOut
+                        ? DisplayStyle.Flex
+                        : DisplayStyle.None;
+                }
+                if (entry.DetachButton != null)
+                {
+                    bool isPopoutShown = entry.PoppedOut && entry.PopoutOpen;
+                    entry.DetachButton.style.display = entry.Container != null ? DisplayStyle.Flex : DisplayStyle.None;
+                    entry.DetachButton.text = isPopoutShown ? "Dock" : "Pop out";
+                }
+                if (entry.Controller == null && shown && reason == null && !entry.LegacyDetected)
+                {
+                    entry.Load(false);
+                }
+                if (entry.Controller != null)
+                {
+                    entry.Controller.IsWindowOpen = shown && reason == null;
+                }
+                if (entry.Renderer != null)
+                {
+                    Label popoutReason = entry.Shell.Q<Label>("scene-reason");
+                    popoutReason.text = reason;
+                    popoutReason.style.display = reason == null ? DisplayStyle.None : DisplayStyle.Flex;
+                    entry.Shell.style.display = entry.PopoutOpen && entry.PoppedOut ? DisplayStyle.Flex : DisplayStyle.None;
+                    entry.Renderer.enabled = entry.PopoutOpen && entry.PoppedOut;
+                }
+            }
+        }
+
         private void AddEntry(HubEntry entry, string keywords)
         {
             string sectionName = SECTION_NAMES[(int)entry.Section];
@@ -308,10 +575,7 @@ namespace DebugTools.Runtime.Controllers
         private void OnApplicationQuit()
         {
             // The position is otherwise saved only when the hub is closed, which quitting the game skips.
-            if (_isWindowOpen)
-            {
-                SaveWindowRect();
-            }
+            SaveWindowRect();
         }
 
         /// <summary>
@@ -342,11 +606,13 @@ namespace DebugTools.Runtime.Controllers
             _nextRefresh = Time.unscaledTime + REFRESH_INTERVAL;
             RefreshEntries();
             RefreshStatusStrip();
+            RefreshToolVisibility();
         }
 
         private void BindRoot()
         {
             RestoreWindowRect();
+            _rootElement.Add(new Tooltip());
 
             _rootElement.Q<Button>("close-button").clicked += () => IsWindowOpen = false;
 
@@ -360,6 +626,7 @@ namespace DebugTools.Runtime.Controllers
             _paneNotice = _rootElement.Q<Label>("pane-notice");
             _paneNotice.style.display = DisplayStyle.None;
             _content = _rootElement.Q<ScrollView>("pane-content");
+            _content.Clear();
 
             _statusStrip = _rootElement.Q<VisualElement>("status-strip");
             _statusSummary = _rootElement.Q<Label>("status-summary");
@@ -443,7 +710,6 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnClosed()
         {
-            UnsubscribeFromGameState();
             SaveWindowRect();
             CancelConfirm();
             if (!string.IsNullOrEmpty(_search.value))
@@ -469,6 +735,7 @@ namespace DebugTools.Runtime.Controllers
 
             _gameState = message.StateBeingEntered;
             _nextRefresh = 0f;
+            RefreshToolVisibility();
         }
 
         #region Sections and search
@@ -508,6 +775,7 @@ namespace DebugTools.Runtime.Controllers
             _content.Add(_sectionPanes[(int)_section]);
             _content.scrollOffset = Vector2.zero;
             _nextRefresh = 0f;
+            RefreshToolVisibility();
         }
 
         private void SetRailSelection(int selectedIndex)
@@ -532,36 +800,80 @@ namespace DebugTools.Runtime.Controllers
 
             foreach (string group in groups)
             {
-                var groupElement = new VisualElement();
-                groupElement.AddToClassList("dt-group");
-                // The "//" sub-header of the game's own Redux windows.
-                var header = new VisualElement();
-                header.AddToClassList("dt-group__header");
-                var slashes = new Label("//");
-                slashes.AddToClassList("dt-group__slashes");
-                header.Add(slashes);
-                var title = new Label(group.ToUpperInvariant());
-                title.AddToClassList("dt-group__title");
-                header.Add(title);
-                groupElement.Add(header);
-                // Stock windows that still have their old look come last, so each group starts with its own tools.
-                AddGroupRows(groupElement, section, group, false);
-                AddGroupRows(groupElement, section, group, true);
+                var groupElement = new Foldout { text = group, value = true };
+                groupElement.AddToClassList("kui-group");
+                groupElement.RegisterValueChangedCallback(_ => RefreshToolVisibility());
+                // The rows go into a plain element of their own. The two column rule matches its children, and the
+                // content container of a Foldout is not a parent that rule can see.
+                VisualElement rowParent = groupElement;
+                if (group == "Game rules")
+                {
+                    rowParent = new VisualElement();
+                    rowParent.AddToClassList("dt-grid-2");
+                    groupElement.Add(rowParent);
+                }
+                AddGroupRows(groupElement, rowParent, section, group, false);
+                AddGroupRows(groupElement, rowParent, section, group, true);
                 pane.Add(groupElement);
             }
 
             return pane;
         }
 
-        private void AddGroupRows(VisualElement groupElement, Section section, string group, bool isLegacy)
+        private void AddGroupRows(Foldout groupElement, VisualElement rowParent, Section section, string group,
+            bool isLegacy)
         {
             foreach (HubEntry entry in _entries)
             {
                 if (entry.Section != section || entry.Group != group || entry.IsLegacy != isLegacy)
                     continue;
 
+                if (entry.Load != null && entry.Mode == ToolMode.Inline)
+                {
+                    entry.SectionGroup = groupElement;
+                    entry.ToolGroup = new Foldout { text = entry.Label, value = !entry.Collapsed };
+                    entry.ToolGroup.AddToClassList("kui-category");
+                    entry.ToolGroup.RegisterValueChangedCallback(_ => RefreshToolVisibility());
+                    if (entry.Detachable)
+                    {
+                        // Pops the tool out, or docks it while its pop-out is open. It shows once the tool exists.
+                        entry.DetachButton = new OabButton(() =>
+                        {
+                            if (entry.Container == null)
+                                return;
+
+                            if (entry.PoppedOut && entry.PopoutOpen)
+                            {
+                                DockTool(entry);
+                            }
+                            else
+                            {
+                                ShowPopout(entry);
+                            }
+                        }) { text = "Pop out" };
+                        entry.DetachButton.AddToClassList("kui-button");
+                        entry.DetachButton.AddToClassList("dt-detach");
+                        entry.DetachButton.style.display = DisplayStyle.None;
+                        entry.ToolGroup.Add(entry.DetachButton);
+                    }
+                    entry.ToolReason = new Label();
+                    entry.ToolReason.AddToClassList("dt-tool__reason");
+                    entry.ToolGroup.Add(entry.ToolReason);
+                    entry.Slot = new VisualElement();
+                    entry.Slot.AddToClassList("dt-tool-slot");
+                    entry.ToolGroup.Add(entry.Slot);
+                    groupElement.Add(entry.ToolGroup);
+                    if (entry.Container != null && !entry.PoppedOut)
+                    {
+                        entry.Slot.Add(entry.Container);
+                    }
+                    // Legacy tools remain explicit Open rows until their slice converts the UXML.
+                    entry.SectionView = BuildRow(entry, false);
+                    entry.ToolGroup.Add(entry.SectionView.Row);
+                    continue;
+                }
                 entry.SectionView = BuildRow(entry, false);
-                groupElement.Add(entry.SectionView.Row);
+                rowParent.Add(entry.SectionView.Row);
             }
         }
 
@@ -569,6 +881,7 @@ namespace DebugTools.Runtime.Controllers
         {
             var view = new EntryRow { Row = new VisualElement() };
             view.Row.AddToClassList("dt-row");
+            view.Row.AddToClassList("kui-row");
 
             var text = new VisualElement();
             text.AddToClassList("dt-row__text");
@@ -589,12 +902,15 @@ namespace DebugTools.Runtime.Controllers
             }
 
             text.Add(titleLine);
-            if (!string.IsNullOrEmpty(entry.Note))
+            view.Row.tooltip = entry.Note;
+            view.Row.RegisterCallback<PointerEnterEvent>(_ =>
             {
-                var note = new Label(entry.Note);
-                note.AddToClassList("dt-row__note");
-                text.Add(note);
-            }
+                if (!string.IsNullOrEmpty(entry.Note))
+                {
+                    _rootElement.Q<Tooltip>()?.Show(view.Row);
+                }
+            });
+            view.Row.RegisterCallback<PointerLeaveEvent>(_ => _rootElement.Q<Tooltip>()?.Close(view.Row));
 
             view.Reason = new Label();
             view.Reason.AddToClassList("dt-row__reason");
@@ -635,6 +951,13 @@ namespace DebugTools.Runtime.Controllers
 
         private void ActivateEntry(HubEntry entry)
         {
+            // Inline search results still navigate to their scene reason when the tool cannot run.
+            if (entry.Load != null && entry.Mode == ToolMode.Inline && !entry.PoppedOut && !entry.LegacyDetected)
+            {
+                OpenHostedTool(entry);
+                return;
+            }
+
             bool isActive = entry.IsActive();
             // An open tool can always be closed, even after its scene has gone.
             if (!isActive && GetUnavailableReason(entry) != null)
@@ -699,6 +1022,7 @@ namespace DebugTools.Runtime.Controllers
             _content.Add(_searchResults);
             _content.scrollOffset = Vector2.zero;
             _nextRefresh = 0f;
+            RefreshToolVisibility();
         }
 
         private static bool MatchesAll(string text, string[] terms)
@@ -744,13 +1068,20 @@ namespace DebugTools.Runtime.Controllers
             Array.Clear(_openCounts, 0, SECTION_COUNT);
             foreach (HubEntry entry in _entries)
             {
+                if (entry.Load != null && entry.Mode == ToolMode.Inline && entry.SectionView.Row != null)
+                {
+                    entry.SectionView.Row.style.display = entry.Container == null ? DisplayStyle.Flex : DisplayStyle.None;
+                }
                 string reason = GetUnavailableReason(entry);
                 bool isReasonShown = reason != null && reason != campaignReason;
                 bool isActive = entry.IsActive();
                 UpdateRow(entry.SectionView, reason, isReasonShown, isActive);
                 UpdateRow(entry.SearchView, reason, isReasonShown, isActive);
-                // Cheats are counted by the status strip, so the rail counts open tools and overlays only.
-                if (isActive && !entry.IsOverride)
+                // Cheats are counted by the status strip, so the rail counts open tools and overlays only. A tool shown
+                // inline in its section is part of the pane and not an open window.
+                bool isShownInline = entry.Load != null && entry.Mode == ToolMode.Inline && !entry.PoppedOut &&
+                    !entry.LegacyDetected;
+                if (isActive && !entry.IsOverride && !isShownInline)
                 {
                     _openCounts[(int)entry.Section]++;
                 }
@@ -864,18 +1195,19 @@ namespace DebugTools.Runtime.Controllers
 
         private void RegisterCheats()
         {
-            RegisterCheat("Damage", CheatSystemItemID.UnbreakableParts, "Unbreakable Parts",
+            RegisterCheat("Game rules", CheatSystemItemID.UnbreakableParts, "Unbreakable Parts",
                 "Impacts, splashdowns, overheating and aero stress break no part", "crash damage invincible");
             // Unbreakable joints and infinite resources are difficulty options, saved with the campaign.
-            RegisterDifficultyOption("Damage", DifficultyOptionsUtils.UNBREAKABLE_JOINTS, "Unbreakable Joints", "joint");
-            RegisterDifficultyOption("Resources", DifficultyOptionsUtils.INFINITE_FUEL, "Infinite Propellant", "fuel");
-            RegisterDifficultyOption("Resources", DifficultyOptionsUtils.INFINITE_POWER, "Infinite Electricity",
+            RegisterDifficultyOption("Game rules", DifficultyOptionsUtils.UNBREAKABLE_JOINTS, "Unbreakable Joints", "joint");
+            RegisterDifficultyOption("Game rules", DifficultyOptionsUtils.INFINITE_FUEL, "Infinite Propellant", "fuel");
+            RegisterDifficultyOption("Game rules", DifficultyOptionsUtils.INFINITE_POWER, "Infinite Electricity",
                 "power ec battery");
-            RegisterCheat("Physics", CheatSystemItemID.DisableGravity, "Disable Gravity", keywords: "gravity");
-            RegisterCheat("Physics", CheatSystemItemID.DisableAerodynamics, "Disable Aerodynamics",
+            RegisterCheat("Game rules", CheatSystemItemID.DisableGravity, "Disable Gravity", keywords: "gravity");
+            RegisterCheat("Game rules", CheatSystemItemID.DisableAerodynamics, "Disable Aerodynamics",
                 keywords: "aero drag lift");
-            RegisterCheat("Physics", CheatSystemItemID.DisableThermodynamics, "Disable Thermodynamics",
+            RegisterCheat("Game rules", CheatSystemItemID.DisableThermodynamics, "Disable Thermodynamics",
                 keywords: "heat thermal temperature");
+            RegisterCheat("Progression", CheatSystemItemID.UnlockAllParts, "Unlock All Parts", keywords: "science tech");
             // The status strip lists only these switches. Other cheat system values are either unused by the game or,
             // like Part Overheating, gameplay settings that belong to the Settings menu.
         }
@@ -885,7 +1217,7 @@ namespace DebugTools.Runtime.Controllers
         {
             AddEntry(new HubEntry
             {
-                Section = Section.Cheats,
+                Section = cheat == CheatSystemItemID.UnlockAllParts ? Section.Science : Section.Cheats,
                 Group = group,
                 Label = label,
                 Note = note,
@@ -1123,57 +1455,59 @@ namespace DebugTools.Runtime.Controllers
 
         #region Window position
 
-        private void RestoreWindowRect()
+        private void RestoreWindowRect() => RestoreRect(_rootElement, Configuration.HubWindowRect?.Value,
+            size => new Vector2((ReferenceResolution.Width - size.x) / 2, (ReferenceResolution.Height - size.y) / 2));
+
+        private static void RestoreRect(VisualElement root, string saved, Func<Vector2, Vector2> fallback)
         {
-            if (!TryParseWindowRect(Configuration.HubWindowRect?.Value, out Vector2 position, out Vector2 size))
+            bool valid = TryParseWindowRect(saved, out Vector2 position, out Vector2 size);
+            if (size.x > 0 && size.y > 0)
             {
-                _rootElement.CenterByDefault();
-                return;
+                root.style.width = size.x;
+                root.style.height = size.y;
             }
-
-            if (size.x > 0f && size.y > 0f)
+            root.SetDefaultPosition(windowSize =>
             {
-                _rootElement.style.width = size.x;
-                _rootElement.style.height = size.y;
-            }
-
-            _rootElement.SetDefaultPosition(windowSize =>
-            {
-                // The screen may be smaller than when the position and size were saved.
-                Rect bounds = _rootElement.panel?.visualTree?.contentRect ??
+                Rect bounds = root.panel?.visualTree?.contentRect ??
                     new Rect(0, 0, ReferenceResolution.Width, ReferenceResolution.Height);
                 if (windowSize.x > bounds.width || windowSize.y > bounds.height)
                 {
                     windowSize = Vector2.Min(windowSize, bounds.size);
-                    _rootElement.style.width = windowSize.x;
-                    _rootElement.style.height = windowSize.y;
+                    root.style.width = windowSize.x;
+                    root.style.height = windowSize.y;
                 }
-
-                return new Vector2(
-                    Mathf.Clamp(position.x, 0f, Mathf.Max(0f, bounds.width - windowSize.x)),
-                    Mathf.Clamp(position.y, 0f, Mathf.Max(0f, bounds.height - windowSize.y)));
+                Vector2 target = valid ? position : fallback(windowSize);
+                return new Vector2(Mathf.Clamp(target.x, 0, Mathf.Max(0, bounds.width - windowSize.x)),
+                    Mathf.Clamp(target.y, 0, Mathf.Max(0, bounds.height - windowSize.y)));
             });
         }
 
         private void SaveWindowRect()
         {
-            if (Configuration.HubWindowRect == null)
-                return;
-
-            Rect layout = _rootElement.layout;
-            if (float.IsNaN(layout.width) || layout.width <= 0f)
-                return;
-
-            // The size is kept only after the window was resized, so the stylesheet size applies until then.
-            bool isResized = _rootElement.style.width.keyword == StyleKeyword.Undefined;
-            string value = isResized
-                ? string.Format(CultureInfo.InvariantCulture, "{0:0},{1:0},{2:0},{3:0}", layout.x, layout.y,
-                    layout.width, layout.height)
-                : string.Format(CultureInfo.InvariantCulture, "{0:0},{1:0}", layout.x, layout.y);
-            if (Configuration.HubWindowRect.Value != value)
+            string value = FormatWindowRect(_rootElement);
+            if (Configuration.HubWindowRect != null && !string.IsNullOrEmpty(value))
             {
                 Configuration.HubWindowRect.Value = value;
             }
+            foreach (HubEntry entry in _entries)
+            {
+                if (entry.Shell != null || entry.LegacyRoot != null)
+                {
+                    SaveToolPlacement(entry);
+                }
+            }
+        }
+
+        private static string FormatWindowRect(VisualElement root)
+        {
+            Rect layout = root.layout;
+            if ((float.IsNaN(layout.width) || float.IsInfinity(layout.width)) || layout.width <= 0)
+                return string.Empty;
+
+            return root.style.width.keyword == StyleKeyword.Undefined
+                ? string.Format(CultureInfo.InvariantCulture, "{0:0},{1:0},{2:0},{3:0}", layout.x, layout.y,
+                    layout.width, layout.height)
+                : string.Format(CultureInfo.InvariantCulture, "{0:0},{1:0}", layout.x, layout.y);
         }
 
         /// <summary>
@@ -1197,7 +1531,8 @@ namespace DebugTools.Runtime.Controllers
             var numbers = new float[parts.Length];
             for (int index = 0; index < parts.Length; index++)
             {
-                if (!float.TryParse(parts[index], NumberStyles.Float, CultureInfo.InvariantCulture, out numbers[index]))
+                if (!float.TryParse(parts[index], NumberStyles.Float, CultureInfo.InvariantCulture, out numbers[index]) ||
+                    float.IsNaN(numbers[index]) || float.IsInfinity(numbers[index]))
                     return false;
             }
 

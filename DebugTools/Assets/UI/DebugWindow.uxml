@@ -1,26 +1,45 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/DebugWindow.uss?fileID=7433441132597879392&amp;guid=3b02df7e5905e8746a5ed673f30eb0be&amp;type=3#DebugWindow" />
-    <UitkForKsp2.Controls.AppShell name="root" title="Dev Tools" close-button-name="close-button" class="dt-hub">
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/DebugWindow.uss?fileID=7433441132597879392&amp;guid=3b02df7e5905e8746a5ed673f30eb0be&amp;type=3#DebugWindow" />
+    <UitkForKsp2.Controls.AppShell name="root" title="Dev Tools" close-button-name="close-button" class="kui-dense dt-hub">
         <UitkForKsp2.Controls.PlaceholderTextField name="search" placeholder="Search tools and cheats" class="oab-text-field dt-search" />
         <ui:VisualElement name="status-strip" class="dt-strip">
             <ui:VisualElement name="status-header" class="dt-strip__header">
                 <ui:Label text="//" class="dt-strip__slashes" />
-                <ui:Label name="status-summary" class="dt-strip__summary" />
-                <UitkForKsp2.Controls.OabButton text="Show" name="status-expand" class="dt-button" />
-                <UitkForKsp2.Controls.OabButton text="Revert all" name="status-revert-all" class="dt-button dt-button--wide" />
+                <ui:Label text="2 overrides active" name="status-summary" class="dt-strip__summary" />
+                <UitkForKsp2.Controls.OabButton text="Hide" name="status-expand" class="kui-button dt-button" />
+                <UitkForKsp2.Controls.OabButton text="Revert all" name="status-revert-all" class="kui-button dt-button dt-button--wide" />
             </ui:VisualElement>
-            <ui:VisualElement name="status-list" class="dt-strip__list" />
+            <ui:VisualElement name="status-list" class="dt-strip__list"><ui:VisualElement class="dt-override"><ui:Label text="Infinite Propellant" class="dt-override__name" /><UitkForKsp2.Controls.OabButton text="Revert" class="kui-button dt-button" /></ui:VisualElement><ui:VisualElement class="dt-override"><ui:Label text="Disable Gravity" class="dt-override__name" /><UitkForKsp2.Controls.OabButton text="Revert" class="kui-button dt-button" /></ui:VisualElement></ui:VisualElement>
         </ui:VisualElement>
-        <UitkForKsp2.Controls.InvertedCornerBox name="body" border-thickness="1" notch-size="5" border-color="#747680FF" background-color="#1B1E24FF" class="dt-body">
-            <ui:VisualElement name="rail" class="dt-rail" />
-            <ui:VisualElement name="pane" class="dt-pane">
+        <ui:VisualElement name="body" class="dt-body">
+            <UitkForKsp2.Controls.InvertedCornerBox name="rail" border-thickness="1" notch-size="5" border-color="#747680FF" background-color="#1B1E24FF" class="dt-rail">
+                <ui:VisualElement class="dt-rail__item dt-rail__item--selected"><ui:Label text="CHEATS" class="dt-rail__label" /></ui:VisualElement>
+                <ui:VisualElement class="dt-rail__item"><ui:Label text="SCIENCE" class="dt-rail__label" /></ui:VisualElement>
+                <ui:VisualElement class="dt-rail__item"><ui:Label text="INSPECT" class="dt-rail__label" /></ui:VisualElement>
+                <ui:VisualElement class="dt-rail__item"><ui:Label text="OVERLAYS" class="dt-rail__label" /></ui:VisualElement>
+                <ui:VisualElement class="dt-rail__item"><ui:Label text="TEST BENCHES" class="dt-rail__label" /></ui:VisualElement>
+            </UitkForKsp2.Controls.InvertedCornerBox>
+            <UitkForKsp2.Controls.InvertedCornerBox name="pane" border-thickness="1" notch-size="5" border-color="#747680FF" background-color="#1B1E24FF" class="dt-pane">
                 <ui:VisualElement name="pane-header" class="dt-pane__header">
-                    <ui:Label name="pane-title" class="dt-pane__title" />
-                    <ui:Label name="pane-purpose" class="dt-pane__purpose" />
+                    <ui:Label text="CHEATS" name="pane-title" class="dt-pane__title" />
+                    <ui:Label text="Put the game in the situation you need." name="pane-purpose" class="dt-pane__purpose" />
                     <ui:Label name="pane-notice" class="dt-pane__notice" />
                 </ui:VisualElement>
-                <ui:ScrollView name="pane-content" mode="Vertical" horizontal-scroller-visibility="Hidden" class="dt-pane__content" />
-            </ui:VisualElement>
-        </UitkForKsp2.Controls.InvertedCornerBox>
+                <ui:ScrollView name="pane-content" mode="Vertical" horizontal-scroller-visibility="Hidden" class="dt-pane__content">
+                <ui:Foldout text="Game rules" value="true" class="kui-group">
+                    <ui:VisualElement class="dt-grid-2">
+                        <ui:VisualElement class="kui-row dt-row"><ui:Label text="Unbreakable Parts" class="kui-row__label dt-row__text" /><ui:Toggle class="switch" /></ui:VisualElement>
+                        <ui:VisualElement class="kui-row dt-row"><ui:Label text="Unbreakable Joints" class="kui-row__label dt-row__text" /><ui:Toggle class="switch" /></ui:VisualElement>
+                        <ui:VisualElement class="kui-row dt-row"><ui:Label text="Infinite Propellant" class="kui-row__label dt-row__text" /><ui:Toggle class="switch" /></ui:VisualElement>
+                        <ui:VisualElement class="kui-row dt-row"><ui:Label text="Infinite Electricity" class="kui-row__label dt-row__text" /><ui:Toggle class="switch" /></ui:VisualElement>
+                        <ui:VisualElement class="kui-row dt-row"><ui:Label text="Disable Gravity" class="kui-row__label dt-row__text" /><ui:Toggle class="switch" /></ui:VisualElement>
+                        <ui:VisualElement class="kui-row dt-row"><ui:Label text="Disable Aerodynamics" class="kui-row__label dt-row__text" /><ui:Toggle class="switch" /></ui:VisualElement>
+                        <ui:VisualElement class="kui-row dt-row"><ui:Label text="Disable Thermodynamics" class="kui-row__label dt-row__text" /><ui:Toggle class="switch" /></ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:Foldout>
+                <ui:Foldout text="Teleport" value="true" class="kui-group"><ui:Foldout text="Quick Switch" value="true" class="kui-category"><ui:Label text="Go to" class="kui-section" /><ui:VisualElement class="dt-sample-quick"><UitkForKsp2.Controls.OabButton text="Ship in VAB" class="kui-button dt-sample-quick-button" /><UitkForKsp2.Controls.OabButton text="Ship on Launchpad" class="kui-button dt-sample-quick-button" /><UitkForKsp2.Controls.OabButton text="Ship in Orbit" class="kui-button dt-sample-quick-button" /><UitkForKsp2.Controls.OabButton text="Plane in VAB" class="kui-button dt-sample-quick-button" /><UitkForKsp2.Controls.OabButton text="Plane on Runway" class="kui-button dt-sample-quick-button" /><UitkForKsp2.Controls.OabButton text="VAB Surface" class="kui-button dt-sample-quick-button" /><UitkForKsp2.Controls.OabButton text="VAB Orbit" class="kui-button dt-sample-quick-button" /><UitkForKsp2.Controls.OabButton text="BAE Surface" class="kui-button dt-sample-quick-button" /><UitkForKsp2.Controls.OabButton text="BAE Orbit" class="kui-button dt-sample-quick-button" /></ui:VisualElement></ui:Foldout></ui:Foldout>
+                </ui:ScrollView>
+            </UitkForKsp2.Controls.InvertedCornerBox>
+        </ui:VisualElement>
     </UitkForKsp2.Controls.AppShell>
 </ui:UXML>

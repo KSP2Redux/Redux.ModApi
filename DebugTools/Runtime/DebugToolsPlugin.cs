@@ -12,6 +12,7 @@ using ILogger = SpaceWarp2.API.Logging.ILogger;
 using Legacy = KSP.DebugTools;
 using ReduxManager = Redux.ReduxManager;
 using Section = DebugTools.Runtime.Controllers.DebugWindowController.Section;
+using ToolMode = DebugTools.Runtime.Controllers.DebugWindowController.ToolMode;
 using ToolScene = DebugTools.Runtime.Controllers.DebugWindowController.ToolScene;
 
 // ReSharper disable once CheckNamespace
@@ -109,16 +110,16 @@ namespace DebugTools
         private static void RegisterTools(DebugWindowController hub)
         {
             // Cheats: put the game in the situation a test needs. The cheat switches themselves come from the hub.
-            hub.RegisterTool(Section.Cheats, "Location", "Teleport and Science Cheats", ToolScene.Campaign,
+            hub.RegisterTool(Section.Cheats, "Teleport", "Orbit, surface, rendezvous", ToolScene.Campaign,
                 () => CheatsMenu.IsWindowVisible, ToggleStockCheatsMenu,
                 "Teleport to an orbit, a surface or a rendezvous, and add science",
                 "teleport orbit surface rendezvous science stock", true);
-            RegisterWindow<TeleportBookmarksWindowController>(hub, Section.Cheats, "Location", "TeleportBookmarksWindow",
+            RegisterWindow<TeleportBookmarksWindowController>(hub, Section.Cheats, "Teleport", "TeleportBookmarksWindow",
                 "Teleport Bookmarks", ToolScene.Flight, keywords: "teleport position save");
-            RegisterWindow<QuickSwitchWindowController>(hub, Section.Cheats, "Location", "QuickSwitchWindow",
+            RegisterWindow<QuickSwitchWindowController>(hub, Section.Cheats, "Teleport", "QuickSwitchWindow",
                 "Quick Switch", ToolScene.Campaign, "Jump to the VAB, launchpad, runway or orbit",
                 "vab bae launchpad runway orbit");
-            RegisterWindow<FreeFlightWindowController>(hub, Section.Cheats, "Location", "FreeFlightWindow",
+            RegisterWindow<FreeFlightWindowController>(hub, Section.Cheats, "Teleport", "FreeFlightWindow",
                 "Free Flight", ToolScene.Campaign, keywords: "camera planet viewer fly");
 
             RegisterWindow<ResourceScanDebugWindowController>(hub, Section.Cheats, "Progress", "ResourceScanDebugWindow",
@@ -128,7 +129,7 @@ namespace DebugTools
                 "mission stage contract");
 
             RegisterWindow<KerbalRosterToolWindowController>(hub, Section.Cheats, "Crew", "KerbalRosterToolWindow",
-                "Roster Tools", ToolScene.Campaign, keywords: "kerbal crew add");
+                "Roster", ToolScene.Campaign, keywords: "kerbal crew add");
 
             // Science: is science working, and move through progression. The stock Science Tools window does the same
             // as the Redux one, so only the Redux one is listed.
@@ -140,19 +141,39 @@ namespace DebugTools
                 "experiment report region");
 
             // Inspect: what is going on.
-            RegisterWindow<VesselToolsWindowController>(hub, Section.Inspect, "Vessel", "VesselToolsWindow",
+            RegisterWindow<VesselToolsWindowController>(hub, Section.Overlays, "Vessel", "VesselToolsWindow",
                 "Vessel Tools", ToolScene.Campaign,
-                "Markers and physics settings. Opens thermal data, mass stats, maneuvers, coordinates and SAS charts",
+                "Vessel markers and marker size",
                 "thermal mass maneuver coordinates sas com control markers physics");
-            RegisterWindow<JointsToolsWindowController>(hub, Section.Inspect, "Vessel", "JointsToolsWindow",
+            RegisterWindow<JointsToolsWindowController>(hub, Section.Inspect, "Structure", "JointsToolsWindow",
                 "Joints", ToolScene.Flight, keywords: "joint stress structural");
             RegisterWindow<FlightToolsWindowController>(hub, Section.Inspect, "Simulation", "FlightToolsWindow",
-                "Flight Tools", ToolScene.Campaign, "Sim objects, proximity load and unload", "sim object load unload");
+                "Sim Objects", ToolScene.Campaign, "Sim objects, proximity load and unload", "sim object load unload");
+
+            RegisterWindow<VesselCoordinatesWindowController>(hub, Section.Inspect, "Vessel", "VesselCoordinatesWindow",
+                "Vessel State", ToolScene.Flight, keywords: "coordinates control inputs");
+            RegisterWindow<ThermalDataWindowController>(hub, Section.Inspect, "Vessel", "ThermalDataWindow",
+                "Thermal Data", ToolScene.Flight, keywords: "heat temperature");
+            RegisterWindow<MassStatsWindowController>(hub, Section.Inspect, "Vessel", "MassStatsWindow",
+                "Mass Stats", ToolScene.Flight, keywords: "mass dry wet");
+            RegisterWindow<ManeuverNodesWindowController>(hub, Section.Inspect, "Vessel", "ManeuversWindow",
+                "Maneuvers", ToolScene.Flight, keywords: "node delta v");
+            RegisterWindow<SASChartsWindowController>(hub, Section.Inspect, "Vessel", "SASChartsWindow",
+                "SAS Charts", ToolScene.Flight, keywords: "sas control chart");
 
             // Overlays: show it in the world.
             RegisterWindow<TerrainDebugWindowController>(hub, Section.Overlays, "Planet", "TerrainDebugWindow",
                 "Terrain Debug", ToolScene.Campaign, "Biome colors, wireframe, PhysX bubble, triplanar",
                 "terrain biome wireframe pqs quad");
+            hub.RegisterSwitch(Section.Overlays, "Flight", "Aero data", ToolScene.Flight,
+                () => GameManager.Instance.Game.AeroGUI != null && GameManager.Instance.Game.AeroGUI.IsVisible,
+                value =>
+                {
+                    if (GameManager.Instance.Game.AeroGUI != null)
+                    {
+                        GameManager.Instance.Game.AeroGUI.IsVisible = value;
+                    }
+                }, "Aerodynamic data for the active vessel", "aero drag lift");
             hub.RegisterSwitch(Section.Overlays, "Part", "Drag Bounds", ToolScene.Campaign,
                 () => DebugVisualizer.RenderPartDragBounds, value => DebugVisualizer.RenderPartDragBounds = value,
                 "Drag cube bounds of every part", "drag bounds aero cube");
@@ -177,37 +198,17 @@ namespace DebugTools
             string windowName, string label, ToolScene scene, string note = null, string keywords = null)
             where T : BaseWindowController
         {
-            T controller = null;
-            bool isLoading = false;
-            hub.RegisterTool(section, group, label, scene, IsOpen, Toggle, note, keywords);
-
-            bool IsOpen() => controller != null && controller.IsWindowOpen;
-
-            void Toggle()
+            ToolMode mode = windowName switch
             {
-                if (controller != null)
-                {
-                    controller.IsWindowOpen = !controller.IsWindowOpen;
-                    return;
-                }
-
-                if (isLoading)
-                    return;
-
-                isLoading = true;
-                UITKHelper.LoadUxml(windowName, uxml =>
-                {
-                    PanelRenderer window = UITKHelper.CreateWindowFromUxml(uxml, windowName);
-                    controller = window.gameObject.AddComponent<T>();
-                    // A new tool window opens beside the hub rather than centred over it.
-                    window.GetWindowRoot().SetDefaultPosition(hub.GetToolWindowPosition);
-                    controller.CloseButton.clicked += () => controller.IsWindowOpen = false;
-                    // The window missed the campaign load, which happened before it existed.
-                    controller.CatchUpWithLoadedGame();
-                    controller.IsWindowOpen = true;
-                    isLoading = false;
-                });
-            }
+                "QuickSwitchWindow" or "TeleportBookmarksWindow" or "FreeFlightWindow" or
+                "ResourceScanDebugWindow" or "KerbalRosterToolWindow" or "ScienceToolsWindow" or
+                "VesselToolsWindow" or "TerrainDebugWindow" => ToolMode.Inline,
+                _ => ToolMode.Window
+            };
+            bool detachable = windowName is "QuickSwitchWindow" or "TeleportBookmarksWindow" or "KerbalRosterToolWindow";
+            bool collapsed = windowName is "FreeFlightWindow" or "ResourceScanDebugWindow";
+            hub.RegisterHostedTool<T>(section, group, windowName, label, scene, mode, detachable, collapsed,
+                note, keywords, _instance.transform);
         }
 
         private static void ToggleStockCheatsMenu()
