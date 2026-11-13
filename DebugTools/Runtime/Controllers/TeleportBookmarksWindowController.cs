@@ -48,7 +48,8 @@ namespace DebugTools.Runtime.Controllers
 
         private void Awake()
         {
-            Game.Messages.Subscribe<GameLoadFinishedMessage>(OnGameLoadFinished);
+            // Persistent, so the window keeps working after a campaign is closed and another one loaded.
+            Game.Messages.PersistentSubscribe<GameLoadFinishedMessage>(OnGameLoadFinished);
         }
 
         private void OnDestroy()
@@ -321,7 +322,12 @@ namespace DebugTools.Runtime.Controllers
         /// <summary>
         /// Loads all bookmarks when the game finishes loading a campaign.
         /// </summary>
-        private void OnGameLoadFinished(MessageCenterMessage msg)
+        private void OnGameLoadFinished(MessageCenterMessage msg) => LoadBookmarks();
+
+        /// <inheritdoc />
+        public override void CatchUpWithLoadedGame() => LoadBookmarks();
+
+        private void LoadBookmarks()
         {
             GameManager.Instance.Assets.Load<TextAsset>(KSCBookmarkAddress, OnKSCBookmarkLoaded);
             PopulateBookmarksLists();

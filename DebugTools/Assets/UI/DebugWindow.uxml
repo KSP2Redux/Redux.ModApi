@@ -1,12 +1,26 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/DebugWindow.uss?fileID=7433441132597879392&amp;guid=3b02df7e5905e8746a5ed673f30eb0be&amp;type=3#DebugWindow" />
-    <ui:VisualElement name="root" class="root">
-        <ui:VisualElement name="title-bar">
-            <ui:Label text="Debug Tools" />
-            <ui:Button text="×" name="close-button" />
+    <UitkForKsp2.Controls.AppShell name="root" title="Dev Tools" close-button-name="close-button" class="dt-hub">
+        <UitkForKsp2.Controls.PlaceholderTextField name="search" placeholder="Search tools and cheats" class="oab-text-field dt-search" />
+        <ui:VisualElement name="status-strip" class="dt-strip">
+            <ui:VisualElement name="status-header" class="dt-strip__header">
+                <ui:Label text="//" class="dt-strip__slashes" />
+                <ui:Label name="status-summary" class="dt-strip__summary" />
+                <UitkForKsp2.Controls.OabButton text="Show" name="status-expand" class="dt-button" />
+                <UitkForKsp2.Controls.OabButton text="Revert all" name="status-revert-all" class="dt-button dt-button--wide" />
+            </ui:VisualElement>
+            <ui:VisualElement name="status-list" class="dt-strip__list" />
         </ui:VisualElement>
-        <ui:VisualElement name="content">
-            <ui:Toggle label="Thermal Data" class="toggle" />
-        </ui:VisualElement>
-    </ui:VisualElement>
+        <UitkForKsp2.Controls.InvertedCornerBox name="body" border-thickness="1" notch-size="5" border-color="#747680FF" background-color="#1B1E24FF" class="dt-body">
+            <ui:VisualElement name="rail" class="dt-rail" />
+            <ui:VisualElement name="pane" class="dt-pane">
+                <ui:VisualElement name="pane-header" class="dt-pane__header">
+                    <ui:Label name="pane-title" class="dt-pane__title" />
+                    <ui:Label name="pane-purpose" class="dt-pane__purpose" />
+                    <ui:Label name="pane-notice" class="dt-pane__notice" />
+                </ui:VisualElement>
+                <ui:ScrollView name="pane-content" mode="Vertical" horizontal-scroller-visibility="Hidden" class="dt-pane__content" />
+            </ui:VisualElement>
+        </UitkForKsp2.Controls.InvertedCornerBox>
+    </UitkForKsp2.Controls.AppShell>
 </ui:UXML>

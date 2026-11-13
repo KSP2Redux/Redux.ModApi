@@ -27,10 +27,11 @@ namespace DebugTools.Runtime.Controllers
 
         private void Awake()
         {
-            Game.Messages.Subscribe<KerbalAddedToRoster>(OnNeedRefresh);
-            Game.Messages.Subscribe<KerbalRemovedFromRoster>(OnNeedRefresh);
-            Game.Messages.Subscribe<KerbalLocationChanged>(OnNeedRefresh);
-            Game.Messages.Subscribe<VesselChangedMessage>(OnNeedRefresh);
+            // Persistent, so the window keeps working after a campaign is closed and another one loaded.
+            Game.Messages.PersistentSubscribe<KerbalAddedToRoster>(OnNeedRefresh);
+            Game.Messages.PersistentSubscribe<KerbalRemovedFromRoster>(OnNeedRefresh);
+            Game.Messages.PersistentSubscribe<KerbalLocationChanged>(OnNeedRefresh);
+            Game.Messages.PersistentSubscribe<VesselChangedMessage>(OnNeedRefresh);
         }
 
         private void OnDestroy()

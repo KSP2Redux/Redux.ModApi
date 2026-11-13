@@ -3,17 +3,32 @@ using DebugTools.Runtime.Controllers.FlightTools;
 using DebugTools.Runtime.Controllers.VesselTools;
 using DebugTools.Utils;
 using KSP.Game;
+using KSP.OAB;
 using SpaceWarp2.API.Logging;
+using UitkForKsp2.API;
 using UnityEngine;
+using UnityEngine.UIElements;
 using ILogger = SpaceWarp2.API.Logging.ILogger;
+using Legacy = KSP.DebugTools;
 using ReduxManager = Redux.ReduxManager;
+using Section = DebugTools.Runtime.Controllers.DebugWindowController.Section;
+using ToolScene = DebugTools.Runtime.Controllers.DebugWindowController.ToolScene;
 
 // ReSharper disable once CheckNamespace
 namespace DebugTools
 {
+    /// <summary>
+    /// Opens the Dev Tools hub on its keyboard shortcut and registers every debug tool in it.
+    /// </summary>
+    /// <remarks>
+    /// Only the shortcut check runs from startup. The hub and each tool window are created the first time they are
+    /// opened, so a tool that was never opened costs nothing.
+    /// </remarks>
     public class DebugToolsPlugin : KerbalMonoBehaviour
     {
+        private static DebugToolsPlugin _instance;
         private static DebugWindowController? DebugWindowController { get; set; }
+        private static bool _isHubLoading;
 
         internal static ILogger Logger;
 
@@ -22,7 +37,9 @@ namespace DebugTools
         {
             // With Domain Reload disabled this runs on every Play Mode enter, so reset static
             // state (UDR0002) and re-subscribe idempotently to the static event (UDR0003).
+            _instance = null;
             DebugWindowController = null;
+            _isHubLoading = false;
             Logger = null;
             ReduxManager.OnInitialized -= PreInitialize;
             ReduxManager.OnInitialized += PreInitialize;
@@ -39,77 +56,193 @@ namespace DebugTools
         /// </summary>
         public static void Initialize()
         {
-            if (!Application.isPlaying) return;
+            if (!Application.isPlaying || _instance != null)
+                return;
 
             Configuration.Initialize(ReduxManager.ReduxCoreConfig);
 
+            // This object only watches the shortcut. The hub window is built the first time it is opened.
+            var pluginObject = new GameObject("DebugTools");
+            DontDestroyOnLoad(pluginObject);
+            _instance = pluginObject.AddComponent<DebugToolsPlugin>();
+        }
+
+        private void Update()
+        {
+            if (!Configuration.KeyboardShortcut.Value.Down)
+                return;
+
+            ToggleHub();
+        }
+
+        private static void ToggleHub()
+        {
+            if (DebugWindowController != null)
+            {
+                DebugWindowController.IsWindowOpen = !DebugWindowController.IsWindowOpen;
+                return;
+            }
+
+            if (_isHubLoading)
+                return;
+
+            _isHubLoading = true;
             UITKHelper.LoadUxml("DebugWindow", uxml =>
             {
-                // Create main debug window
-                var debugWindow = UITKHelper.CreateWindowFromUxml(uxml, "DebugWindow");
-                // Add a controller for the UI to the window's game object
-                DebugWindowController = debugWindow.gameObject.AddComponent<DebugWindowController>();
-                DebugWindowController.IsWindowOpen = false;
-
-                CreateDebugWindows();
-                DebugWindowController.RegisterToggle("VFXTestSuite", "VFX Test Suite",
-                    evt => GameManager.Instance.Game.VFXTestSuiteDialog.IsVisible = evt.newValue);
-                DebugWindowController.RegisterToggle("FXDebugTools", "FX Debug Tools",
-                    evt => GameManager.Instance.Game.FXDebugTools.IsVisible = evt.newValue);
+                _isHubLoading = false;
+                PanelRenderer hubWindow = UITKHelper.CreateWindowFromUxml(uxml, "DebugWindow");
+                DebugWindowController = hubWindow.gameObject.AddComponent<DebugWindowController>();
+                RegisterTools(DebugWindowController);
+                DebugWindowController.IsWindowOpen = true;
             });
         }
 
-        private static void CreateDebugWindow<T>(string windowName, string toggleLabel) where T : BaseWindowController
+        /// <summary>
+        /// Gives every debug tool its one home in the hub, grouped by the question it answers.
+        /// </summary>
+        /// <remarks>
+        /// Stock debug windows whose prefabs the game no longer ships (Teleport, Teleport Bookmark Walk, Planet Viewer,
+        /// Kerbal Roster, Flight Tools, Thermal Debug, Vessel Coordinates, Joints and Triggers, Vessel Science, Research
+        /// Reports, Log Console, Terrain Debug, Rendering Debug and the OAB assembly overlay) are left out, since they
+        /// cannot open.
+        /// </remarks>
+        private static void RegisterTools(DebugWindowController hub)
         {
-            // Load window UXML
-            UITKHelper.LoadUxml(windowName, uxml =>
+            // Cheats: put the game in the situation a test needs. The cheat switches themselves come from the hub.
+            hub.RegisterTool(Section.Cheats, "Location", "Teleport and Science Cheats", ToolScene.Campaign,
+                () => CheatsMenu.IsWindowVisible, ToggleStockCheatsMenu,
+                "Teleport to an orbit, a surface or a rendezvous, and add science",
+                "teleport orbit surface rendezvous science stock", true);
+            RegisterWindow<TeleportBookmarksWindowController>(hub, Section.Cheats, "Location", "TeleportBookmarksWindow",
+                "Teleport Bookmarks", ToolScene.Flight, keywords: "teleport position save");
+            RegisterWindow<QuickSwitchWindowController>(hub, Section.Cheats, "Location", "QuickSwitchWindow",
+                "Quick Switch", ToolScene.Campaign, "Jump to the VAB, launchpad, runway or orbit",
+                "vab bae launchpad runway orbit");
+            RegisterWindow<FreeFlightWindowController>(hub, Section.Cheats, "Location", "FreeFlightWindow",
+                "Free Flight", ToolScene.Campaign, keywords: "camera planet viewer fly");
+
+            RegisterWindow<ResourceScanDebugWindowController>(hub, Section.Cheats, "Progress", "ResourceScanDebugWindow",
+                "Resource Scanning", ToolScene.Campaign, keywords: "scan isru ore");
+            RegisterWindow<MissionsDebugWindowController>(hub, Section.Cheats, "Progress", "MissionsDebugWindow",
+                "Missions", ToolScene.Campaign, "Activate, complete, fail or reset missions and stages",
+                "mission stage contract");
+
+            RegisterWindow<KerbalRosterToolWindowController>(hub, Section.Cheats, "Crew", "KerbalRosterToolWindow",
+                "Roster Tools", ToolScene.Campaign, keywords: "kerbal crew add");
+
+            // Science: is science working, and move through progression. The stock Science Tools window does the same
+            // as the Redux one, so only the Redux one is listed.
+            RegisterWindow<ScienceToolsWindowController>(hub, Section.Science, "Progression", "ScienceToolsWindow",
+                "Science Tools", ToolScene.Campaign, "Science points, tech nodes, Unlock All Parts",
+                "tech tree node research unlock all parts");
+            RegisterWindow<VesselScienceWindowController>(hub, Section.Science, "Experiments", "VesselScienceWindow",
+                "Vessel Science", ToolScene.Flight, "Situation, region and experiment reports",
+                "experiment report region");
+
+            // Inspect: what is going on.
+            RegisterWindow<VesselToolsWindowController>(hub, Section.Inspect, "Vessel", "VesselToolsWindow",
+                "Vessel Tools", ToolScene.Campaign,
+                "Markers and physics settings. Opens thermal data, mass stats, maneuvers, coordinates and SAS charts",
+                "thermal mass maneuver coordinates sas com control markers physics");
+            RegisterWindow<JointsToolsWindowController>(hub, Section.Inspect, "Vessel", "JointsToolsWindow",
+                "Joints", ToolScene.Flight, keywords: "joint stress structural");
+            RegisterWindow<FlightToolsWindowController>(hub, Section.Inspect, "Simulation", "FlightToolsWindow",
+                "Flight Tools", ToolScene.Campaign, "Sim objects, proximity load and unload", "sim object load unload");
+
+            // Overlays: show it in the world.
+            RegisterWindow<TerrainDebugWindowController>(hub, Section.Overlays, "Planet", "TerrainDebugWindow",
+                "Terrain Debug", ToolScene.Campaign, "Biome colors, wireframe, PhysX bubble, triplanar",
+                "terrain biome wireframe pqs quad");
+            hub.RegisterSwitch(Section.Overlays, "Part", "Drag Bounds", ToolScene.Campaign,
+                () => DebugVisualizer.RenderPartDragBounds, value => DebugVisualizer.RenderPartDragBounds = value,
+                "Drag cube bounds of every part", "drag bounds aero cube");
+            hub.RegisterSwitch(Section.Overlays, "VAB", "Size Limits", ToolScene.Assembly,
+                () => ObjectAssemblyBuilder.IsRenderingDebugSizeLimits, SetOabSizeLimits,
+                "Assembly size limit boxes", "oab vab size limit");
+
+            // Test benches: run a controlled effect.
+            hub.RegisterTool(Section.TestBenches, "Effects", "VFX Test Suite", ToolScene.Flight,
+                () => GameManager.Instance.Game.VFXTestSuiteDialog != null &&
+                    GameManager.Instance.Game.VFXTestSuiteDialog.IsVisible,
+                ToggleVfxTestSuite, "Decouple, launch clamp, fairing and parachute effects", "vfx effect fx", true);
+            hub.RegisterTool(Section.TestBenches, "Effects", "FX Debug Tools", ToolScene.Flight,
+                () => GameManager.Instance.Game.FXDebugTools != null && GameManager.Instance.Game.FXDebugTools.IsVisible,
+                ToggleFxDebugTools, "Destroy parts and break joints to see their effects", "vfx effect fx", true);
+        }
+
+        /// <summary>
+        /// Registers a Redux debug window that is created the first time it is opened.
+        /// </summary>
+        private static void RegisterWindow<T>(DebugWindowController hub, Section section, string group,
+            string windowName, string label, ToolScene scene, string note = null, string keywords = null)
+            where T : BaseWindowController
+        {
+            T controller = null;
+            bool isLoading = false;
+            hub.RegisterTool(section, group, label, scene, IsOpen, Toggle, note, keywords);
+
+            bool IsOpen() => controller != null && controller.IsWindowOpen;
+
+            void Toggle()
             {
-                // Create UITK window
-                var window = UITKHelper.CreateWindowFromUxml(uxml, windowName);
-
-                // Attach window controller
-                var controller = window.gameObject.AddComponent<T>();
-                controller.IsWindowOpen = false;
-
-                if (DebugWindowController == null) return;
-                
-                // Setup window toggling & close button
-                DebugWindowController.RegisterToggle(windowName, toggleLabel,
-                    evt => controller.IsWindowOpen = evt.newValue);
-                controller.CloseButton.clicked += () =>
+                if (controller != null)
                 {
-                    controller.IsWindowOpen = false;
-                    DebugWindowController.WindowToggles[windowName].value = false;
-                };
-            });
+                    controller.IsWindowOpen = !controller.IsWindowOpen;
+                    return;
+                }
+
+                if (isLoading)
+                    return;
+
+                isLoading = true;
+                UITKHelper.LoadUxml(windowName, uxml =>
+                {
+                    PanelRenderer window = UITKHelper.CreateWindowFromUxml(uxml, windowName);
+                    controller = window.gameObject.AddComponent<T>();
+                    // A new tool window opens beside the hub rather than centred over it.
+                    window.GetWindowRoot().SetDefaultPosition(hub.GetToolWindowPosition);
+                    controller.CloseButton.clicked += () => controller.IsWindowOpen = false;
+                    // The window missed the campaign load, which happened before it existed.
+                    controller.CatchUpWithLoadedGame();
+                    controller.IsWindowOpen = true;
+                    isLoading = false;
+                });
+            }
         }
 
-        private static void CreateDebugWindows()
+        private static void ToggleStockCheatsMenu()
         {
-            // Vessel tools window
-            CreateDebugWindow<VesselToolsWindowController>("VesselToolsWindow", "Vessel Tools");
-            // Flight tools window
-            CreateDebugWindow<FlightToolsWindowController>("FlightToolsWindow", "Flight Tools");
-            // Joints tools window
-            CreateDebugWindow<JointsToolsWindowController>("JointsToolsWindow", "Joints Tools");
-            // Quick actions window
-            CreateDebugWindow<QuickSwitchWindowController>("QuickSwitchWindow", "Quick Switch");
-            // Free flight window
-            CreateDebugWindow<FreeFlightWindowController>("FreeFlightWindow", "Free Flight");
-            // Terrain debug window
-            CreateDebugWindow<TerrainDebugWindowController>("TerrainDebugWindow", "Terrain Debug");
-            // Science tools window
-            CreateDebugWindow<ScienceToolsWindowController>("ScienceToolsWindow", "Science Tools");
-            // Vessel science window
-            CreateDebugWindow<VesselScienceWindowController>("VesselScienceWindow", "Vessel Science");
-            // Kerbal roster tools window
-            CreateDebugWindow<KerbalRosterToolWindowController>("KerbalRosterToolWindow", "Roster Tools");
-            // Teleport bookmarks window
-            CreateDebugWindow<TeleportBookmarksWindowController>("TeleportBookmarksWindow", "Teleport Bookmarks");
-            // Resource scanning window
-            CreateDebugWindow<ResourceScanDebugWindowController>("ResourceScanDebugWindow", "Resource Scanning");
-            // Missions debug window
-            CreateDebugWindow<MissionsDebugWindowController>("MissionsDebugWindow", "Missions");
+            // The game creates the stock menu at startup, so it has loaded by the time the hub can be opened.
+            CheatsMenu cheatsMenu = CheatsMenu.GetOrCreateWindow();
+            if (cheatsMenu == null)
+                return;
+
+            cheatsMenu.ToggleWindow();
+        }
+
+        private static void ToggleVfxTestSuite()
+        {
+            KSP.VFX.VFXTestSuiteDialog dialog = GameManager.Instance.Game.VFXTestSuiteDialog;
+            if (dialog == null)
+                return;
+
+            dialog.IsVisible = !dialog.IsVisible;
+        }
+
+        private static void ToggleFxDebugTools()
+        {
+            if (GameManager.Instance.Game.FXDebugTools == null)
+                return;
+
+            Legacy.FXDebugTools.ToggleWindow();
+        }
+
+        private static void SetOabSizeLimits(bool value)
+        {
+            if (ObjectAssemblyBuilder.IsRenderingDebugSizeLimits == value)
+                return;
+
+            ObjectAssemblyBuilder.ToggleRenderDebugSizeLimits();
         }
     }
 }

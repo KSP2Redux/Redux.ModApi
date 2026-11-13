@@ -114,6 +114,9 @@ namespace DebugTools.Runtime.Controllers.VesselTools
             Refresh();
         }
 
+        /// <inheritdoc />
+        public override void CatchUpWithLoadedGame() => Refresh();
+
         private void Refresh()
         {
             if (!_initialized) return;

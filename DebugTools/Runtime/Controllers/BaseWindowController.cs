@@ -38,6 +38,18 @@ namespace DebugTools.Runtime.Controllers
         }
 
         /// <summary>
+        /// Brings a window created while a campaign is loaded up to date with that campaign.
+        /// </summary>
+        /// <remarks>
+        /// Tool windows are created the first time they are opened from Dev Tools, after the campaign's
+        /// <c>GameLoadFinishedMessage</c> has gone out. A window that sets itself up from that message overrides this to
+        /// run the same setup.
+        /// </remarks>
+        public virtual void CatchUpWithLoadedGame()
+        {
+        }
+
+        /// <summary>
         /// Runs when the window is first created, and every time the window is re-enabled.
         /// </summary>
         protected void Enable()

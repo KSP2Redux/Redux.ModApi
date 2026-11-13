@@ -49,10 +49,20 @@ namespace DebugTools.Runtime.Controllers.FlightTools
 
         private void Awake()
         {
-            Game.Messages.Subscribe<VesselChangedMessage>(OnActiveVesselChanged);
-            Game.Messages.Subscribe<GameLoadFinishedMessage>(OnGameLoadFinished);
+            // Persistent, so the window keeps working after a campaign is closed and another one loaded.
+            Game.Messages.PersistentSubscribe<VesselChangedMessage>(OnActiveVesselChanged);
+            Game.Messages.PersistentSubscribe<GameLoadFinishedMessage>(OnGameLoadFinished);
             _simObjects = new List<SimObjectItemController>();
             _jointConnections = new List<JointConnectionItemController>();
+        }
+
+        private void OnDestroy()
+        {
+            if (Game == null)
+                return;
+
+            Game.Messages.Unsubscribe<VesselChangedMessage>(OnActiveVesselChanged);
+            Game.Messages.Unsubscribe<GameLoadFinishedMessage>(OnGameLoadFinished);
         }
 
         /// <summary>

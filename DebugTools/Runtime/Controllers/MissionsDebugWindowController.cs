@@ -58,12 +58,13 @@ namespace DebugTools.Runtime.Controllers
 
         private void Awake()
         {
-            Game.Messages.Subscribe<NewMissionAvailableMessage>(OnMissionMessage);
-            Game.Messages.Subscribe<MissionCompleteMessage>(OnMissionMessage);
-            Game.Messages.Subscribe<MissionStageCompleted>(OnMissionMessage);
-            Game.Messages.Subscribe<OnMissionStageCompleted>(OnMissionMessage);
-            Game.Messages.Subscribe<GameLoadFinishedMessage>(OnMissionMessage);
-            Game.Messages.Subscribe<GameStateEnteredMessage>(OnMissionMessage);
+            // Persistent, so the window keeps working after a campaign is closed and another one loaded.
+            Game.Messages.PersistentSubscribe<NewMissionAvailableMessage>(OnMissionMessage);
+            Game.Messages.PersistentSubscribe<MissionCompleteMessage>(OnMissionMessage);
+            Game.Messages.PersistentSubscribe<MissionStageCompleted>(OnMissionMessage);
+            Game.Messages.PersistentSubscribe<OnMissionStageCompleted>(OnMissionMessage);
+            Game.Messages.PersistentSubscribe<GameLoadFinishedMessage>(OnMissionMessage);
+            Game.Messages.PersistentSubscribe<GameStateEnteredMessage>(OnMissionMessage);
         }
 
         private void OnDestroy()

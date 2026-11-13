@@ -1,33 +1,325 @@
-.root {
-    max-height: 600px;
-    width: 250px;
-    background-color: rgba(34, 38, 46, 0.95);
+/* Dev Tools hub. The window chrome, buttons, switches, text field and scroll bars come from the KerbalUI theme
+   (AppShell, OabButton, the switch toggle, oab-text-field). This sheet only lays the hub out and styles what the
+   theme has no class for, borrowing each colour and font from the game's own Redux windows:
+   - section headers: the "//" sub-headers of the Resource Scanner and Stage Recovery windows
+   - rail and open rows: the selected row of the Resource Scanner list
+   - status strip: the alert rows of the Tracking Station, in the scanner's warning orange
+   - tags: the row tags of the Map Object Picker */
+
+.dt-hub {
+    width: 780px;
+    height: 580px;
+    min-width: 600px;
+    min-height: 380px;
 }
 
-#title-bar {
-    justify-content: space-between;
-    margin-bottom: 8px;
-    margin-top: 0;
+/* Search sits under the header across the full width, as in the VAB part picker */
+
+.dt-search {
+    flex-shrink: 0;
+    margin-bottom: 6px;
+    padding: 0;
+    font-size: 13px;
 }
 
-#close-button {
-    margin-left: 0;
-    margin-right: 4px;
-    margin-top: 0;
-    margin-bottom: 0;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 9px;
-    padding-bottom: 10px;
-    font-size: 25px;
-    max-width: 20px;
-    max-height: 20px;
+/* Status strip: shown only while something differs from normal play */
+
+.dt-strip {
+    flex-shrink: 0;
+    margin-bottom: 6px;
+    padding: 6px 6px 6px 8px;
+    background-color: rgba(24, 26, 34, 0.8);
+    border-left-width: 2px;
+    border-left-color: rgb(240, 160, 75);
 }
 
-#close-button:hover {
-    color: rgb(194, 41, 25);
-    border-left-color: rgb(194, 41, 25);
-    border-right-color: rgb(194, 41, 25);
-    border-top-color: rgb(194, 41, 25);
-    border-bottom-color: rgb(194, 41, 25);
+.dt-strip__header {
+    flex-direction: row;
+    align-items: center;
+}
+
+.dt-strip__slashes {
+    flex-shrink: 0;
+    margin-right: 8px;
+    font-size: 9px;
+    color: rgb(240, 160, 75);
+    -unity-font-definition: url("project://database/Packages/ksp2redux.sdk/Controls/Assets/Theme/Fonts/RosesAreFF0000/RosesareFF0000%20SDF.asset?fileID=11400000&guid=f2516f1635a41814ca97b23fac4691fd&type=2#RosesareFF0000 SDF");
+}
+
+.dt-strip__summary {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-right: 8px;
+    font-size: 12px;
+    color: rgb(240, 160, 75);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    -unity-font-definition: url("project://database/Packages/ksp2redux.sdk/Controls/Assets/Theme/Fonts/JetBrainsMono/JetBrainsMono-Medium%20SDF.asset?fileID=11400000&guid=ca4cab634f6d3284294893797c2fb994&type=2#JetBrainsMono-Medium SDF");
+}
+
+/* A confirmation says in full what the click will change */
+.dt-strip__summary--confirm {
+    white-space: normal;
+}
+
+.dt-strip__list {
+    margin-top: 4px;
+}
+
+.dt-override {
+    flex-direction: row;
+    align-items: center;
+    min-height: 30px;
+    padding-left: 17px;
+}
+
+.dt-override__name {
+    flex-grow: 1;
+    font-size: 12px;
+    color: rgb(214, 219, 239);
+}
+
+/* Compact OabButtons: the theme draws them at 30px with a 16px label */
+
+.dt-button.oab-button {
+    flex-shrink: 0;
+    width: 72px;
+    height: 24px;
+    margin-left: 6px;
+}
+
+.dt-button--wide.oab-button {
+    width: 104px;
+}
+
+.dt-button.oab-button > .oab-button__inner > .oab-button__label {
+    padding-top: 3px;
+    -unity-text-auto-size: best-fit 8px 13px;
+}
+
+/* Body: the rail and the section pane share one inset box, divided like the Map Object Picker */
+
+.dt-body {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+    flex-direction: row;
+    padding: 6px 0 6px 0;
+}
+
+.dt-rail {
+    width: 156px;
+    flex-shrink: 0;
+    padding-top: 2px;
+    border-right-width: 1px;
+    border-right-color: rgb(87, 95, 111);
+}
+
+.dt-rail__item {
+    flex-direction: row;
+    align-items: center;
+    height: 32px;
+    padding: 0 10px 0 11px;
+    border-left-width: 5px;
+    border-left-color: rgba(0, 0, 0, 0);
+}
+
+.dt-rail__item:hover {
+    background-color: rgba(123, 124, 240, 0.06);
+}
+
+.dt-rail__item--selected,
+.dt-rail__item--selected:hover {
+    background-color: rgb(42, 45, 60);
+    border-left-color: rgb(123, 124, 240);
+}
+
+.dt-rail__label {
+    flex-grow: 1;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: rgb(192, 199, 213);
+    -unity-font-definition: url("project://database/Packages/ksp2redux.sdk/Controls/Assets/Theme/Fonts/JetBrainsMono/JetBrainsMono-Medium%20SDF.asset?fileID=11400000&guid=ca4cab634f6d3284294893797c2fb994&type=2#JetBrainsMono-Medium SDF");
+}
+
+.dt-rail__item--selected > .dt-rail__label {
+    color: rgb(255, 255, 255);
+}
+
+/* Open tools in the section, counted like a value in the Resource Scanner */
+.dt-rail__badge {
+    font-size: 12px;
+    color: rgb(211, 175, 122);
+    -unity-font-definition: url("project://database/Packages/ksp2redux.sdk/Controls/Assets/Theme/Fonts/JetBrainsMono/JetBrainsMono-Medium%20SDF.asset?fileID=11400000&guid=ca4cab634f6d3284294893797c2fb994&type=2#JetBrainsMono-Medium SDF");
+}
+
+.dt-pane {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    padding: 2px 0 0 14px;
+}
+
+.dt-pane__header {
+    flex-shrink: 0;
+    margin-bottom: 6px;
+    padding-right: 14px;
+}
+
+.dt-pane__title {
+    font-size: 17px;
+    letter-spacing: 2px;
+    color: rgb(214, 219, 239);
+    -unity-font-definition: url("project://database/Packages/ksp2redux.sdk/Controls/Assets/Theme/Fonts/JetBrainsMono/JetBrainsMono-Bold%20SDF.asset?fileID=11400000&guid=5d23620e1b8bb5e49ab80186ee3fed9b&type=2#JetBrainsMono-Bold SDF");
+}
+
+.dt-pane__purpose {
+    margin-top: 2px;
+    font-size: 12px;
+    white-space: normal;
+    color: rgb(163, 170, 196);
+}
+
+/* A reason that holds for the whole pane, written like the scanner's warning status line */
+.dt-pane__notice {
+    margin-top: 8px;
+    padding: 6px 8px;
+    font-size: 12px;
+    white-space: normal;
+    color: rgb(240, 160, 75);
+    background-color: rgba(24, 26, 34, 0.8);
+    border-left-width: 2px;
+    border-left-color: rgb(240, 160, 75);
+}
+
+/* The themed scroll view paints its own inset panel, which would sit inside the body box, so it is reset */
+.dt-pane__content {
+    flex-grow: 1;
+    width: auto;
+    height: auto;
+    padding: 0;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.dt-pane__content > .unity-scroll-view__content-viewport > .unity-scroll-view__content-container {
+    padding-right: 14px;
+    padding-bottom: 6px;
+}
+
+/* Groups: the "//" sub-header of the game's Redux windows */
+
+.dt-group {
+    margin-bottom: 10px;
+}
+
+.dt-group__header {
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 0 4px 2px;
+}
+
+.dt-group__slashes {
+    margin-right: 8px;
+    font-size: 9px;
+    color: rgb(115, 121, 221);
+    -unity-font-definition: url("project://database/Packages/ksp2redux.sdk/Controls/Assets/Theme/Fonts/RosesAreFF0000/RosesareFF0000%20SDF.asset?fileID=11400000&guid=f2516f1635a41814ca97b23fac4691fd&type=2#RosesareFF0000 SDF");
+}
+
+.dt-group__title {
+    font-size: 11px;
+    letter-spacing: 20px;
+    color: rgb(115, 121, 221);
+    -unity-font-definition: url("project://database/Packages/ksp2redux.sdk/Controls/Assets/Theme/Fonts/RosesAreFF0000/RosesareFF0000%20SDF.asset?fileID=11400000&guid=f2516f1635a41814ca97b23fac4691fd&type=2#RosesareFF0000 SDF");
+}
+
+/* Rows */
+
+.dt-row {
+    flex-direction: row;
+    align-items: center;
+    min-height: 38px;
+    padding: 4px 4px 4px 9px;
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+}
+
+.dt-row:hover {
+    background-color: rgba(123, 124, 240, 0.06);
+}
+
+/* A tool whose window is open, marked like the selected row of the Resource Scanner list */
+.dt-row--open,
+.dt-row--open:hover {
+    background-color: rgb(42, 45, 60);
+    border-left-color: rgb(123, 124, 240);
+}
+
+.dt-row__text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    margin-right: 12px;
+}
+
+.dt-row__title-line {
+    flex-direction: row;
+    align-items: center;
+}
+
+.dt-row__name {
+    font-size: 13px;
+    color: rgb(214, 219, 239);
+}
+
+.dt-row__note {
+    margin-top: 1px;
+    font-size: 11px;
+    white-space: normal;
+    color: rgb(163, 170, 196);
+}
+
+.dt-row__reason {
+    margin-top: 1px;
+    font-size: 11px;
+    color: rgb(240, 160, 75);
+}
+
+.dt-row--unavailable .dt-row__name {
+    color: rgb(108, 116, 148);
+}
+
+.dt-row--unavailable .dt-row__note {
+    color: rgb(108, 116, 148);
+}
+
+.dt-row__button.oab-button {
+    width: 72px;
+    height: 26px;
+}
+
+.dt-row__switch {
+    flex-shrink: 0;
+}
+
+/* Tags after a name: the Map Object Picker row tag */
+
+.dt-tag {
+    margin-left: 10px;
+    padding: 0;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgb(101, 128, 199);
+}
+
+.dt-tag--legacy {
+    color: rgb(108, 116, 148);
+}
+
+.dt-coming {
+    margin: 4px 2px 0 2px;
+    font-size: 12px;
+    white-space: normal;
+    color: rgb(108, 116, 148);
 }

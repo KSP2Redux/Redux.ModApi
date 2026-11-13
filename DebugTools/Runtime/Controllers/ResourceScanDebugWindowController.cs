@@ -23,7 +23,13 @@ namespace DebugTools.Runtime.Controllers
         private Button _unscanAll;
 
         private bool _isCurrentResourceScanned;
-        
+
+        private void Awake()
+        {
+            // Persistent, so the window keeps working after a campaign is closed and another one loaded.
+            Game.Messages.PersistentSubscribe<GameLoadFinishedMessage>(OnGameLoadFinished);
+        }
+
         private void OnEnable()
         {
             Enable();
@@ -50,16 +56,14 @@ namespace DebugTools.Runtime.Controllers
 
             _scanAll = RootElement.Q<Button>("unscan-all");
             _scanAll.clicked += UnscanAll;
-
-            Game.Messages.Subscribe<GameLoadFinishedMessage>(OnGameLoadFinished);
         }
 
         private void OnDestroy()
         {
-            if (!IsGameShuttingDown)
-            {
-                Game.Messages.Unsubscribe<GameLoadFinishedMessage>(OnGameLoadFinished);
-            }
+            if (IsGameShuttingDown || Game == null)
+                return;
+
+            Game.Messages.Unsubscribe<GameLoadFinishedMessage>(OnGameLoadFinished);
         }
 
         private void OnGameLoadFinished(MessageCenterMessage message)
@@ -68,7 +72,15 @@ namespace DebugTools.Runtime.Controllers
             {
                 return;
             }
-            
+
+            PopulateBodies();
+        }
+
+        /// <inheritdoc />
+        public override void CatchUpWithLoadedGame() => PopulateBodies();
+
+        private void PopulateBodies()
+        {
             var bodies = ISRUResourceManager.CbResources.Keys.ToList();
             _celestialBody.choices = bodies;
             if (bodies.Count == 0)

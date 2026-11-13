@@ -45,9 +45,10 @@ namespace DebugTools.Runtime.Controllers
 
         private void Awake()
         {
-            Game.Messages.Subscribe<AddVesselToMapMessage>(OnVesselAdded);
-            Game.Messages.Subscribe<VesselDestroyedMessage>(OnVesselRemoved);
-            Game.Messages.Subscribe<GameLoadFinishedMessage>(OnGameLoaded);
+            // Persistent, so the window keeps working after a campaign is closed and another one loaded.
+            Game.Messages.PersistentSubscribe<AddVesselToMapMessage>(OnVesselAdded);
+            Game.Messages.PersistentSubscribe<VesselDestroyedMessage>(OnVesselRemoved);
+            Game.Messages.PersistentSubscribe<GameLoadFinishedMessage>(OnGameLoaded);
 
             GameManager.Instance.Assets.Load<Material>(PhysXBubbleMaterialAddress, mat => _regionBoundsMaterial = mat);
             GameManager.Instance.Assets.Load<PQSScienceOverlay>(PqsOverlayPrefabAddress, overlay =>
@@ -105,6 +106,16 @@ namespace DebugTools.Runtime.Controllers
             if (msg is GameLoadFinishedMessage { IsSuccess: false })
                 return;
 
+            LoadFromGame();
+        }
+
+        /// <inheritdoc />
+        public override void CatchUpWithLoadedGame() => LoadFromGame();
+
+        private void LoadFromGame()
+        {
+            // Vessels of a campaign loaded earlier are gone.
+            _allVessels.Clear();
             _allVessels.AddRange(Game.UniverseModel.GetAllVessels());
 
             UpdateVesselDropdown();
