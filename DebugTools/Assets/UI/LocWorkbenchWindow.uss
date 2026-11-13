@@ -1,0 +1,31 @@
+.loc-workbench { min-width: 850px; flex-grow: 1; }
+
+/* Toolbar: the search takes the free width, the buttons keep their own and never overlap it. */
+.loc-toolbar { margin-bottom: 6px; }
+.loc-search { flex-grow: 1; flex-shrink: 1; min-width: 160px; margin-right: 6px; }
+.loc-toolbar > .kui-button { flex-shrink: 0; width: 148px; margin-left: 6px; }
+.loc-toolbar > .loc-toolbar__narrow { width: 88px; }
+
+.loc-list { height: 420px; min-height: 180px; flex-grow: 1; }
+.loc-row { height: 32px; min-height: 32px; flex-shrink: 0; padding: 0 6px; }
+.loc-row > .loc-key { width: 24%; flex-grow: 0; }
+.loc-row > .loc-value { width: 31%; flex-grow: 0; margin-right: 6px; }
+.loc-row > .loc-english { width: 25%; flex-grow: 0; }
+.loc-row > .loc-source { width: 90px; flex-grow: 0; }
+.loc-reset { width: 56px; }
+.loc-row .unity-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Rows are marked like the selected group header of the Parts Manager: the header colour, never the theme's light
+   list highlight, which leaves light text unreadable. */
+.loc-list .unity-collection-view__item--selected,
+.loc-list .unity-collection-view__item--selected:hover {
+    background-color: rgb(46, 53, 64);
+}
+.loc-list .unity-collection-view__item:hover {
+    background-color: rgb(36, 41, 50);
+}
+.loc-list .unity-collection-view__item--selected .unity-label {
+    color: rgb(214, 224, 255);
+}
+
+.loc-status { white-space: normal; max-height: 90px; overflow: hidden; margin-top: 4px; }

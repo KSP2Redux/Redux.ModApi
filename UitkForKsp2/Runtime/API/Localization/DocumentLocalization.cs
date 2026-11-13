@@ -22,6 +22,33 @@ public class DocumentLocalization : MonoBehaviour
     private PanelRenderer? _renderer;
 
     private readonly Dictionary<VisualElement, string> _elementDictionary = new();
+    private static readonly HashSet<DocumentLocalization> _activeDocuments = new();
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetInspectionRegistry() => _activeDocuments.Clear();
+
+    /// <summary>
+    /// Read the registered key of a text element without searching UI objects.
+    /// </summary>
+    /// <param name="element">
+    /// The text element to inspect.
+    /// </param>
+    /// <param name="key">
+    /// The registered key, or null if no document knows the element.
+    /// </param>
+    /// <returns>
+    /// True if a document registered the element, false otherwise.
+    /// </returns>
+    public static bool TryGetLocalizationKey(VisualElement element, out string key)
+    {
+        foreach (DocumentLocalization document in _activeDocuments)
+        {
+            if (document != null && document._elementDictionary.TryGetValue(element, out key))
+                return true;
+        }
+        key = null;
+        return false;
+    }
     private readonly Dictionary<ITextEdition, string> _placeholderDictionary = new();
     private static readonly MethodInfo CreateBindingRequestsMethod = typeof(VisualElement).GetMethod(
         "CreateBindingRequests",
@@ -44,9 +71,17 @@ public class DocumentLocalization : MonoBehaviour
         }
     }
 
-    private void OnEnable() => ILocalizer.Instance.OnLocalize += Localize;
+    private void OnEnable()
+    {
+        _activeDocuments.Add(this);
+        ILocalizer.Instance.OnLocalize += Localize;
+    }
 
-    private void OnDisable() => ILocalizer.Instance.OnLocalize -= Localize;
+    private void OnDisable()
+    {
+        _activeDocuments.Remove(this);
+        ILocalizer.Instance.OnLocalize -= Localize;
+    }
 
     private void OnDestroy()
     {

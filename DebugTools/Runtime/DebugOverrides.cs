@@ -79,7 +79,7 @@ namespace DebugTools
         /// <summary>
         /// Gets a save warning naming active test state, or an empty string.
         /// </summary>
-        public static string SaveWarning => _active.Count == 0 ? string.Empty :
+        public static string SaveWarning => _active.Count == 0 || GetTestNames().Count == 0 ? string.Empty :
             $"Test overrides active: {string.Join(", ", GetTestNames())}. Saving may preserve test state. Revert in Dev Tools for normal play.";
 
         /// <summary>
@@ -93,15 +93,24 @@ namespace DebugTools
         /// <param name="id">The stable owner identifier.</param>
         /// <param name="name">The displayed name.</param>
         /// <param name="revert">The action that ends the override.</param>
-        public static void Report(string id, string name, Action revert)
+        public static void Report(string id, string name, Action revert) => Report(id, name, revert, true);
+
+        /// <summary>
+        /// Reports an override with its save warning and campaign cleanup policy.
+        /// </summary>
+        /// <param name="id">The stable owner identifier.</param>
+        /// <param name="name">The displayed name.</param>
+        /// <param name="revert">The action that ends the override.</param>
+        /// <param name="isTestOnly">True for state that may affect saves and needs campaign cleanup.</param>
+        public static void Report(string id, string name, Action revert, bool isTestOnly)
         {
             if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(name) || revert == null)
                 throw new ArgumentException("An override needs an id, name and revert action.");
 
             // Owners often report again with a new revert closure. Only a new entry or a new name changes what the
             // strip shows, so only those raise Changed. A rebuild would cancel a Revert waiting for confirmation.
-            bool isShownChange = !_active.TryGetValue(id, out ActiveOverride previous) || previous.Name != name;
-            _active[id] = new ActiveOverride(id, name, revert, true);
+            bool isShownChange = !_active.TryGetValue(id, out ActiveOverride previous) || previous.Name != name || previous.IsTestOnly != isTestOnly;
+            _active[id] = new ActiveOverride(id, name, revert, isTestOnly);
             if (isShownChange)
             {
                 Changed?.Invoke();
@@ -152,6 +161,8 @@ namespace DebugTools
         {
             foreach (ActiveOverride entry in new List<ActiveOverride>(_active.Values))
             {
+                if (!entry.IsTestOnly)
+                    continue;
                 try
                 {
                     entry.Revert();
@@ -168,7 +179,10 @@ namespace DebugTools
             var names = new List<string>();
             foreach (ActiveOverride entry in _active.Values)
             {
-                names.Add(entry.Name);
+                if (entry.IsTestOnly)
+                {
+                    names.Add(entry.Name);
+                }
             }
             return names;
         }

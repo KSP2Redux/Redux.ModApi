@@ -412,6 +412,23 @@ namespace DebugTools.Runtime.Controllers
             AddEntry(entry, keywords);
         }
 
+        /// <summary>
+        /// Opens the text workbench without toggling an already visible window closed.
+        /// </summary>
+        internal void OpenTextWorkbench()
+        {
+            foreach (HubEntry entry in _entries)
+            {
+                if (entry.WindowName != "LocWorkbenchWindow")
+                    continue;
+                if (!entry.PopoutOpen)
+                {
+                    OpenHostedTool(entry);
+                }
+                return;
+            }
+        }
+
         private void OpenHostedTool(HubEntry entry)
         {
             if (entry.Mode == ToolMode.Inline && !entry.PoppedOut)

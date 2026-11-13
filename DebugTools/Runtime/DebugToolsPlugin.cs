@@ -1,3 +1,5 @@
+using System;
+using KSP.Logging;
 using DebugTools.Runtime.Controllers;
 using DebugTools.Runtime.Controllers.FlightTools;
 using DebugTools.Runtime.Controllers.VesselTools;
@@ -32,6 +34,7 @@ namespace DebugTools
         private static DebugToolsPlugin _instance;
         private static DebugWindowController? DebugWindowController { get; set; }
         private static bool _isHubLoading;
+        private static bool _openLocWorkbench;
 
         internal static ILogger Logger;
 
@@ -43,6 +46,7 @@ namespace DebugTools
             _instance = null;
             DebugWindowController = null;
             _isHubLoading = false;
+            _openLocWorkbench = false;
             Logger = null;
             ReduxManager.OnInitialized -= PreInitialize;
             ReduxManager.OnInitialized += PreInitialize;
@@ -63,6 +67,14 @@ namespace DebugTools
                 return;
 
             Configuration.Initialize(ReduxManager.ReduxCoreConfig);
+            try
+            {
+                Redux.QA.LocWorkbench.Initialize();
+            }
+            catch (Exception exception)
+            {
+                GlobalLog.Warn(LogFilter.Gameplay, $"Localization workbench initialization failed: {exception}");
+            }
             // Redux's state event, not a message subscription: a static handler subscribed to the message center is
             // dropped when another static handler already listens to the same message type.
             StateChanges.MainMenuStateEntered -= OnMainMenuEntered;
@@ -94,6 +106,22 @@ namespace DebugTools
             ToggleHub();
         }
 
+        /// <summary>
+        /// Opens the localization workbench, creating the hub when necessary.
+        /// </summary>
+        /// <param name="key">The key to filter and select.</param>
+        internal static void OpenLocWorkbench(string key)
+        {
+            LocWorkbenchWindowController.SelectKey(key);
+            if (DebugWindowController != null)
+            {
+                DebugWindowController.OpenTextWorkbench();
+                return;
+            }
+            _openLocWorkbench = true;
+            ToggleHub();
+        }
+
         private static void ToggleHub()
         {
             if (DebugWindowController != null)
@@ -113,6 +141,11 @@ namespace DebugTools
                 DebugWindowController = hubWindow.gameObject.AddComponent<DebugWindowController>();
                 RegisterTools(DebugWindowController);
                 DebugWindowController.IsWindowOpen = true;
+                if (_openLocWorkbench)
+                {
+                    _openLocWorkbench = false;
+                    DebugWindowController.OpenTextWorkbench();
+                }
             });
         }
 
@@ -127,6 +160,12 @@ namespace DebugTools
         /// </remarks>
         private static void RegisterTools(DebugWindowController hub)
         {
+            RegisterWindow<LocWorkbenchWindowController>(hub, Section.Text, "Localization", "LocWorkbenchWindow",
+                "Loc workbench", ToolScene.Any, "Search, edit, reset and export runtime text", "localization translation keys text csv");
+            hub.RegisterSwitch(Section.Text, "Display", "Show keys", ToolScene.Any,
+                () => Redux.QA.LocWorkbench.IsShowingKeys, Redux.QA.LocWorkbench.SetShowKeys);
+            hub.RegisterSwitch(Section.Text, "Display", "Pseudo-localization", ToolScene.Any,
+                () => Redux.QA.LocWorkbench.IsPseudoLocalized, Redux.QA.LocWorkbench.SetPseudoLocalization);
             // Cheats: put the game in the situation a test needs. The cheat switches themselves come from the hub.
             hub.RegisterTool(Section.Cheats, "Teleport", "Orbit, surface, rendezvous", ToolScene.Campaign,
                 () => CheatsMenu.IsWindowVisible, ToggleStockCheatsMenu,
@@ -207,6 +246,10 @@ namespace DebugTools
             hub.RegisterTool(Section.TestBenches, "Effects", "FX Debug Tools", ToolScene.Flight,
                 () => GameManager.Instance.Game.FXDebugTools != null && GameManager.Instance.Game.FXDebugTools.IsVisible,
                 ToggleFxDebugTools, "Destroy parts and break joints to see their effects", "vfx effect fx", true);
+
+            hub.RegisterSwitch(Section.Text, "Pointer inspection", $"Pick text ({Redux.QA.TextInspector.GetHotkeyText()})", ToolScene.Any,
+                () => Redux.QA.TextInspector.IsPicking, Redux.QA.TextInspector.SetPicking,
+                "Hover text. Alt+F3 opens its key in the workbench", "text hover inspect key pointer");
 
             // QA runs: check many things and write it down.
             hub.RegisterAction(Section.QaRuns, "Log", "Log marker", ToolScene.Any, "Place marker",

@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:VisualElement class="kui-row loc-row">
+        <ui:Label name="loc-key" class="kui-row__label loc-key" />
+        <ui:TextField name="loc-value" class="oab-text-field kui-field loc-value" />
+        <ui:Label name="loc-english" class="kui-row__label loc-english" />
+        <ui:Label name="loc-source" class="kui-row__label loc-source" />
+        <UitkForKsp2.Controls.OabButton name="loc-reset" text="Reset" class="kui-button loc-reset" />
+    </ui:VisualElement>
+</ui:UXML>

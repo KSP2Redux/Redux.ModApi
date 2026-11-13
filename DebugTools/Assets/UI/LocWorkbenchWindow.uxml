@@ -1,0 +1,21 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="DebugWindow.uss" />
+    <Style src="LocWorkbenchWindow.uss" />
+    <ui:VisualElement name="root" class="dt-tool loc-workbench">
+        <ui:VisualElement class="kui-row loc-toolbar">
+            <UitkForKsp2.Controls.PlaceholderTextField name="loc-search" placeholder="Search keys and values" class="oab-text-field kui-field loc-search" />
+            <UitkForKsp2.Controls.OabButton name="loc-reload" text="Reload overrides" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="loc-export" text="Export changed" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="loc-reset-all" text="Reset all" class="kui-button loc-toolbar__narrow" />
+        </ui:VisualElement>
+        <ui:VisualElement class="dt-table__header kui-row loc-row">
+            <ui:Label text="Key" class="kui-row__label loc-key" />
+            <ui:Label text="Current language" class="kui-row__label loc-value" />
+            <ui:Label text="English" class="kui-row__label loc-english" />
+            <ui:Label text="Source" class="kui-row__label loc-source" />
+            <ui:VisualElement class="loc-reset" />
+        </ui:VisualElement>
+        <ui:ListView name="loc-list" item-template="LocWorkbenchRow.uxml" virtualization-method="FixedHeight" fixed-item-height="32" selection-type="Single" class="loc-list" />
+        <ui:Label name="loc-status" class="kui-row__label loc-status" />
+    </ui:VisualElement>
+</ui:UXML>
