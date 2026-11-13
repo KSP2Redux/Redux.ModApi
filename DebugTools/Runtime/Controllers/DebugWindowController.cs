@@ -104,6 +104,8 @@ namespace DebugTools.Runtime.Controllers
         private const float CONFIRM_SECONDS = 3f;
         private const float TOOL_WINDOW_GAP = 12f;
         private const float TOOL_WINDOW_CASCADE = 48f;
+        // Two switch cells of 260px each.
+        private const float GRID_TWO_COLUMN_MIN_WIDTH = 520f;
         private const string SIZED_FLAG = "s";
         private const string LOAD_A_CAMPAIGN = "Load a campaign first";
         private const string WAIT_FOR_LOADING = "Wait for loading to finish";
@@ -844,29 +846,25 @@ namespace DebugTools.Runtime.Controllers
                 }
             }
 
+            // A group is a category in capitals, as in the Parts Manager. Its inline tools are foldout boxes inside it.
+            // Its plain rows sit in the category with no frame, in one block placed where the first row comes.
             foreach (string group in groups)
             {
-                var groupElement = new Foldout { text = group, value = true };
-                groupElement.AddToClassList("kui-group");
+                var groupElement = new Foldout { text = group.ToUpperInvariant(), value = true };
+                groupElement.AddToClassList("kui-category");
                 groupElement.RegisterValueChangedCallback(_ => RefreshToolVisibility());
-                // A plain wrapper owns the two-column layout inside the Foldout content container.
-                VisualElement rowParent = groupElement;
-                if (group == "Game rules")
-                {
-                    rowParent = new VisualElement();
-                    rowParent.AddToClassList("dt-grid-2");
-                    groupElement.Add(rowParent);
-                }
-                AddGroupRows(groupElement, rowParent, section, group, false);
-                AddGroupRows(groupElement, rowParent, section, group, true);
+                VisualElement rowBox = null;
+                VisualElement rowParent = null;
+                AddGroupRows(groupElement, ref rowBox, ref rowParent, section, group, false);
+                AddGroupRows(groupElement, ref rowBox, ref rowParent, section, group, true);
                 pane.Add(groupElement);
             }
 
             return pane;
         }
 
-        private void AddGroupRows(Foldout groupElement, VisualElement rowParent, Section section, string group,
-            bool isLegacy)
+        private void AddGroupRows(Foldout groupElement, ref VisualElement rowBox, ref VisualElement rowParent,
+            Section section, string group, bool isLegacy)
         {
             foreach (HubEntry entry in _entries)
             {
@@ -877,7 +875,7 @@ namespace DebugTools.Runtime.Controllers
                 {
                     entry.SectionGroup = groupElement;
                     entry.ToolGroup = new Foldout { text = entry.Label, value = !entry.Collapsed };
-                    entry.ToolGroup.AddToClassList("kui-category");
+                    entry.ToolGroup.AddToClassList("kui-group");
                     entry.ToolGroup.RegisterValueChangedCallback(_ => RefreshToolVisibility());
                     entry.ToolReason = new Label();
                     entry.ToolReason.AddToClassList("dt-tool__reason");
@@ -896,8 +894,37 @@ namespace DebugTools.Runtime.Controllers
                     }
                     continue;
                 }
+                if (rowBox == null)
+                {
+                    rowBox = new VisualElement();
+                    rowBox.AddToClassList("dt-rows");
+                    groupElement.Add(rowBox);
+                    rowParent = rowBox;
+                    // A plain wrapper owns the two-column switch layout. Every cell is half of it, so an odd last
+                    // cell stays in the first column. Below two 260px cells it falls back to one column.
+                    if (group == "Game rules")
+                    {
+                        VisualElement grid = new VisualElement();
+                        grid.AddToClassList("dt-grid-2");
+                        grid.RegisterCallback<GeometryChangedEvent>(evt =>
+                            grid.EnableInClassList("dt-grid-2--single", evt.newRect.width < GRID_TWO_COLUMN_MIN_WIDTH));
+                        rowBox.Add(grid);
+                        rowParent = grid;
+                    }
+                }
+
                 entry.SectionView = BuildRow(entry, false);
-                rowParent.Add(entry.SectionView.Row);
+                if (rowParent.ClassListContains("dt-grid-2"))
+                {
+                    var cell = new VisualElement();
+                    cell.AddToClassList("dt-grid-2__cell");
+                    cell.Add(entry.SectionView.Row);
+                    rowParent.Add(cell);
+                }
+                else
+                {
+                    rowParent.Add(entry.SectionView.Row);
+                }
             }
         }
 

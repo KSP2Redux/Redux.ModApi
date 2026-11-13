@@ -109,41 +109,46 @@
     flex-direction: row;
 }
 
+/* Rail items are drawn like the group list of the Action Group Manager: the selected one is a 6px box in the group
+   header colour, the others are dimmed capitals with no fill, lit on hover like a Parts Manager category. */
 .dt-rail {
-    width: 128px;
+    width: 136px;
     flex-shrink: 0;
-    padding: 5px 1px;
+    padding: 6px;
 }
 
 .dt-rail__item {
     flex-direction: row;
     align-items: center;
     height: 28px;
-    padding: 0 10px 0 11px;
-    border-left-width: 5px;
-    border-left-color: rgba(0, 0, 0, 0);
+    margin-bottom: 2px;
+    padding: 0 8px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0);
 }
 
 .dt-rail__item:hover {
-    background-color: rgba(123, 124, 240, 0.06);
+    background-color: rgb(55, 62, 75);
 }
 
 .dt-rail__item--selected,
 .dt-rail__item--selected:hover {
-    background-color: rgb(42, 45, 60);
-    border-left-color: rgb(123, 124, 240);
+    background-color: rgb(46, 53, 64);
+    border-color: rgb(66, 75, 92);
 }
 
 .dt-rail__label {
     flex-grow: 1;
     font-size: 12px;
-    letter-spacing: 2px;
-    color: rgb(192, 199, 213);
-    -unity-font-definition: url("project://database/Packages/ksp2redux.sdk/Controls/Assets/Theme/Fonts/JetBrainsMono/JetBrainsMono-Medium%20SDF.asset?fileID=11400000&guid=ca4cab634f6d3284294893797c2fb994&type=2#JetBrainsMono-Medium SDF");
+    letter-spacing: 12px;
+    color: rgba(214, 224, 255, 0.5);
+    -unity-text-align: middle-left;
 }
 
+.dt-rail__item:hover > .dt-rail__label,
 .dt-rail__item--selected > .dt-rail__label {
-    color: rgb(255, 255, 255);
+    color: rgb(214, 224, 255);
 }
 
 /* Open tools in the section, counted like a value in the Resource Scanner */
@@ -296,7 +301,7 @@
 .dt-search {
     height: 24px;
     min-height: 24px;
-    margin-bottom: 2px;
+    margin-bottom: 6px;
 }
 .dt-strip__header {
     min-height: 24px;
@@ -324,18 +329,50 @@
     padding: 2px 6px;
     white-space: nowrap;
 }
-.dt-rail__label {
-    letter-spacing: 0;
-}
 .dt-grid-2 {
     flex-direction: row;
     flex-wrap: wrap;
 }
-/* Two columns when the pane is wide enough for two 260px rows, one column at the hub's minimum width. The last row of
-   an odd count takes the full width, so its switch lines up with the right column. */
-.dt-grid-2 > .dt-row {
-    flex-grow: 1;
-    flex-basis: 260px;
+/* The grid's negative margin takes back the outer halves of the 24px gutter. */
+.dt-grid-2 {
+    margin: 0 -12px;
+}
+/* Every cell is half the grid, so an odd last cell stays in the first column. The hub adds dt-grid-2--single when the
+   grid is narrower than two 260px cells. The cell pads 12 on each side for the gutter, and the row inside it carries
+   the divider, so the line breaks between the columns. */
+.dt-grid-2__cell {
+    width: 50%;
+    padding: 0 12px;
+}
+.dt-grid-2--single > .dt-grid-2__cell {
+    width: 100%;
+}
+/* The label takes only what the switch leaves, so a long name ends in dots instead of pushing the switch out of the
+   cell. */
+.dt-grid-2__cell > .dt-row > .dt-row__text {
+    flex-basis: 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* The divider is the theme's kui-divider (fieldDivider, the dashed line between Parts Manager fields), drawn under the
+   cell. The dash sits in the middle of its 11px tile, and the tile is placed at the bottom of the cell, so the line
+   runs 5px above the cell's lower edge. The cell is 36 high, the PartsManager_BoolPropertyToggle row, and pads 6 at
+   the bottom so the switch is centred above the line. */
+.dt-grid-2__cell > .dt-row {
+    min-height: 36px;
+    padding-bottom: 6px;
+    background-image: url("project://database/Packages/ksp2redux.sdk/Controls/Assets/Theme/Sprites/dash.png?fileID=21300000&guid=8bcad968150482849aed7025ed71c162&type=3#dash");
+    background-repeat: repeat-x;
+    background-size: 24px 11px;
+    background-position-y: bottom;
+    -unity-background-image-tint-color: rgba(242, 235, 213, 0.14);
+}
+/* Rows that belong to a section directly, not to a tool, sit in the category with no frame. The inset lines their
+   names up with the names in the box headers below. */
+.dt-rows {
+    margin-bottom: 4px;
+    padding: 0 0 0 10px;
 }
 .dt-tool {
     flex-grow: 1;
@@ -371,11 +408,11 @@
     max-height: none;
     flex-grow: 1;
 }
-/* The host switch of a detachable tool floats over the right end of its group header (32px tall, 8px side padding), so
+/* The host switch of a detachable tool floats over the right end of its box header (28px tall, 8px side padding), so
    it adds nothing to the header layout. */
 .dt-detach.oab-button {
     position: absolute;
-    top: 4px;
+    top: 2px;
     right: 8px;
     width: 64px;
     margin: 0;
