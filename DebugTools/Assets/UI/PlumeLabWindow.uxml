@@ -21,7 +21,7 @@
             <UitkForKsp2.Controls.OabButton name="stop" text="Stop and restore" class="kui-button" />
         </ui:VisualElement>
         <ui:Foldout text="Collision plate (offset from craft center)" value="false">
-            <ui:Toggle name="plate" label="Show plate" value="false" class="kui-switch" />
+            <ui:Toggle name="plate" label="Show plate" value="false" class="switch" />
             <ui:Label text="High quality: flight collider impingement. Low: scene-depth clipping only. No physical heating or force." class="kui-value plume-lab-wrap" />
             <ui:FloatField name="x" label="X offset (m)" value="0" class="kui-field" />
             <ui:FloatField name="y" label="Y offset (m)" value="-5" class="kui-field" />

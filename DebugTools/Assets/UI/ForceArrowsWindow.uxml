@@ -2,10 +2,10 @@
     <Style src="DebugWindow.uss" />
     <Style src="ForceArrowsWindow.uss" />
     <ui:ScrollView name="root" horizontal-scroller-visibility="Hidden" class="dt-tool kui-dense force-arrows">
-        <ui:Toggle name="draw" label="Draw force arrows" class="kui-field" />
-        <ui:Toggle name="drag" label="Drag (red)" value="true" class="kui-field" />
-        <ui:Toggle name="lift" label="Lift (cyan)" value="true" class="kui-field" />
-        <ui:Toggle name="thrust" label="Thrust (green)" value="true" class="kui-field" />
+        <ui:Toggle name="draw" label="Draw force arrows" class="switch" />
+        <ui:Toggle name="drag" label="Drag (red)" value="true" class="switch" />
+        <ui:Toggle name="lift" label="Lift (cyan)" value="true" class="switch" />
+        <ui:Toggle name="thrust" label="Thrust (green)" value="true" class="switch" />
         <ui:Slider name="scale" label="Length scale" low-value="-2" high-value="4" value="1" class="kui-field" />
         <ui:Label name="readout" class="kui-value force-wrap" />
         <ui:FloatField name="minimum" label="Minimum force (kN)" value="0.05" class="kui-field" />

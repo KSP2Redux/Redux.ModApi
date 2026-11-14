@@ -11,7 +11,7 @@
         <ui:Label text="// RUN" class="kui-category" />
         <ui:FloatField name="duration" label="Duration (s)" value="5" class="kui-field" />
         <ui:FloatField name="step" label="Time step (s)" value="0.02" class="kui-field" />
-        <ui:Toggle name="sweep" label="Sweep shield orientation" value="true" class="kui-field" />
+        <ui:Toggle name="sweep" label="Sweep shield orientation" value="true" class="switch" />
         <ui:FloatField name="from" label="AoA from (deg)" value="-40" class="kui-field" />
         <ui:FloatField name="to" label="AoA to (deg)" value="40" class="kui-field" />
         <ui:IntegerField name="count" label="Orientation samples" value="9" class="kui-field" />

@@ -7,14 +7,14 @@
             <ui:Button name="selected" text="Use VAB selection" class="kui-button" />
             <ui:Button name="refresh" text="Refresh craft" class="kui-button" />
         </ui:VisualElement>
-        <ui:Toggle name="whole" label="Whole craft (otherwise chosen part)" class="kui-field" />
-        <ui:Toggle name="draw" label="Draw geometry overlay" class="kui-field" />
-        <ui:Toggle name="nodes" label="Attach nodes and size tags" value="true" class="kui-field" />
-        <ui:Toggle name="colliders" label="Colliders: cyan solid, orange trigger" class="kui-field" />
-        <ui:Toggle name="drag" label="Drag cube faces: blue low drag, red high" class="kui-field" />
-        <ui:Toggle name="thrust" label="Thrust direction (green)" class="kui-field" />
-        <ui:Toggle name="hatches" label="Airlock transforms (yellow)" class="kui-field" />
-        <ui:Toggle name="com" label="Authored CoM per part (white)" class="kui-field" />
+        <ui:Toggle name="whole" label="Whole craft (otherwise chosen part)" class="switch" />
+        <ui:Toggle name="draw" label="Draw geometry overlay" class="switch" />
+        <ui:Toggle name="nodes" label="Attach nodes and size tags" value="true" class="switch" />
+        <ui:Toggle name="colliders" label="Colliders: cyan solid, orange trigger" class="switch" />
+        <ui:Toggle name="drag" label="Drag cube faces: blue low drag, red high" class="switch" />
+        <ui:Toggle name="thrust" label="Thrust direction (green)" class="switch" />
+        <ui:Toggle name="hatches" label="Airlock transforms (yellow)" class="switch" />
+        <ui:Toggle name="com" label="Authored CoM per part (white)" class="switch" />
         <ui:Label text="Geometry only. Refresh after craft edits." class="kui-value gizmos-wrap" />
         <ui:Label text="Close or Clear all stops drawing." class="kui-value gizmos-wrap" />
         <ui:Label name="status" class="kui-value gizmos-wrap" />

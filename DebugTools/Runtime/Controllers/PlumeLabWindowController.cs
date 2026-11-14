@@ -123,7 +123,7 @@ namespace DebugTools.Runtime.Controllers
                     string mode = engine != null ? engine.DataEngine?.currentEngineModeData?.engineID : null;
                     mode ??= FormattableString.Invariant($"mode {manager.CurrentEngineMode}");
                     var toggle = new Toggle($"{part.PartName} | {mode}") { value = true, userData = manager };
-                    toggle.AddToClassList("kui-switch");
+                    toggle.AddToClassList("switch");
                     toggle.AddToClassList("plume-engine");
                     _selection.Add(toggle);
                 }

@@ -64,7 +64,7 @@ namespace DebugTools.Runtime.Controllers
                 var row = new VisualElement();
                 row.AddToClassList("feature-row");
                 var toggle = new Toggle(feature.Id);
-                toggle.AddToClassList("kui-field");
+                toggle.AddToClassList("switch");
                 toggle.SetValueWithoutNotify(_requested.Contains(feature.Id));
                 toggle.SetEnabled(CanEdit && !_busy && !ModIds.AlwaysOn.Contains(feature.ModId));
                 toggle.RegisterValueChangedCallback(change =>

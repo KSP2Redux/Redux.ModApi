@@ -8,7 +8,7 @@
             <ui:Button name="selected" text="Use VAB selection" class="kui-button" />
             <ui:Button name="stop" text="Stop / restore all" class="kui-button" />
         </ui:VisualElement>
-        <ui:Toggle name="symmetry" label="Also edit symmetry counterparts" class="kui-field" />
+        <ui:Toggle name="symmetry" label="Also edit symmetry counterparts" class="switch" />
         <ui:Label text="Session only. Save or launch asks to restore first. Copying parts or recording undo history also restores tweaks. Export first. Use dot decimals." class="stat-wrap" />
         <ui:ScrollView class="stat-scroll" horizontal-scroller-visibility="Hidden">
             <ui:VisualElement name="fields" />

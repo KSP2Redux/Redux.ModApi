@@ -2,7 +2,7 @@
     <Style src="DebugWindow.uss" />
     <Style src="FlightTimelineWindow.uss" />
     <ui:VisualElement name="root" class="dt-tool kui-dense flight-timeline">
-        <ui:Toggle name="loss" label="Frozen vessel loss" class="kui-toggle" />
+        <ui:Toggle name="loss" label="Frozen vessel loss" class="switch" />
         <ui:Slider name="zoom" label="Window (real s)" low-value="1" high-value="30" value="30" class="kui-field" />
         <ui:Slider name="cursor" label="Cursor (window fraction)" low-value="0" high-value="1" value="1" class="kui-field" />
         <ui:Label name="status" class="kui-value timeline-wrap" />
