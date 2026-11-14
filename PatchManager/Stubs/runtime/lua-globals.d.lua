@@ -82,6 +82,9 @@ GameState = nil
 ---@type InputLibrary
 Input = nil
 
+---@type SunFlareLibrary
+Flares = nil
+
 ---@type FilesLibrary
 Files = nil
 
