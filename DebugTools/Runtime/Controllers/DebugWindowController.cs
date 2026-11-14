@@ -987,6 +987,7 @@ namespace DebugTools.Runtime.Controllers
                     {
                         VisualElement grid = new VisualElement();
                         grid.AddToClassList("dt-grid-2");
+                        grid.AddToClassList("dt-grid-2--cells");
                         grid.RegisterCallback<GeometryChangedEvent>(evt =>
                             grid.EnableInClassList("dt-grid-2--single", evt.newRect.width < GRID_TWO_COLUMN_MIN_WIDTH));
                         rowBox.Add(grid);
@@ -1116,7 +1117,8 @@ namespace DebugTools.Runtime.Controllers
                 view.Button.AddToClassList("dt-button");
                 view.Button.AddToClassList("dt-row__button");
                 // An action names what it does, which is longer than Open and Close.
-                view.Button.EnableInClassList("dt-button--wide", entry.ActionText != null);
+                // Only a label longer than "Open" or "Close" needs the wide button. A short one matches the tool rows.
+                view.Button.EnableInClassList("dt-button--wide", entry.ActionText != null && entry.ActionText.Length > 5);
                 view.Row.Add(view.Button);
             }
 

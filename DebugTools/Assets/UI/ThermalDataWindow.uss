@@ -1,10 +1,10 @@
 /* The 15 columns have fixed widths that add up to the row width, so the window opens at a width that shows them all and
    a narrower window scrolls the table sideways. Headers are short plain text, and their tooltips spell them out. The
    table fits its rows up to the cap, then scrolls. A pop-out the user resized lets it fill the window (dt-fit). */
-.ThermalDataWindow { width: 944px; max-width: 100%; }
+.ThermalDataWindow { width: 1008px; max-width: 100%; }
 .ThermalDataWindow .vessel-table { height: auto; min-height: 60px; max-height: 440px; }
-.ThermalDataWindow .data-row { flex-direction: row; height: 20px; min-height: 20px; flex-shrink: 0; width: 906px; font-size: 12px; }
-.ThermalDataWindow .data-row > Label { font-size: 12px; flex-grow: 0; flex-shrink: 0; flex-basis: auto; width: 56px; overflow: hidden; text-overflow: ellipsis; -unity-text-align: middle-right; margin: 0; padding: 0 2px; }
+.ThermalDataWindow .data-row { flex-direction: row; height: 20px; min-height: 20px; flex-shrink: 0; width: 970px; font-size: 12px; }
+.ThermalDataWindow .data-row > Label { font-size: 12px; flex-grow: 0; flex-shrink: 0; flex-basis: auto; width: 64px; overflow: hidden; text-overflow: ellipsis; -unity-text-align: middle-right; margin: 0; padding: 0 2px; }
 .ThermalDataWindow .data-row > .data-row-entry-large { width: 104px; -unity-text-align: middle-left; }
 .ThermalDataWindow .data-row > .data-row-entry-temp { width: 100px; }
 .ThermalDataWindow .data-row > .data-row-entry-wide { width: 62px; }

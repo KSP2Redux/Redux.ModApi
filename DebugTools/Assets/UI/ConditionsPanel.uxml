@@ -8,7 +8,7 @@
             <ui:Label text="Pressure (log atm)" class="condition-pressure-label" />
             <ui:VisualElement class="condition-pressure-input">
                 <ui:Slider name="condition-pressure" low-value="-4" high-value="2" value="0" />
-                <ui:VisualElement class="condition-ticks"><ui:Label text="| Vacuum" class="condition-tick-vacuum" /><ui:Label text="| 1 atm" class="condition-tick-one" /><ui:Label text="| 4 atm" class="condition-tick-four" /></ui:VisualElement>
+                <ui:VisualElement class="condition-ticks"><ui:Label text="| Vacuum" class="condition-tick-vacuum" /><ui:Label text="| 1" class="condition-tick-one" /><ui:Label text="| 4 atm" class="condition-tick-four" /></ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:FloatField name="condition-temperature" label="Temperature (K)" value="288" class="kui-field" />

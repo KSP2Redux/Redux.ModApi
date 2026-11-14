@@ -1,8 +1,13 @@
 .module-bench {
     min-width: 540px;
+    max-width: 760px;
     max-height: 720px;
 }
 .module-bench-wrap {
+    white-space: normal;
+}
+/* Status and hint lines wrap inside the window instead of setting its width. */
+.module-bench .unity-label {
     white-space: normal;
 }
 .module-bench .kui-button {

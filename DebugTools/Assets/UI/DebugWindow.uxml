@@ -27,7 +27,7 @@
                 </ui:VisualElement>
                 <ui:ScrollView name="pane-content" mode="Vertical" horizontal-scroller-visibility="Hidden" class="dt-pane__content">
                 <ui:Foldout text="GAME RULES" value="true" class="kui-category">
-                    <ui:VisualElement class="dt-rows"><ui:VisualElement class="dt-grid-2">
+                    <ui:VisualElement class="dt-rows"><ui:VisualElement class="dt-grid-2 dt-grid-2--cells">
                         <ui:VisualElement class="dt-grid-2__cell"><ui:VisualElement class="kui-row dt-row"><ui:Label text="Unbreakable Parts" class="kui-row__label dt-row__text" /><ui:Toggle class="switch" /></ui:VisualElement></ui:VisualElement>
                         <ui:VisualElement class="dt-grid-2__cell"><ui:VisualElement class="kui-row dt-row"><ui:Label text="Unbreakable Joints" class="kui-row__label dt-row__text" /><ui:Toggle class="switch" /></ui:VisualElement></ui:VisualElement>
                         <ui:VisualElement class="dt-grid-2__cell"><ui:VisualElement class="kui-row dt-row"><ui:Label text="Infinite Propellant" class="kui-row__label dt-row__text" /><ui:Toggle class="switch" /></ui:VisualElement></ui:VisualElement>

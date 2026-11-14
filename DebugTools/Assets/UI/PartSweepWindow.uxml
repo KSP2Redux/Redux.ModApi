@@ -1,20 +1,24 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="DebugWindow.uss" />
-    <ui:VisualElement name="root" class="dt-tool">
-        <ui:Label text="// SUBJECT AND FILTER" class="kui-section__title" />
-        <ui:VisualElement class="kui-row">
-            <UitkForKsp2.Controls.PlaceholderTextField name="subject" placeholder="Part ID (empty for all)" class="oab-text-field kui-field" />
-            <UitkForKsp2.Controls.OabButton name="selected" text="Use selected" class="kui-button" />
+    <Style src="PatchTraceWindow.uss" />
+    <ui:VisualElement name="root" class="dt-tool patch-trace">
+        <ui:VisualElement class="kui-section">
+            <ui:Label text="//" class="kui-section__slashes" />
+            <ui:Label text="Subject and filter" class="kui-section__title" />
         </ui:VisualElement>
-        <UitkForKsp2.Controls.PlaceholderTextField name="origin" value="all" placeholder="Origin: all, stock, redux, mod" class="oab-text-field kui-field" />
-        <UitkForKsp2.Controls.PlaceholderTextField name="since" placeholder="New or changed since tag (optional)" class="oab-text-field kui-field" />
-        <UitkForKsp2.Controls.PlaceholderTextField name="previous" placeholder="Previous report.json for carry-forward (optional)" class="oab-text-field kui-field" />
-        <ui:VisualElement class="kui-row">
+        <ui:VisualElement class="patch-search">
+            <UitkForKsp2.Controls.PlaceholderTextField name="subject" placeholder="Part ID (empty for all)" class="oab-text-field patch-search__field" />
+            <UitkForKsp2.Controls.OabButton name="selected" text="Use selected" class="kui-button patch-search__button patch-search__button--wide" />
+        </ui:VisualElement>
+        <UitkForKsp2.Controls.PlaceholderTextField name="origin" value="all" placeholder="Origin: all, stock, redux, mod" class="oab-text-field patch-field" />
+        <UitkForKsp2.Controls.PlaceholderTextField name="since" placeholder="New or changed since tag (optional)" class="oab-text-field patch-field" />
+        <UitkForKsp2.Controls.PlaceholderTextField name="previous" placeholder="Previous report.json for carry-forward (optional)" class="oab-text-field patch-field" />
+        <ui:VisualElement class="patch-actions patch-actions--stack">
             <UitkForKsp2.Controls.OabButton name="list" text="List matching parts" class="kui-button" />
             <UitkForKsp2.Controls.OabButton name="start" text="Start sweep in empty VAB" class="kui-button" />
             <UitkForKsp2.Controls.OabButton name="dossier" text="Open part dossier" class="kui-button" />
         </ui:VisualElement>
-        <ui:TextField name="parts" multiline="true" is-read-only="true" class="oab-text-field kui-field" />
-        <ui:Label name="status" class="kui-row__label" />
+        <ui:TextField name="parts" multiline="true" is-read-only="true" class="oab-text-field patch-output" />
+        <ui:Label name="status" class="patch-wrap" />
     </ui:VisualElement>
 </ui:UXML>

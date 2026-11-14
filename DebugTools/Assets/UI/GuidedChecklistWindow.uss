@@ -2,11 +2,12 @@
    otherwise stretch the window past the screen edge. */
 .checklist { width: 520px; }
 .checklist-subject { flex-grow: 1; margin-right: 6px; }
-.checklist > .kui-row > .kui-button { flex-shrink: 0; width: 104px; margin-left: 6px; }
+.checklist > .kui-row > .kui-button { flex-shrink: 0; width: 120px; margin-left: 6px; }
 .checklist-instruction { white-space: normal; margin: 4px 0; }
 .checklist-note { min-height: 48px; margin-bottom: 6px; }
 
-/* Three verdict buttons per row at fixed widths. Percentage widths in a wrapped row collapse in an auto-sized pop-out. */
+/* Two verdict buttons per row at fixed widths, wide enough for the hotkey suffix the controller adds. Percentage widths
+   in a wrapped row collapse in an auto-sized pop-out. */
 .checklist-verdicts { flex-wrap: wrap; height: auto; align-items: flex-start; }
-.checklist > .checklist-verdicts > .kui-button { flex-shrink: 0; width: 164px; margin: 0 6px 6px 0; }
+.checklist > .checklist-verdicts > .kui-button { flex-shrink: 0; width: 248px; margin: 0 6px 6px 0; }
 .checklist > .kui-button { align-self: flex-start; width: 148px; }

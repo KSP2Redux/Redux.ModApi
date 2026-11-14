@@ -1,24 +1,31 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="DebugWindow.uss" />
-    <ui:VisualElement name="root" class="dt-tool">
-        <ui:Label text="// PATCH TARGET" class="kui-section__title" />
-        <ui:VisualElement class="kui-row">
-            <UitkForKsp2.Controls.PlaceholderTextField name="search" placeholder="Search asset ID or label" class="oab-text-field kui-field" />
-            <UitkForKsp2.Controls.OabButton name="find" text="Find" class="kui-button" />
+    <Style src="PatchTraceWindow.uss" />
+    <ui:VisualElement name="root" class="dt-tool patch-trace">
+        <ui:VisualElement class="kui-section">
+            <ui:Label text="//" class="kui-section__slashes" />
+            <ui:Label text="Patch target" class="kui-section__title" />
         </ui:VisualElement>
-        <ui:ScrollView name="matches" style="max-height: 140px;" />
-        <UitkForKsp2.Controls.PlaceholderTextField name="label" value="parts_data" placeholder="Addressables label" class="oab-text-field kui-field" />
-        <UitkForKsp2.Controls.PlaceholderTextField name="asset" placeholder="Exact asset ID" class="oab-text-field kui-field" />
-        <UitkForKsp2.Controls.PlaceholderTextField name="path" value="data.mass" placeholder="Required single JSONPath (zero-based arrays)" class="oab-text-field kui-field" />
-        <ui:Label text="Arm, then load a campaign normally. Rebuilds that set's patch cache once. No live patch replay. Refresh to read the capture. Values use raw JSON paths, not Lua adapter paths." class="kui-row__label" style="white-space: normal;" />
-        <ui:VisualElement class="kui-row">
+        <ui:VisualElement class="patch-search">
+            <UitkForKsp2.Controls.PlaceholderTextField name="search" placeholder="Search asset ID or label" class="oab-text-field patch-search__field" />
+            <UitkForKsp2.Controls.OabButton name="find" text="Find" class="kui-button patch-search__button" />
+        </ui:VisualElement>
+        <ui:ScrollView name="matches" class="patch-matches" />
+        <UitkForKsp2.Controls.PlaceholderTextField name="label" value="parts_data" placeholder="Addressables label" class="oab-text-field patch-field" />
+        <UitkForKsp2.Controls.PlaceholderTextField name="asset" placeholder="Exact asset ID" class="oab-text-field patch-field" />
+        <UitkForKsp2.Controls.PlaceholderTextField name="path" value="data.mass" placeholder="Required single JSONPath (zero-based arrays)" class="oab-text-field patch-field" />
+        <ui:Label text="Arm, then load a campaign normally. Rebuilds that set's patch cache once. No live patch replay. Refresh to read the capture. Values use raw JSON paths, not Lua adapter paths." class="patch-wrap" />
+        <ui:VisualElement class="patch-actions">
             <UitkForKsp2.Controls.OabButton name="arm" text="Arm next load" class="kui-button" />
             <UitkForKsp2.Controls.OabButton name="refresh" text="Refresh capture" class="kui-button" />
             <UitkForKsp2.Controls.OabButton name="clear" text="Clear capture" class="kui-button" />
         </ui:VisualElement>
-        <ui:Label text="// LOAD-TIME VALUES AND PATCH CHAINS" class="kui-section__title" />
-        <ui:ScrollView style="max-height: 420px;">
-            <ui:TextField name="output" multiline="true" is-read-only="true" class="oab-text-field kui-field" />
+        <ui:VisualElement class="kui-section">
+            <ui:Label text="//" class="kui-section__slashes" />
+            <ui:Label text="Load-time values and patch chains" class="kui-section__title" />
+        </ui:VisualElement>
+        <ui:ScrollView class="patch-output-scroll">
+            <ui:TextField name="output" multiline="true" is-read-only="true" class="oab-text-field patch-output" />
         </ui:ScrollView>
     </ui:VisualElement>
 </ui:UXML>

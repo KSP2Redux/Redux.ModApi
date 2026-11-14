@@ -1,0 +1,17 @@
+.patch-trace { width: 620px; max-height: 760px; }
+.patch-trace > * { flex-shrink: 0; }
+.patch-search { flex-direction: row; align-items: center; margin-bottom: 4px; }
+.patch-search__field { flex-grow: 1; flex-basis: 0; min-width: 0; margin: 0 6px 0 0; }
+.patch-search__button.oab-button { width: 72px; height: 24px; flex-shrink: 0; }
+.patch-search__button--wide.oab-button { width: 120px; }
+/* The theme gives scroll views a full height. The match list only takes the room its matches need. */
+.patch-matches.unity-scroll-view { height: auto; min-height: 0; max-height: 140px; flex-grow: 0; }
+.patch-field { margin: 0 0 4px 0; }
+.patch-wrap { white-space: normal; margin: 4px 0; }
+.patch-actions { flex-direction: row; margin-bottom: 6px; }
+.patch-actions > .kui-button { flex-grow: 1; flex-basis: 0; min-width: 0; height: 24px; margin: 0 2px; }
+/* Labels too long for a third of the row: one full-width button per line. */
+.patch-actions--stack { flex-direction: column; }
+.patch-actions--stack > .kui-button { flex-basis: auto; margin: 0 0 4px 0; }
+.patch-output-scroll { max-height: 420px; flex-shrink: 1; }
+.patch-output { white-space: normal; margin: 0; }

@@ -3,7 +3,7 @@
 .campaign-features .qa-preview-wrap { white-space: normal; flex-shrink: 0; margin-bottom: 6px; height: auto; }
 .campaign-features .kui-button { flex-grow: 1; flex-shrink: 0; flex-basis: auto; min-width: 0; }
 .campaign-features .feature-row { margin-top: 6px; flex-shrink: 0; flex-direction: row; flex-wrap: wrap; align-items: center; }
-.campaign-features .feature-row > .kui-field { flex-grow: 1; flex-basis: 250px; min-width: 0; }
+.campaign-features .feature-row > .switch { flex-grow: 0; flex-basis: 280px; min-width: 0; margin-right: 8px; }
 .campaign-features .feature-row > .qa-preview-wrap { flex-grow: 1; flex-basis: 280px; min-width: 0; }
 .campaign-features .unity-toggle__label { min-width: 0; white-space: normal; height: auto; flex-shrink: 0; }
 .campaign-features .unity-scroll-view { height: auto; }

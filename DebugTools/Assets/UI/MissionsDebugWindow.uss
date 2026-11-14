@@ -22,8 +22,10 @@
 }
 
 /* Mission table */
-.dt-missions-table { flex-shrink: 1; min-height: 0; }
-.dt-missions-table > .unity-scroll-view { max-height: 144px; min-height: 40px; flex-shrink: 1; }
+.dt-missions-table { flex-shrink: 0; min-height: 0; }
+/* The header keeps its full row height. Only the list under it shrinks, and it shows at least three rows. */
+.dt-missions-table > .dt-table__header { flex-shrink: 0; }
+.dt-missions-table > .unity-scroll-view { max-height: 144px; min-height: 64px; flex-shrink: 1; }
 
 .mission-row {
     flex-direction: row;

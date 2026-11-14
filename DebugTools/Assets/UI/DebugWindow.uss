@@ -337,8 +337,10 @@
     flex-direction: row;
     flex-wrap: wrap;
 }
-/* The grid's negative margin takes back the outer halves of the 24px gutter. */
-.dt-grid-2 {
+/* A grid of dt-grid-2__cell children takes back the outer halves of the 24px gutter with a negative margin. Tool
+   windows that put rows straight into the grid have no gutter, so they leave dt-grid-2--cells off and stay inside
+   their box. */
+.dt-grid-2--cells {
     margin: 0 -12px;
 }
 /* Every cell is half the grid, so an odd last cell stays in the first column. The hub adds dt-grid-2--single when the
@@ -446,6 +448,13 @@
 }
 .dt-tool-slot {
     min-width: 0;
+}
+/* Tool roots size themselves for their pop-out window. Hosted in a hub slot they fill the slot instead, so a fixed
+   pop-out width cannot push the tool past the slot's border. */
+.dt-tool-slot .dt-tool {
+    width: auto;
+    min-width: 0;
+    max-width: none;
 }
 .dt-tool-template {
     flex-grow: 1;
