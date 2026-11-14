@@ -2,13 +2,14 @@
     <ui:Template name="ConditionsPanel" src="ConditionsPanel.uxml" />
     <Style src="DebugWindow.uss" />
     <Style src="ThermalBenchWindow.uss" />
-    <ui:ScrollView name="root" class="dt-tool kui-dense thermal-chamber">
+    <ui:ScrollView name="root" mode="Vertical" horizontal-scroller-visibility="Hidden" class="dt-tool kui-dense thermal-chamber">
         <ui:Label text="// SUBJECT" class="kui-category" />
-        <ui:Label name="subject" text="Current loaded flight vessel" class="kui-value" />
+        <ui:Label name="subject" text="Main VAB assembly or loaded flight vessel" class="kui-value" />
         <ui:Label name="validation" text="Not validated" class="kui-value" />
         <ui:Label text="// CONDITIONS" class="kui-category" />
         <ui:Instance template="ConditionsPanel" name="conditions" />
         <ui:Label text="// RUN" class="kui-category" />
+        <ui:FloatField name="initial" label="Initial temp, VAB (K)" value="300" class="kui-field" />
         <ui:FloatField name="duration" label="Duration (s)" value="5" class="kui-field" />
         <ui:FloatField name="step" label="Time step (s)" value="0.02" class="kui-field" />
         <ui:Toggle name="sweep" label="Sweep shield orientation" value="true" class="switch" />

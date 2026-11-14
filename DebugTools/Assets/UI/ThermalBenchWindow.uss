@@ -1,4 +1,4 @@
-.thermal-chamber { min-width: 720px; max-height: 760px; }
+.thermal-chamber { width: 760px; min-width: 720px; max-width: 760px; max-height: 640px; }
 .thermal-chamber .kui-value { white-space: normal; font-size: 12px; }
 .thermal-chamber .unity-base-field__label { min-width: 200px; }
 .thermal-part { width: 280px; white-space: normal; font-size: 12px; }

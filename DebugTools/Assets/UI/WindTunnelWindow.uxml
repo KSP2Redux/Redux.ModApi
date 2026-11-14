@@ -2,9 +2,9 @@
     <ui:Template name="ConditionsPanel" src="ConditionsPanel.uxml" />
     <Style src="DebugWindow.uss" />
     <Style src="WindTunnelWindow.uss" />
-    <ui:VisualElement name="root" class="dt-tool kui-dense wind-tunnel">
+    <ui:ScrollView name="root" mode="Vertical" horizontal-scroller-visibility="Hidden" class="dt-tool kui-dense wind-tunnel">
         <ui:Label text="// SUBJECT" class="kui-category" />
-        <ui:Label name="subject" text="Current loaded flight vessel" class="kui-value" />
+        <ui:Label name="subject" text="Main VAB assembly or loaded flight vessel" class="kui-value" />
         <ui:Label name="validation" text="Not validated" class="kui-value" />
         <ui:Label text="// CONDITIONS" class="kui-category" />
         <ui:Instance template="ConditionsPanel" name="conditions" />
@@ -14,6 +14,13 @@
         <ui:FloatField name="to" label="To (deg)" value="20" class="kui-field" />
         <ui:IntegerField name="count" label="Samples" value="21" class="kui-field" />
         <UitkForKsp2.Controls.OabButton name="run" text="Run headless sweep" class="kui-button" />
+        <ui:Label text="// SCENE ARROWS" class="kui-category" />
+        <ui:Toggle name="part-arrows" label="Per-part forces" class="switch" />
+        <ui:FloatField name="arrow-scale" label="Force scale (kN/m)" value="10" class="kui-field" />
+        <ui:VisualElement class="wind-arrow-buttons">
+            <UitkForKsp2.Controls.OabButton name="draw" text="Draw current Conditions" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="stop" text="Stop arrows" class="kui-button" />
+        </ui:VisualElement>
         <ui:Label name="status" class="kui-value" />
         <ui:Label text="// RESULTS" class="kui-category" />
         <ui:VisualElement name="results-header" class="wind-tunnel-header" />
@@ -21,5 +28,5 @@
             <ui:VisualElement name="results" />
         </ui:ScrollView>
         <UitkForKsp2.Controls.OabButton name="capture" text="Capture report and polars" class="kui-button" />
-    </ui:VisualElement>
+    </ui:ScrollView>
 </ui:UXML>

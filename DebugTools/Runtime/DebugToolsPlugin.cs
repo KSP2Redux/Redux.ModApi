@@ -328,13 +328,13 @@ namespace DebugTools
 
             // Test benches: run a controlled effect.
             RegisterWindow<ThermalBenchWindowController>(hub, Section.TestBenches, "Thermal", "ThermalBenchWindow",
-                "Thermal chamber", ToolScene.Flight, "Temperature, shield orientation and radiator demand. Not validated",
+                "Thermal chamber", ToolScene.Flight | ToolScene.Assembly, "Temperature, shield orientation and radiator demand. Not validated",
                 "thermal heating radiator shield temperature failure", mode: ToolMode.Window);
             RegisterWindow<PlumeLabWindowController>(hub, Section.TestBenches, "Engines", "PlumeLabWindow",
                 "VAB plume lab", ToolScene.Assembly, "Cluster merging, collision plate and readiness-aware captures",
                 "engine plume cluster merging occlusion plate pressure", mode: ToolMode.Window);
             RegisterWindow<WindTunnelWindowController>(hub, Section.TestBenches, "Aerodynamics", "WindTunnelWindow",
-                "Wind tunnel", ToolScene.Flight, "Headless aero sweeps for the loaded vessel. Not validated",
+                "Wind tunnel", ToolScene.Flight | ToolScene.Assembly, "Aero sweeps and VAB force arrows. VAB launch comparison pending",
                 "drag lift moments heating polars mach aoa", mode: ToolMode.Window);
             RegisterWindow<ModuleBenchWindowController>(hub, Section.TestBenches, "Modules", "ModuleBenchWindow",
                 "Module bench", ToolScene.Flight, "Stated values against observed module output and resource rates",

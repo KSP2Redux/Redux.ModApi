@@ -204,27 +204,35 @@ namespace DebugTools.Runtime.Controllers
                 return;
             Vector3 origin = _geometry.transform.InverseTransformPoint(part.position);
             Vector3 vector = _geometry.transform.InverseTransformDirection(part.TransformDirection(force)) / _knPerMetre;
+            AppendArrow(_vertices[type], _indices[type], _colors[type], origin, vector, new Color32(255, 255, 255, 255));
+        }
+
+        internal static void AppendArrow(List<Vector3> vertices, List<int> indices, List<Color32> colors,
+            Vector3 origin, Vector3 vector, Color32 color)
+        {
+            if (vector.sqrMagnitude <= 0 || !float.IsFinite(vector.sqrMagnitude))
+                return;
             Vector3 tip = origin + vector;
             Vector3 direction = vector.normalized;
             Vector3 side = Vector3.Cross(direction, Mathf.Abs(direction.y) < 0.9f ? Vector3.up : Vector3.right).normalized;
             Vector3 otherSide = Vector3.Cross(direction, side);
             float head = Mathf.Min(vector.magnitude * 0.2f, 1f);
-            Line(type, origin, tip);
-            Line(type, tip, tip - direction * head + side * head * 0.5f);
-            Line(type, tip, tip - direction * head - side * head * 0.5f);
-            Line(type, tip, tip - direction * head + otherSide * head * 0.5f);
-            Line(type, tip, tip - direction * head - otherSide * head * 0.5f);
-        }
+            AddLine(origin, tip);
+            AddLine(tip, tip - direction * head + side * head * 0.5f);
+            AddLine(tip, tip - direction * head - side * head * 0.5f);
+            AddLine(tip, tip - direction * head + otherSide * head * 0.5f);
+            AddLine(tip, tip - direction * head - otherSide * head * 0.5f);
 
-        private void Line(int type, Vector3 start, Vector3 end)
-        {
-            int index = _vertices[type].Count;
-            _vertices[type].Add(start);
-            _vertices[type].Add(end);
-            _colors[type].Add(new Color32(255, 255, 255, 255));
-            _colors[type].Add(new Color32(255, 255, 255, 255));
-            _indices[type].Add(index);
-            _indices[type].Add(index + 1);
+            void AddLine(Vector3 start, Vector3 end)
+            {
+                int index = vertices.Count;
+                vertices.Add(start);
+                vertices.Add(end);
+                colors.Add(color);
+                colors.Add(color);
+                indices.Add(index);
+                indices.Add(index + 1);
+            }
         }
 
         private void OnDisable() => StopDrawing();

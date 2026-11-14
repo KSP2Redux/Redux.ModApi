@@ -1,4 +1,7 @@
 using System;
+using System.Collections;
+using KSP.Game;
+using UnityEngine.Rendering;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -18,6 +21,10 @@ namespace DebugTools.Runtime.Controllers
     /// </summary>
     public class WindTunnelWindowController : BaseWindowController
     {
+        private GameObject _arrows;
+        private Mesh _arrowMesh;
+        private Material _arrowMaterial;
+        private Coroutine _arrowLifetime;
         private ConditionsPanel _conditions;
         private DropdownField _variable;
         private QaReport _report;
@@ -36,10 +43,37 @@ namespace DebugTools.Runtime.Controllers
             _variable.RegisterValueChangedCallback(_ => UpdateSweepLabels());
             UpdateSweepLabels();
             _status = RootElement.Q<Label>("status");
-            RootElement.Q<Label>("validation").text = WindTunnel.IS_VALIDATED ? "Validated against flight" : "Not validated";
+            RootElement.Q<Label>("validation").text = "Flight validated | VAB launch comparison pending";
             RootElement.Q<Button>("run").clicked += Run;
+            RootElement.Q<Button>("draw").clicked += Draw;
+            RootElement.Q<Button>("stop").clicked += StopArrows;
+            RootElement.Q<Toggle>("part-arrows").RegisterValueChangedCallback(_ => StopArrows());
+            RootElement.RegisterCallback<ChangeEvent<float>>(_ => StopArrows());
+            RootElement.RegisterCallback<ChangeEvent<string>>(_ => StopArrows());
             RootElement.Q<Button>("capture").clicked += Capture;
             UpdateResultsHeader();
+            // Name the craft as soon as the window opens, and follow it when the assembly or vessel changes.
+            UpdateSubject();
+            RootElement.schedule.Execute(UpdateSubject).Every(1000);
+        }
+
+        private void UpdateSubject()
+        {
+            string text = "No main VAB assembly or loaded flight vessel";
+            try
+            {
+                if (Game.GlobalGameState.GetState() == GameState.VehicleAssemblyBuilder)
+                {
+                    var anchor = WindTunnel.GetAssembly(Game).Anchor;
+                    text = $"{anchor.Name} | {((KSP.Sim.DeltaV.IDeltaVPart)anchor).GlobalId}";
+                }
+                else if (Game.ViewController.GetActiveSimVessel() is VesselComponent vessel)
+                {
+                    text = $"{vessel.Name} | {vessel.GlobalId}";
+                }
+            }
+            catch (InvalidOperationException) { }
+            RootElement.Q<Label>("subject").text = text;
         }
 
         private string SweepVariable => _variable.index switch
@@ -93,16 +127,19 @@ namespace DebugTools.Runtime.Controllers
 
         private void Run()
         {
+            StopArrows();
             try
             {
                 _rows = null;
                 _report = null;
                 RootElement.Q("results").Clear();
                 VesselComponent vessel = Game.ViewController.GetActiveSimVessel();
-                if (vessel == null)
-                    throw new InvalidOperationException("Needs a loaded flight vessel. VAB sampling is not supported.");
-                _subject = vessel.Name;
-                RootElement.Q<Label>("subject").text = $"{vessel.Name} | {vessel.GlobalId}";
+                bool assembly = Game.GlobalGameState.GetState() == GameState.VehicleAssemblyBuilder;
+                if (!assembly && vessel == null)
+                    throw new InvalidOperationException("Needs a main VAB assembly or loaded flight vessel.");
+                _subject = assembly ? WindTunnel.GetAssembly(Game).Anchor.Name : vessel.Name;
+                string craftId = assembly ? ((KSP.Sim.DeltaV.IDeltaVPart)WindTunnel.GetAssembly(Game).Anchor).GlobalId.ToString() : vessel.GlobalId.ToString();
+                RootElement.Q<Label>("subject").text = $"{_subject} | {craftId}";
                 JObject conditions = _conditions.Read();
                 float start = RootElement.Q<FloatField>("from").value;
                 float end = RootElement.Q<FloatField>("to").value;
@@ -111,9 +148,9 @@ namespace DebugTools.Runtime.Controllers
                     throw new ArgumentException("Use finite sweep limits and 2 to 101 samples.");
                 var report = new QaReport("Wind tunnel", "bench-run");
                 var rows = new JArray();
-                var physics = Game.UniverseView.PhysicsSpace;
-                Vector3 forward = physics.VectorToPhysics(vessel.ControlTransform.up);
-                Vector3 right = physics.VectorToPhysics(vessel.ControlTransform.right);
+                var axes = WindTunnel.GetAxes(Game);
+                Vector3 forward = axes.Forward;
+                Vector3 right = axes.Right;
                 Vector3 up = Vector3.Cross(right, forward).normalized;
                 for (int index = 0; index < count; index++)
                 {
@@ -145,9 +182,9 @@ namespace DebugTools.Runtime.Controllers
                     rows.Add(row);
                 }
                 _stamp = new JObject { ["conditions"] = conditions, ["variable"] = SweepVariable,
-                    ["craft"] = _subject, ["craftId"] = vessel.GlobalId.ToString(), ["validated"] = WindTunnel.IS_VALIDATED,
+                    ["craft"] = _subject, ["craftId"] = craftId, ["validated"] = !assembly && WindTunnel.IS_VALIDATED,
                     ["from"] = start, ["to"] = end, ["count"] = count };
-                _stamp["thermalShielding"] = "Current flight exposure and shield fractions held fixed across the sweep";
+                _stamp["thermalShielding"] = assembly ? "VAB geometry and neutral controls. No live exhaust, solar or flight bay shielding. Launch comparison pending." : "Current flight exposure and shield fractions held fixed across the sweep";
                 _rows = rows;
                 _report = report;
                 VisualElement table = RootElement.Q("results");
@@ -160,13 +197,134 @@ namespace DebugTools.Runtime.Controllers
                         cells[column] = FormatNumber(row[column].Value<double>());
                     AddTableRow(table, cells);
                 }
-                _status.text = FormattableString.Invariant($"{count} headless samples. Current geometry and shielding held fixed. Magnitudes below 0.0001 shown as 0. Capture to write reports.");
+                _status.text = FormattableString.Invariant($"{count} samples. {_stamp.Value<string>("thermalShielding")} Magnitudes below 0.0001 shown as 0.");
+                if (assembly)
+                    Draw();
             }
             catch (Exception exception)
             {
                 _status.text = exception.Message;
             }
         }
+
+        private void Draw()
+        {
+            StopArrows();
+            try
+            {
+                if (Game.GlobalGameState.GetState() != GameState.VehicleAssemblyBuilder)
+                    throw new InvalidOperationException("Scene arrows use the VAB assembly. Flight force arrows are in Overlays.");
+                int layer = GetOverlayLayer(GetOverlayCamera());
+                Shader shader = Shader.Find("Hidden/Internal-Colored");
+                if (layer < 0 || shader == null)
+                    throw new InvalidOperationException("VAB overlay camera or shader unavailable.");
+                JObject conditions = _conditions.Read();
+                var axes = WindTunnel.GetAxes(Game);
+                Vector3 up = Vector3.Cross(axes.Right, axes.Forward).normalized;
+                Vector3 direction = (axes.Forward - up * (float)Math.Tan(conditions.Value<double>("aoa") * Math.PI / 180) +
+                    axes.Right * (float)Math.Tan(conditions.Value<double>("sideslip") * Math.PI / 180)).normalized;
+                double density = _conditions.Body.GetDensity(conditions.Value<double>("pressureKPa"), conditions.Value<double>("temperature"));
+                float speed = (float)(AeroUtilities.GetSoundSpeed(_conditions.Body.atmosphereAdiabaticIndex,
+                    conditions.Value<double>("pressureKPa"), density) * conditions.Value<double>("mach"));
+                JObject result = WindTunnel.Sample(Game, _conditions.Body, density, speed, conditions.Value<float>("mach"), direction);
+                float scale = RootElement.Q<FloatField>("arrow-scale").value;
+                if (!float.IsFinite(scale) || scale <= 0)
+                    throw new ArgumentException("Arrow scale must be positive kN/m.");
+                Vector3 center = ReadVector(result["centerOfPressure"]);
+                Vector3 side = Vector3.ProjectOnPlane(axes.Right, direction).normalized;
+                Vector3 lift = Vector3.Cross(side, direction).normalized;
+                var vertices = new List<Vector3>();
+                var indices = new List<int>();
+                var colors = new List<Color32>();
+                Add(center, -direction * result.Value<float>("drag") / scale, Color.red);
+                Add(center, lift * result.Value<float>("lift") / scale, Color.cyan);
+                Add(center + axes.Right * 2, -direction * 3, Color.yellow);
+                if (RootElement.Q<Toggle>("part-arrows").value)
+                    foreach (JObject part in result["partForces"])
+                    {
+                        Add(ReadVector(part["origin"]), ReadVector(part["force"]) / scale, Color.green);
+                    }
+                _arrows = new GameObject("VAB wind tunnel arrows") { layer = layer };
+                _arrowMesh = new Mesh { name = "Wind tunnel forces", indexFormat = IndexFormat.UInt32 };
+                _arrowMesh.SetVertices(vertices);
+                _arrowMesh.SetColors(colors);
+                _arrowMesh.SetIndices(indices, MeshTopology.Lines, 0);
+                _arrows.AddComponent<MeshFilter>().sharedMesh = _arrowMesh;
+                _arrowMaterial = new Material(shader) { renderQueue = (int)RenderQueue.Overlay };
+                _arrowMaterial.SetInt("_ZTest", (int)CompareFunction.Always);
+                _arrowMaterial.SetInt("_ZWrite", 0);
+                _arrowMaterial.SetInt("_Cull", (int)CullMode.Off);
+                var renderer = _arrows.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial = _arrowMaterial;
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+                DebugOverrides.Report("visual:wind-tunnel", "Wind tunnel arrows (visual aid)", StopArrows, false);
+                _arrowLifetime = StartCoroutine(WatchAssembly());
+                _status.text = result.Value<string>("thermalShielding") + " Yellow: wind, red: drag, cyan: lift, green: part forces. Draw uses current Conditions.";
+
+                void Add(Vector3 origin, Vector3 vector, Color color) =>
+                    ForceArrowsWindowController.AppendArrow(vertices, indices, colors, origin, vector, color);
+            }
+            catch (Exception exception)
+            {
+                StopArrows();
+                _status.text = exception.Message;
+            }
+        }
+
+        private static Vector3 ReadVector(JToken token) => new(token[0].Value<float>(), token[1].Value<float>(), token[2].Value<float>());
+
+        private IEnumerator WatchAssembly()
+        {
+            var assembly = WindTunnel.GetAssembly(Game);
+            var poses = new List<(Transform Transform, Vector3 Position, Quaternion Rotation)>();
+            foreach (var part in assembly.Parts)
+            {
+                poses.Add((part.PartTransform, part.PartTransform.position, part.PartTransform.rotation));
+            }
+            while (_arrows != null && IsRequestedOpen)
+            {
+                yield return null;
+                bool changed = Game.GlobalGameState.GetState() != GameState.VehicleAssemblyBuilder || Game.OAB.Current == null;
+                if (!changed)
+                    changed = Game.OAB.Current.Stats.MainAssembly != assembly || assembly.Parts.Count != poses.Count;
+                foreach (var pose in poses)
+                {
+                    if (pose.Transform == null || pose.Transform.position != pose.Position || pose.Transform.rotation != pose.Rotation)
+                        changed = true;
+                }
+                if (!changed)
+                    continue;
+                _arrowLifetime = null;
+                StopArrows();
+                yield break;
+            }
+        }
+
+        private void StopArrows()
+        {
+            if (_arrowLifetime != null)
+                StopCoroutine(_arrowLifetime);
+            _arrowLifetime = null;
+            if (_arrows != null)
+                Destroy(_arrows);
+            if (_arrowMesh != null)
+                Destroy(_arrowMesh);
+            if (_arrowMaterial != null)
+                Destroy(_arrowMaterial);
+            _arrows = null;
+            DebugOverrides.Clear("visual:wind-tunnel");
+        }
+
+        /// <inheritdoc />
+        protected override void OnRequestedOpenChanged(bool isOpen)
+        {
+            if (!isOpen)
+                StopArrows();
+        }
+
+        private void OnDisable() => StopArrows();
+        private void OnDestroy() => StopArrows();
 
         private static void AddTableRow(VisualElement table, string[] cells)
         {
@@ -295,7 +453,7 @@ namespace DebugTools.Runtime.Controllers
                 _report.Add(result);
                 string path = _report.Write();
                 JObject fingerprint = JObject.Parse(File.ReadAllText(Path.Combine(_report.DirectoryPath, "report.json")));
-                var html = new StringBuilder("<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width'><title>Wind tunnel polars</title><style>body{font:14px sans-serif;margin:24px;color:#243444;background:#fff}main{max-width:1000px;margin:auto}svg{display:block;width:100%;height:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere}polyline{fill:none;stroke:#1679a8;stroke-width:2}circle{fill:#1679a8}text{font:12px sans-serif;fill:#243444}.grid{stroke:#e0e5ea;stroke-width:1}.axis{stroke:#607080;stroke-width:1}.zero{stroke:#607080;stroke-width:1.5;stroke-dasharray:5 3}table{border-collapse:collapse;width:100%;margin-bottom:20px}th,td{border-bottom:1px solid #e0e5ea;text-align:left;padding:4px 8px;overflow-wrap:anywhere}th{width:28%}details{margin:16px 0}section{break-inside:avoid}</style></head><body><main><h1>Wind tunnel polars</h1><p>Not validated. Frozen craft geometry and current flight thermal exposure and shielding. Forces kN, moments kN m, heating kW.</p><h2>Conditions and sweep</h2><table>");
+                var html = new StringBuilder("<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width'><title>Wind tunnel polars</title><style>body{font:14px sans-serif;margin:24px;color:#243444;background:#fff}main{max-width:1000px;margin:auto}svg{display:block;width:100%;height:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere}polyline{fill:none;stroke:#1679a8;stroke-width:2}circle{fill:#1679a8}text{font:12px sans-serif;fill:#243444}.grid{stroke:#e0e5ea;stroke-width:1}.axis{stroke:#607080;stroke-width:1}.zero{stroke:#607080;stroke-width:1.5;stroke-dasharray:5 3}table{border-collapse:collapse;width:100%;margin-bottom:20px}th,td{border-bottom:1px solid #e0e5ea;text-align:left;padding:4px 8px;overflow-wrap:anywhere}th{width:28%}details{margin:16px 0}section{break-inside:avoid}</style></head><body><main><h1>Wind tunnel polars</h1><p>Frozen craft geometry. Scene assumptions and validation state are recorded below. Forces kN, moments kN m, heating kW.</p><h2>Conditions and sweep</h2><table>");
                 AppendMetadata(html, _stamp, "");
                 html.Append("</table><h2>Build fingerprint</h2><table>");
                 AppendMetadata(html, fingerprint["fingerprint"], "");

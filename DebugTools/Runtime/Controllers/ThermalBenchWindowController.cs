@@ -25,9 +25,26 @@ namespace DebugTools.Runtime.Controllers
         {
             _conditions = new ConditionsPanel(RootElement.Q("conditions"), Game);
             _status = RootElement.Q<Label>("status");
-            RootElement.Q<Label>("validation").text = ThermalBench.IS_VALIDATED ? "Validated against flight" : "Not validated";
+            RootElement.Q<Label>("validation").text = "Flight validated | VAB launch comparison pending";
             RootElement.Q<Button>("run").clicked += Run;
             RootElement.Q<Button>("capture").clicked += Capture;
+            // Name the craft as soon as the window opens, and follow it when the assembly or vessel changes.
+            UpdateSubject();
+            RootElement.schedule.Execute(UpdateSubject).Every(1000);
+        }
+
+        private void UpdateSubject()
+        {
+            string text = "No main VAB assembly or loaded flight vessel";
+            try
+            {
+                if (Game.GlobalGameState.GetState() == KSP.Game.GameState.VehicleAssemblyBuilder)
+                    text = WindTunnel.GetAssembly(Game).Anchor.Name;
+                else if (Game.ViewController.GetActiveSimVessel() is KSP.Sim.impl.VesselComponent vessel)
+                    text = vessel.Name;
+            }
+            catch (InvalidOperationException) { }
+            RootElement.Q<Label>("subject").text = text;
         }
 
         private void Run()
@@ -38,6 +55,8 @@ namespace DebugTools.Runtime.Controllers
             try
             {
                 JObject conditions = _conditions.Read();
+                if (Game.GlobalGameState.GetState() == KSP.Game.GameState.VehicleAssemblyBuilder)
+                    conditions["initialK"] = RootElement.Q<FloatField>("initial").value;
                 double duration = RootElement.Q<FloatField>("duration").value;
                 double step = RootElement.Q<FloatField>("step").value;
                 bool sweep = RootElement.Q<Toggle>("sweep").value;
