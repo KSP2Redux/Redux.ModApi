@@ -22,18 +22,29 @@ namespace SpaceWarp2.Patching.LoadingActions
 
         protected override void DoAction(Action resolve, Action<string> reject)
         {
+            var timer = System.Diagnostics.Stopwatch.StartNew();
             try
             {
                 if (_plugin.DoLoadingActions)
                 {
                     _plugin.Plugin?.OnPreInitialized();
                 }
+                RecordTime();
                 resolve();
             }
             catch (Exception e)
             {
+                RecordTime();
                 _plugin.Logger.LogError(e.ToString());
                 reject(e.ToString());
+            }
+
+            void RecordTime()
+            {
+                if (!timer.IsRunning)
+                    return;
+                timer.Stop();
+                _plugin.LoadMilliseconds = (_plugin.LoadMilliseconds ?? 0) + timer.Elapsed.TotalMilliseconds;
             }
         }
     }

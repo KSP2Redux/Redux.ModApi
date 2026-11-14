@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="DebugWindow.uss" />
+    <Style src="PartDiagnosticsWindow.uss" />
+    <ui:VisualElement name="root" class="dt-tool kui-dense part-diagnostics">
+        <ui:DropdownField name="subject" label="Part" class="kui-field" />
+        <ui:VisualElement class="kui-row">
+            <UitkForKsp2.Controls.OabButton name="refresh" text="Refresh parts" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="selected" text="Use VAB selection" class="kui-button" />
+        </ui:VisualElement>
+        <ui:VisualElement class="kui-row">
+            <UitkForKsp2.Controls.OabButton name="flow" text="Explain resource flow" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="why" text="Why not working" class="kui-button" />
+        </ui:VisualElement>
+        <ui:Label name="status" class="kui-value diagnostic-wrap" />
+        <ui:ScrollView class="diagnostic-results" horizontal-scroller-visibility="Hidden">
+            <ui:Label name="results" class="kui-value diagnostic-wrap" />
+        </ui:ScrollView>
+        <UitkForKsp2.Controls.OabButton name="capture" text="Capture report" class="kui-button" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,24 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="DebugWindow.uss" />
+    <Style src="StatTweakerWindow.uss" />
+    <ui:VisualElement name="root" class="dt-tool kui-dense stat-tweaker">
+        <ui:DropdownField name="subject" label="Placed part" class="kui-field" />
+        <ui:VisualElement class="kui-row">
+            <ui:Button name="refresh" text="Refresh parts" class="kui-button" />
+            <ui:Button name="selected" text="Use VAB selection" class="kui-button" />
+            <ui:Button name="stop" text="Stop / restore all" class="kui-button" />
+        </ui:VisualElement>
+        <ui:Toggle name="symmetry" label="Also edit symmetry counterparts" class="kui-field" />
+        <ui:Label text="Session only. Save or launch asks to restore first. Copying parts or recording undo history also restores tweaks. Export first. Use dot decimals." class="stat-wrap" />
+        <ui:ScrollView class="stat-scroll" horizontal-scroller-visibility="Hidden">
+            <ui:VisualElement name="fields" />
+            <ui:Label text="Active delta: field / old / new" class="stat-wrap" />
+            <ui:Label name="deltas" class="stat-wrap" />
+        </ui:ScrollView>
+        <ui:VisualElement class="kui-row">
+            <ui:Button name="lua" text="Copy Lua + report" class="kui-button" />
+            <ui:Button name="json" text="Copy JSON + report" class="kui-button" />
+        </ui:VisualElement>
+        <ui:Label name="status" class="stat-wrap" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,49 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Template name="ConditionsPanel" src="ConditionsPanel.uxml" />
+    <Style src="DebugWindow.uss" />
+    <Style src="PlumeLabWindow.uss" />
+    <ui:ScrollView name="root" horizontal-scroller-visibility="Hidden" class="dt-tool kui-dense plume-lab">
+        <ui:VisualElement class="kui-section"><ui:Label text="//" class="kui-section__slashes" /><ui:Label text="SUBJECT" class="kui-section__title" /></ui:VisualElement>
+        <ui:Label text="Current VAB craft. Checked engines preview together." class="kui-value plume-lab-wrap" />
+        <ui:VisualElement name="engines" />
+        <UitkForKsp2.Controls.OabButton name="refresh" text="Refresh current craft" class="kui-button" />
+        <ui:VisualElement class="kui-divider" />
+        <ui:VisualElement class="kui-section"><ui:Label text="//" class="kui-section__slashes" /><ui:Label text="CONDITIONS" class="kui-section__title" /></ui:VisualElement>
+        <ui:Instance template="ConditionsPanel" name="conditions" />
+        <ui:Label name="pressure-value" class="kui-value plume-lab-wrap" />
+        <ui:DropdownField name="quality" label="Plume quality" class="kui-field" />
+        <ui:VisualElement class="kui-divider" />
+        <ui:VisualElement class="kui-section"><ui:Label text="//" class="kui-section__slashes" /><ui:Label text="RUN" class="kui-section__title" /></ui:VisualElement>
+        <ui:Slider name="throttle" label="Visual throttle (%)" low-value="0" high-value="100" value="100" />
+        <ui:Label name="throttle-value" class="kui-value plume-lab-wrap" />
+        <ui:VisualElement class="kui-row plume-lab-buttons">
+            <UitkForKsp2.Controls.OabButton name="start" text="Start preview" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="stop" text="Stop and restore" class="kui-button" />
+        </ui:VisualElement>
+        <ui:Foldout text="Collision plate (offset from craft center)" value="false">
+            <ui:Toggle name="plate" label="Show plate" value="false" class="kui-switch" />
+            <ui:Label text="High quality: flight collider impingement. Low: scene-depth clipping only. No physical heating or force." class="kui-value plume-lab-wrap" />
+            <ui:FloatField name="x" label="X offset (m)" value="0" class="kui-field" />
+            <ui:FloatField name="y" label="Y offset (m)" value="-5" class="kui-field" />
+            <ui:FloatField name="z" label="Z offset (m)" value="0" class="kui-field" />
+            <ui:FloatField name="pitch" label="X rotation (deg)" value="0" class="kui-field" />
+            <ui:FloatField name="yaw" label="Y rotation (deg)" value="0" class="kui-field" />
+            <ui:FloatField name="roll" label="Z rotation (deg)" value="0" class="kui-field" />
+            <ui:FloatField name="width" label="Width (m)" value="6" class="kui-field" />
+            <ui:FloatField name="depth" label="Depth (m)" value="6" class="kui-field" />
+        </ui:Foldout>
+        <ui:VisualElement class="kui-row plume-lab-buttons">
+            <UitkForKsp2.Controls.OabButton name="side" text="Side" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="below" text="Below" class="kui-button" />
+        </ui:VisualElement>
+        <ui:VisualElement class="kui-row plume-lab-buttons">
+            <UitkForKsp2.Controls.OabButton name="quarter" text="Three-quarter" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="free" text="Free camera" class="kui-button" />
+        </ui:VisualElement>
+        <ui:Label name="status" class="kui-value plume-lab-wrap" />
+        <ui:VisualElement class="kui-divider" />
+        <ui:VisualElement class="kui-section"><ui:Label text="//" class="kui-section__slashes" /><ui:Label text="RESULTS" class="kui-section__title" /></ui:VisualElement>
+        <ui:Label name="results" text="Start to inspect analytic jets and computed cluster merging." class="kui-value plume-lab-wrap" />
+        <UitkForKsp2.Controls.OabButton name="capture" text="Capture ready view to QA report" class="kui-button" />
+    </ui:ScrollView>
+</ui:UXML>

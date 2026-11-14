@@ -311,11 +311,13 @@ namespace VSwift.Modules.Behaviours
         /// </summary>
         /// <param name="isStarting">Whether this is the initial OAB application (true) or a swap (false).</param>
         /// <param name="swapped">The variant set whose variants were swapped, or <c>null</c> when applying every variant set.</param>
-        public void ApplyInOab(bool isStarting,VariantSet? swapped=null)
+        public void ApplyInOab(bool isStarting,VariantSet? swapped=null) => ApplyInOab(isStarting, swapped, false);
+
+        private void ApplyInOab(bool isStarting, VariantSet? swapped, bool resetAll)
         {
             if (_storedState == null) StoreOriginalState();
             var savedStoredUnits = SnapshotContainerStoredUnits();
-            ResetToOriginalState(isStarting,swapped);
+            ResetToOriginalState(isStarting,swapped, resetAll);
             ApplyCommon();
             var i = 0;
             foreach (var variantSet in _dataPartSwitch!.VariantSets)
@@ -394,6 +396,32 @@ namespace VSwift.Modules.Behaviours
             MarkOabDirty();
         }
 
+        /// <summary>
+        /// Restores an OAB selection snapshot locally and refreshes the builder controls.
+        /// </summary>
+        /// <param name="activeVariants">The original variant identifiers in set order.</param>
+        public void RestoreVariantSelectionInOab(IReadOnlyList<string> activeVariants)
+        {
+            if (_dataPartSwitch == null || OABPart == null || activeVariants == null)
+                return;
+
+            // Each symmetry partner can have a different snapshot. Restoration must not fan out again.
+            for (int index = 0; index < activeVariants.Count && index < _dataPartSwitch.VariantSets.Count; index++)
+            {
+                VariantSet set = _dataPartSwitch.VariantSets[index];
+                EnsureActiveVariant(index, set);
+                _dataPartSwitch.ActiveVariants[index] = activeVariants[index];
+            }
+            // Restore the whole selection before applying it, including sets with unchanged identifiers.
+            ApplyInOab(false, null, true);
+            for (int index = 0; index < _dataPartSwitch.VariantSets.Count; index++)
+            {
+                SyncVariantSetDropdown(index, _dataPartSwitch.ActiveVariants[index]);
+            }
+            QueuePamUpdate();
+            MarkOabDirty();
+        }
+
         private void ApplySelectionToSymmetrySet(int variantSetIndex, string variantId)
         {
             if (OABPart?.SymmetrySet?.Parts == null)
@@ -462,12 +490,12 @@ namespace VSwift.Modules.Behaviours
             currentBuilder?.eventsBuilder.OnInternalRefresh?.Invoke();
         }
 
-        private void ResetToOriginalState(bool isStarting=false,VariantSet? swapped=null)
+        private void ResetToOriginalState(bool isStarting=false,VariantSet? swapped=null, bool resetAll = false)
         {
             _dataPartSwitch!.MassModifier = 0.0f;
             foreach (var (instance, data) in _storedState!.OriginalTransformerData)
             {
-                if (!instance.RequiresInVariantSet || isStarting ||
+                if (resetAll || !instance.RequiresInVariantSet || isStarting ||
                     (swapped != null && swapped.Variants.Any(x => x.Transformers.Any(y => y.Reverter == instance))))
                     instance.Revert(this, data, isStarting);
             }

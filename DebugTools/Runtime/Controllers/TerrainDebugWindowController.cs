@@ -142,7 +142,11 @@ namespace DebugTools.Runtime.Controllers
 
         private void Update()
         {
-            if (IsGameShuttingDown || !IsWindowOpen)
+            if (IsGameShuttingDown || !IsRequestedOpen)
+                return;
+
+            DrawPhysicsBubble();
+            if (!IsWindowOpen)
                 return;
 
             if (_selectQuadForDebugging && Input.GetMouseButtonDown(0))
@@ -182,8 +186,11 @@ namespace DebugTools.Runtime.Controllers
             _debugQuadStatus.text = _selectQuadForDebugging
                 ? "Click on a piece of terrain"
                 : $"Quad: {PQSRenderer.DebugQuadIndex}";
+        }
 
-            if (_renderPhysXBubble.value)
+        private void DrawPhysicsBubble()
+        {
+            if (_renderPhysXBubble.value && _physxBubbleMaterial != null)
             {
                 var matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, -Vector3.one * 2000f);
                 Graphics.DrawMesh(Singleton<MeshPool>.Get.UnitSphere, matrix, _physxBubbleMaterial, 0, null, 0, null,

@@ -1,0 +1,24 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Template name="ConditionsPanel" src="ConditionsPanel.uxml" />
+    <Style src="DebugWindow.uss" />
+    <Style src="ThermalBenchWindow.uss" />
+    <ui:ScrollView name="root" class="dt-tool kui-dense thermal-chamber">
+        <ui:Label text="// SUBJECT" class="kui-category" />
+        <ui:Label name="subject" text="Current loaded flight vessel" class="kui-value" />
+        <ui:Label name="validation" text="Not validated" class="kui-value" />
+        <ui:Label text="// CONDITIONS" class="kui-category" />
+        <ui:Instance template="ConditionsPanel" name="conditions" />
+        <ui:Label text="// RUN" class="kui-category" />
+        <ui:FloatField name="duration" label="Duration (s)" value="5" class="kui-field" />
+        <ui:FloatField name="step" label="Time step (s)" value="0.02" class="kui-field" />
+        <ui:Toggle name="sweep" label="Sweep shield orientation" value="true" class="kui-field" />
+        <ui:FloatField name="from" label="AoA from (deg)" value="-40" class="kui-field" />
+        <ui:FloatField name="to" label="AoA to (deg)" value="40" class="kui-field" />
+        <ui:IntegerField name="count" label="Orientation samples" value="9" class="kui-field" />
+        <UitkForKsp2.Controls.OabButton name="run" text="Run thermal prediction" class="kui-button" />
+        <ui:Label name="status" class="kui-value" />
+        <ui:Label text="// RESULTS" class="kui-category" />
+        <ui:VisualElement name="results" class="kui-group" />
+        <UitkForKsp2.Controls.OabButton name="capture" text="Capture report and charts" class="kui-button" />
+    </ui:ScrollView>
+</ui:UXML>

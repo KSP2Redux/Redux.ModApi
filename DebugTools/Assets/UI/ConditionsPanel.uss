@@ -1,0 +1,9 @@
+.condition-pressure-row { flex-direction: row; flex-shrink: 0; }
+.condition-pressure-label { width: 150px; flex-shrink: 0; margin: 0 4px 0 0; padding-top: 4px; }
+.condition-pressure-input { flex-grow: 1; min-width: 0; }
+.condition-pressure-input > Slider { margin: 0; }
+.condition-ticks { height: 13px; margin: 0 10px; flex-shrink: 0; }
+.condition-ticks > Label { position: absolute; top: 0; margin: 0; padding: 0; font-size: 10px; color: rgba(214, 224, 255, 0.55); }
+.condition-tick-vacuum { left: 0; }
+.condition-tick-one { left: 66.67%; }
+.condition-tick-four { left: 76.70%; }

@@ -382,7 +382,15 @@ namespace SpaceWarp2.API.Mods
             {
                 if (mod.Plugin is UnloadedMod unloadedMod)
                 {
-                    mod.Plugin = unloadedMod.Load();
+                    var timer = System.Diagnostics.Stopwatch.StartNew();
+                    try
+                    {
+                        mod.Plugin = unloadedMod.Load();
+                    }
+                    finally
+                    {
+                        mod.LoadMilliseconds = (mod.LoadMilliseconds ?? 0) + timer.Elapsed.TotalMilliseconds;
+                    }
                 }
             }
         }

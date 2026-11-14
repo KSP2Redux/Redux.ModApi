@@ -1,0 +1,19 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="DebugWindow.uss" />
+    <Style src="AddressablesDoctorWindow.uss" />
+    <ui:VisualElement name="root" class="dt-tool doctor-root">
+        <ui:TextField name="key" label="Address or label" class="kui-field" />
+        <ui:VisualElement class="kui-row doctor-actions">
+            <ui:Button name="find" text="Find keys" class="kui-button" />
+            <ui:Button name="inspect" text="Inspect" class="kui-button" />
+            <ui:Button name="try-load" text="Try load" class="kui-button" />
+        </ui:VisualElement>
+        <ui:Label text="Inspect never loads assets. Try load requests one Object and releases its handle on completion. Recent failures cover the game loading wrapper and Try load." class="doctor-wrap" />
+        <ui:ScrollView name="matches" class="doctor-matches doctor-hidden" horizontal-scroller-visibility="Hidden" />
+        <ui:ScrollView name="results" class="doctor-results doctor-hidden" horizontal-scroller-visibility="Hidden">
+            <ui:Label name="output" enable-rich-text="false" class="doctor-output" />
+        </ui:ScrollView>
+        <ui:Label name="status" class="doctor-wrap" />
+        <ui:Button name="capture" text="Capture report" class="kui-button" />
+    </ui:VisualElement>
+</ui:UXML>

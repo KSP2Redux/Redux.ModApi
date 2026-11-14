@@ -1,0 +1,13 @@
+.input-locks { width: 640px; min-width: 420px; max-width: 640px; max-height: 680px; flex-grow: 0; }
+.input-locks .input-wrap { white-space: normal; height: auto; flex-shrink: 0; -unity-text-align: upper-left; min-width: 0; }
+.input-scroll { max-height: 220px; min-height: 0; flex-shrink: 1; }
+.input-locks .unity-scroll-view__content-container { min-width: 0; flex-grow: 0; }
+.input-locks .kui-row > .kui-button { flex-grow: 1; flex-basis: 0; min-width: 0; }
+.input-row { flex-direction: row; flex-shrink: 0; min-height: 24px; }
+.input-row > Label { white-space: normal; height: auto; flex-shrink: 0; -unity-text-align: upper-left; margin-right: 6px; min-width: 0; }
+.input-owner { width: 38%; }
+.input-mask { flex-grow: 1; flex-basis: 0; }
+.input-age { width: 64px; }
+.input-header { background-color: rgb(46, 53, 64); }
+.input-locks .unity-scroll-view { height: auto; }
+.input-locks.unity-scroll-view { height: auto; }

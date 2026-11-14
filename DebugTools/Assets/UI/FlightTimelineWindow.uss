@@ -1,0 +1,9 @@
+.flight-timeline { width: 680px; max-width: 680px; max-height: 680px; }
+.flight-timeline .timeline-wrap { white-space: normal; -unity-text-align: upper-left; height: auto; flex-shrink: 0; }
+.flight-timeline .timeline-graph { height: 34px; min-height: 34px; flex-shrink: 0; }
+.flight-timeline .timeline-markers { height: 18px; min-height: 18px; flex-shrink: 0; }
+.flight-timeline .kui-button { flex-shrink: 0; }
+.flight-timeline > ScrollView { min-height: 0; flex-shrink: 1; }
+.flight-timeline .unity-scroll-view { height: auto; }
+.flight-timeline > .unity-scroll-view { max-height: 480px; min-height: 0; flex-shrink: 1; }
+.flight-timeline > .kui-field, .flight-timeline > .kui-row, .flight-timeline > .kui-button { flex-shrink: 0; }

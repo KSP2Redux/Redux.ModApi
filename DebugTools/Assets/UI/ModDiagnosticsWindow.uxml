@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="DebugWindow.uss" />
+    <Style src="ModDiagnosticsWindow.uss" />
+    <ui:VisualElement name="root" class="dt-tool doctor-root">
+        <ui:VisualElement class="kui-row doctor-actions">
+            <ui:Button name="refresh" text="Refresh" class="kui-button" />
+            <ui:Button name="trace" text="Open patch trace" class="kui-button" />
+        </ui:VisualElement>
+        <ui:Label text="Read-only snapshot. Timings cover synchronous callbacks, not total startup. Counts refer to the active patch summary and the last 128 Unity exception logs." class="doctor-wrap" />
+        <ui:ScrollView class="doctor-results" horizontal-scroller-visibility="Hidden">
+            <ui:Label name="output" enable-rich-text="false" class="doctor-output" />
+        </ui:ScrollView>
+        <ui:Label name="status" class="doctor-wrap" />
+        <ui:Button name="capture" text="Capture report" class="kui-button" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -9,6 +9,7 @@ using KSP.OAB;
 using SpaceWarp2.API.Logging;
 using UitkForKsp2.API;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 using ILogger = SpaceWarp2.API.Logging.ILogger;
 using Legacy = KSP.DebugTools;
@@ -35,6 +36,9 @@ namespace DebugTools
         private static DebugWindowController? DebugWindowController { get; set; }
         private static bool _isHubLoading;
         private static bool _openLocWorkbench;
+        private static bool _openPalette;
+        private static bool _openHubAfterLoad;
+        private InputAction _paletteAction;
 
         internal static ILogger Logger;
 
@@ -47,7 +51,10 @@ namespace DebugTools
             DebugWindowController = null;
             _isHubLoading = false;
             _openLocWorkbench = false;
+            _openPalette = false;
+            _openHubAfterLoad = false;
             Logger = null;
+            Redux.QA.ModDiagnostics.Initialize();
             ReduxManager.OnInitialized -= PreInitialize;
             ReduxManager.OnInitialized += PreInitialize;
         }
@@ -87,6 +94,8 @@ namespace DebugTools
             var pluginObject = new GameObject("DebugTools") { tag = "Game Manager" };
             DontDestroyOnLoad(pluginObject);
             _instance = pluginObject.AddComponent<DebugToolsPlugin>();
+            _instance._paletteAction = GameManager.Instance.Game.Input.Global.ToggleDebugPalette;
+            _instance._paletteAction.performed += _instance.OnPaletteShortcut;
         }
 
         // Test overrides never outlive the campaign they were set in.
@@ -97,6 +106,10 @@ namespace DebugTools
 
         private void OnDestroy()
         {
+            if (_paletteAction != null)
+            {
+                _paletteAction.performed -= OnPaletteShortcut;
+            }
             DebugOverrides.RevertTestOverrides();
             StateChanges.MainMenuStateEntered -= OnMainMenuEntered;
         }
@@ -107,6 +120,23 @@ namespace DebugTools
                 return;
 
             ToggleHub();
+        }
+
+        private void OnPaletteShortcut(InputAction.CallbackContext context) => TogglePalette();
+
+        private static void TogglePalette()
+        {
+            if (DebugWindowController != null)
+            {
+                DebugWindowController.TogglePalette();
+                return;
+            }
+            _openPalette = !_openPalette;
+            _openHubAfterLoad = false;
+            if (_openPalette)
+            {
+                ToggleHub(false);
+            }
         }
 
         /// <summary>
@@ -125,7 +155,12 @@ namespace DebugTools
             ToggleHub();
         }
 
-        private static void ToggleHub()
+        /// <summary>
+        /// Open the registered M2 tool from mod diagnostics.
+        /// </summary>
+        internal static void OpenPatchTrace() => DebugWindowController?.OpenPatchTrace();
+
+        private static void ToggleHub(bool openHub = true)
         {
             if (DebugWindowController != null)
             {
@@ -133,6 +168,7 @@ namespace DebugTools
                 return;
             }
 
+            _openHubAfterLoad = openHub;
             if (_isHubLoading)
                 return;
 
@@ -143,7 +179,16 @@ namespace DebugTools
                 PanelRenderer hubWindow = UITKHelper.CreateWindowFromUxml(uxml, "DebugWindow", minWidth: 560f, minHeight: 360f);
                 DebugWindowController = hubWindow.gameObject.AddComponent<DebugWindowController>();
                 RegisterTools(DebugWindowController);
-                DebugWindowController.IsWindowOpen = true;
+                if (_openPalette)
+                {
+                    _openPalette = false;
+                    DebugWindowController.IsWindowOpen = false;
+                    DebugWindowController.TogglePalette();
+                }
+                else
+                {
+                    DebugWindowController.IsWindowOpen = _openHubAfterLoad;
+                }
                 if (_openLocWorkbench)
                 {
                     _openLocWorkbench = false;
@@ -163,6 +208,36 @@ namespace DebugTools
         /// </remarks>
         private static void RegisterTools(DebugWindowController hub)
         {
+            hub.RegisterSwitch(Section.Performance, "Capture", "Frame spike capture (100 ms)", ToolScene.Any,
+                () => Redux.QA.LifecycleDiagnostics.IsArmed, value => Redux.QA.LifecycleDiagnostics.Arm(value),
+                "Recent 512 frames, top 20 main-thread markers. Stops after 10 captures, at least 5 s apart. Reports in QAReports/bench-run.", "spike hitch profiler soak");
+            RegisterWindow<PartAppearanceWindowController>(hub, Section.Overlays, "Part", "PartAppearanceWindow",
+                "Part materials / appearance", ToolScene.Campaign, "Material channels in flight and VAB, reversible VAB animation, variant and light previews",
+                "albedo normal smoothness metallic paint emissive ao animation deploy retract gear solar antenna cargo variant", mode: ToolMode.Window);
+            hub.RegisterAction(Section.QaRuns, "Tools", "Debug palette", ToolScene.Any, "Open", TogglePalette,
+                () => GameManager.Instance.Game.Input.Global.ToggleDebugPalette.GetBindingDisplayString(),
+                "Search every tool, cheat and CLI method", "keyboard command search palette");
+            RegisterWindow<AddressablesDoctorWindowController>(hub, Section.Mods, "Assets", "AddressablesDoctorWindow",
+                "Addressables doctor", ToolScene.Any, "Resolve keys, catalogs and dependency bundles without loading assets",
+                "address label catalog bundle dependency failed load", mode: ToolMode.Inline, detachable: true);
+            RegisterWindow<ModDiagnosticsWindowController>(hub, Section.Mods, "Mods", "ModDiagnosticsWindow",
+                "Mod diagnostics", ToolScene.Any, "Load callbacks, patch outcomes and exceptions by assembly",
+                "mod load timing patch exception assembly", mode: ToolMode.Inline, detachable: true);
+            RegisterWindow<CampaignFeaturesWindowController>(hub, Section.Mods, "Campaign", "CampaignFeaturesWindow",
+                "Campaign feature toggler", ToolScene.Campaign, "Test feature sets through campaign reloads",
+                "features patches campaign reload");
+            RegisterWindow<StructuralVfxWindowController>(hub, Section.TestBenches, "Effects", "StructuralVfxWindow",
+                "Structural failure VFX preview", ToolScene.Flight, "Preview intact attachment effects without breaking craft",
+                "structural joint break overstress sparks fragments bubbles");
+            RegisterWindow<ForceArrowsWindowController>(hub, Section.Overlays, "Part", "ForceArrowsWindow",
+                "Part force arrows", ToolScene.Flight, "Read-only drag, lift and thrust vectors per part",
+                "aero force drag lift thrust scale", mode: ToolMode.Window);
+            RegisterWindow<PartGizmosWindowController>(hub, Section.Overlays, "Part", "PartGizmosWindow",
+                "Part geometry gizmos", ToolScene.Campaign, "Read-only VAB and flight part geometry overlay",
+                "attach node collider drag cube thrust hatch airlock center mass gizmo", mode: ToolMode.Window);
+            RegisterWindow<InputLocksWindowController>(hub, Section.Inspect, "Input", "InputLocksWindow",
+                "Input locks", ToolScene.Any, "Lock owners, observed ages and a non-consuming routing probe",
+                "input lock click hotkey routing probe", mode: ToolMode.Window);
             RegisterWindow<PatchTraceWindowController>(hub, Section.Mods, "Patches", "PatchTraceWindow",
                 "Patch trace", ToolScene.Any, "Trace one asset field during the next normal campaign load",
                 "patch order feature mod effective original skipped failed", mode: ToolMode.Inline, detachable: true);
@@ -190,6 +265,9 @@ namespace DebugTools
             RegisterWindow<MissionsDebugWindowController>(hub, Section.Inspect, "Missions", "MissionsDebugWindow",
                 "Missions", ToolScene.Campaign, "Inspect stage conditions or activate, complete, fail or reset missions",
                 "mission stage condition operand latch contract", mode: ToolMode.Window);
+            RegisterWindow<StatTweakerWindowController>(hub, Section.TestBenches, "VAB", "StatTweakerWindow",
+                "Live stat tweaker", ToolScene.Assembly, "Session part stats and Patch Manager or prefab delta export",
+                "mass cost thrust isp torque capacity numeric designer patch prefab", mode: ToolMode.Window);
 
             RegisterWindow<KerbalRosterToolWindowController>(hub, Section.Cheats, "Crew", "KerbalRosterToolWindow",
                 "Roster", ToolScene.Campaign, keywords: "kerbal crew add", mode: ToolMode.Inline, detachable: true);
@@ -202,6 +280,10 @@ namespace DebugTools
             RegisterWindow<VesselScienceWindowController>(hub, Section.Science, "Experiments", "VesselScienceWindow",
                 "Vessel Science", ToolScene.Flight, "Situation, region and experiment reports",
                 "experiment report region", mode: ToolMode.Window);
+
+            RegisterWindow<PartDiagnosticsWindowController>(hub, Section.Inspect, "Resources", "PartDiagnosticsWindow",
+                "Resource flow / Why not working", ToolScene.Campaign, "Read-only routes, delivery and module blockers in flight or the VAB",
+                "resource starvation crossfeed engine radiator generator transmitter", mode: ToolMode.Window);
 
             // Inspect: what is going on.
             RegisterWindow<VesselToolsWindowController>(hub, Section.Overlays, "Vessel", "VesselToolsWindow",
@@ -245,6 +327,15 @@ namespace DebugTools
                 "Assembly size limit boxes", "oab vab size limit");
 
             // Test benches: run a controlled effect.
+            RegisterWindow<ThermalBenchWindowController>(hub, Section.TestBenches, "Thermal", "ThermalBenchWindow",
+                "Thermal chamber", ToolScene.Flight, "Temperature, shield orientation and radiator demand. Not validated",
+                "thermal heating radiator shield temperature failure", mode: ToolMode.Window);
+            RegisterWindow<PlumeLabWindowController>(hub, Section.TestBenches, "Engines", "PlumeLabWindow",
+                "VAB plume lab", ToolScene.Assembly, "Cluster merging, collision plate and readiness-aware captures",
+                "engine plume cluster merging occlusion plate pressure", mode: ToolMode.Window);
+            RegisterWindow<WindTunnelWindowController>(hub, Section.TestBenches, "Aerodynamics", "WindTunnelWindow",
+                "Wind tunnel", ToolScene.Flight, "Headless aero sweeps for the loaded vessel. Not validated",
+                "drag lift moments heating polars mach aoa", mode: ToolMode.Window);
             RegisterWindow<ModuleBenchWindowController>(hub, Section.TestBenches, "Modules", "ModuleBenchWindow",
                 "Module bench", ToolScene.Flight, "Stated values against observed module output and resource rates",
                 "generator solar radiator converter heat shield antenna", mode: ToolMode.Window);
@@ -266,6 +357,8 @@ namespace DebugTools
             RegisterWindow<GuidedChecklistWindowController>(hub, Section.QaRuns, "Checklists", "GuidedChecklistWindow",
                 "Guided part checklist", ToolScene.Campaign, "Manual part checks with screenshots and a per-part dossier",
                 "part checklist pass fail review screenshot report");
+            RegisterWindow<FlightTimelineWindowController>(hub, Section.QaRuns, "Flight", "FlightTimelineWindow",
+                "Failure timeline", ToolScene.Any, "Last 30 real seconds of flight telemetry and events", "flight recorder timeline commands assertions resources loss");
             // QA runs: check many things and write it down.
             RegisterWindow<PartSweepWindowController>(hub, Section.QaRuns, "Parts", "PartSweepWindow",
                 "Part sweep", ToolScene.Assembly, "Automated live checks in an empty VAB", "part sweep stock redux mod changed");

@@ -1,0 +1,14 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="DebugPalette.uss" />
+    <UitkForKsp2.Controls.AppShell name="root" title="Debug palette - Ctrl+Shift+F11" class="kui-dense dt-palette">
+        <UitkForKsp2.Controls.InvertedCornerBox class="dt-palette-body">
+            <UitkForKsp2.Controls.PlaceholderTextField name="paletteSearch" placeholder="Search tools, cheats and CLI methods" class="oab-text-field" />
+            <ui:Label name="paletteHelp" text="Up / Down: select   Enter: open, toggle or copy   Escape: close" class="kui-section dt-palette-help" />
+            <ui:ScrollView name="paletteResults" mode="Vertical" horizontal-scroller-visibility="Hidden" class="dt-palette-results" />
+            <ui:ScrollView mode="Vertical" horizontal-scroller-visibility="Hidden" class="dt-palette-details-scroll">
+                <ui:Label name="paletteDetails" class="dt-palette-details" />
+            </ui:ScrollView>
+            <UitkForKsp2.Controls.OabButton name="paletteActivate" text="Open" class="kui-button" />
+        </UitkForKsp2.Controls.InvertedCornerBox>
+    </UitkForKsp2.Controls.AppShell>
+</ui:UXML>

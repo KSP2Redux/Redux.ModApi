@@ -56,6 +56,11 @@ namespace SpaceWarp2.API.Mods
         /// </summary>
         public ISpaceWarpMod? Plugin;
 
+        /// <summary>
+        /// Gets or sets the cumulative synchronous plugin construction and lifecycle action time in milliseconds.
+        /// </summary>
+        public double? LoadMilliseconds { get; set; }
+
         private ILogger _logger;
 
         /// <summary>

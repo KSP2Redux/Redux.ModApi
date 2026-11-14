@@ -1,0 +1,24 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="DebugWindow.uss" />
+    <Style src="PartAppearanceWindow.uss" />
+    <ui:VisualElement name="root" class="dt-tool kui-dense appearance">
+        <ui:DropdownField name="subject" label="Part" class="kui-field" />
+        <ui:VisualElement class="kui-row">
+            <ui:Button name="refresh" text="Refresh parts" class="kui-button" />
+            <ui:Button name="selected" text="Use VAB selection" class="kui-button" />
+            <ui:Button name="stop" text="Stop / revert" class="kui-button" />
+        </ui:VisualElement>
+        <ui:DropdownField name="view" label="Material view" class="kui-field" />
+        <ui:Label name="status" class="kui-value appearance-wrap" />
+        <ui:ScrollView horizontal-scroller-visibility="Hidden" class="appearance-scroll">
+            <ui:Foldout text="Materials and textures" value="true">
+                <ui:Label name="inventory" class="kui-value appearance-wrap" />
+            </ui:Foldout>
+            <ui:Foldout text="VAB animations, variants and lights" value="false">
+                <ui:Label text="Transform animation preview only. Fraction 0 = start, 1 = end. The last slider used selects the clip on that animator. Blend shapes and component curves are not sampled. Variants revert on Stop and close, including symmetry. Builder edit history remains. Refresh after craft edits." class="appearance-wrap" />
+                <ui:VisualElement name="scrubbers" />
+            </ui:Foldout>
+        </ui:ScrollView>
+        <ui:Button name="capture" text="Capture material inventory report" class="kui-button" />
+    </ui:VisualElement>
+</ui:UXML>

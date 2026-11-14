@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="ConditionsPanel.uss" />
+    <ui:VisualElement class="kui-group">
+        <ui:DropdownField name="condition-preset" label="Preset" class="kui-field" />
+        <ui:DropdownField name="condition-body" label="Body" class="kui-field" />
+        <ui:FloatField name="condition-altitude" label="Altitude (m ASL)" value="0" class="kui-field" />
+        <ui:VisualElement class="condition-pressure-row">
+            <ui:Label text="Pressure (log atm)" class="condition-pressure-label" />
+            <ui:VisualElement class="condition-pressure-input">
+                <ui:Slider name="condition-pressure" low-value="-4" high-value="2" value="0" />
+                <ui:VisualElement class="condition-ticks"><ui:Label text="| Vacuum" class="condition-tick-vacuum" /><ui:Label text="| 1 atm" class="condition-tick-one" /><ui:Label text="| 4 atm" class="condition-tick-four" /></ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:FloatField name="condition-temperature" label="Temperature (K)" value="288" class="kui-field" />
+        <ui:FloatField name="condition-mach" label="Mach" value="0.3" class="kui-field" />
+        <ui:FloatField name="condition-aoa" label="AoA (deg)" value="0" class="kui-field" />
+        <ui:FloatField name="condition-sideslip" label="Sideslip (deg)" value="0" class="kui-field" />
+        <ui:Label name="condition-readout" class="kui-value" />
+    </ui:VisualElement>
+</ui:UXML>

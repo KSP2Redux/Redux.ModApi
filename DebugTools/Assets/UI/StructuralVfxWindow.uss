@@ -1,0 +1,9 @@
+.structural-vfx { width: 560px; min-width: 420px; max-width: 560px; max-height: 620px; }
+.structural-vfx .unity-scroll-view__content-container { flex-shrink: 1; min-width: 0; flex-grow: 0; }
+.structural-vfx .qa-preview-wrap { white-space: normal; flex-shrink: 0; margin-top: 6px; margin-bottom: 6px; height: auto; }
+.structural-vfx .kui-button { flex-grow: 1; flex-shrink: 0; flex-basis: auto; min-width: 0; }
+.structural-vfx .unity-base-field__label { min-width: 160px; max-width: 160px; white-space: normal; }
+.structural-vfx .unity-base-field__input { min-width: 0; }
+.structural-vfx .structural-heading { min-height: 22px; flex-shrink: 0; margin-top: 6px; }
+.structural-vfx .unity-scroll-view { height: auto; }
+.structural-vfx.unity-scroll-view { height: auto; }

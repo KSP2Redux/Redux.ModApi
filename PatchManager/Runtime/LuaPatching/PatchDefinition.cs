@@ -587,7 +587,17 @@ namespace PatchManager.LuaPatching
         public bool Apply(DynValue value, Summary summary, out bool removed, out bool errored)
         {
             string before = Core.Assets.PatchingManager.ReadTraceValue(this, value);
-            bool applied = ApplyCore(value, summary, out removed, out errored);
+            string previousOwner = summary.CurrentModId;
+            bool applied;
+            summary.CurrentModId = PatchModId;
+            try
+            {
+                applied = ApplyCore(value, summary, out removed, out errored);
+            }
+            finally
+            {
+                summary.CurrentModId = previousOwner;
+            }
             if (before != null)
                 Core.Assets.PatchingManager.RecordTracePatch(this, value, summary.LatestEntry, before, removed);
             return applied;

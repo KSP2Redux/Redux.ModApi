@@ -1,4 +1,7 @@
 ﻿using KSP.Game;
+using KSP.Rendering;
+using KSP.Sim;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 // ReSharper disable once CheckNamespace
@@ -16,6 +19,38 @@ namespace DebugTools.Runtime.Controllers
         // The backing field for the IsWindowOpen property
         private bool _isWindowOpen;
 
+        /// <summary>
+        /// Gets the scene camera used for physics-space overlay geometry.
+        /// </summary>
+        /// <returns>The scene render camera, or null while unavailable.</returns>
+        protected Camera GetOverlayCamera()
+        {
+            if (Game.GlobalGameState.GetState() == GameState.VehicleAssemblyBuilder)
+            {
+                var builder = Game.OAB.Current;
+                return builder == null || builder.CameraManager == null ? null : builder.CameraManager.Camera;
+            }
+            return Game.CameraManager.GetCameraRenderStack(CameraID.Flight, RenderSpaceType.PhysicsSpace)
+                ?.GetMainRenderCamera();
+        }
+
+        /// <summary>
+        /// Finds a layer included by the scene camera rather than assuming TransparentFX is visible.
+        /// </summary>
+        /// <param name="camera">The scene render camera.</param>
+        /// <returns>An included layer, or -1 while no render layer is available.</returns>
+        protected static int GetOverlayLayer(Camera camera)
+        {
+            if (camera == null || !camera.isActiveAndEnabled)
+                return -1;
+            for (int layer = 0; layer < 32; layer++)
+            {
+                if ((camera.cullingMask & (1 << layer)) != 0)
+                    return layer;
+            }
+            return -1;
+        }
+
         internal void Bind(VisualElement toolRoot)
         {
             RootElement = toolRoot;
@@ -31,11 +66,22 @@ namespace DebugTools.Runtime.Controllers
                 RootElement.resolvedStyle.visibility == Visibility.Visible;
             set
             {
+                bool changed = _isWindowOpen != value;
                 _isWindowOpen = value;
                 // The host shows or hides the tool by its display style. Every update of a tool returns at once while
                 // the tool is not shown.
                 RootElement.style.display = value ? DisplayStyle.Flex : DisplayStyle.None;
+                if (changed)
+                    OnRequestedOpenChanged(value);
             }
+        }
+
+        /// <summary>
+        /// Start or stop work tied to the requested window lifetime.
+        /// </summary>
+        /// <param name="isOpen">True while the host requests the tool open.</param>
+        protected virtual void OnRequestedOpenChanged(bool isOpen)
+        {
         }
 
         /// <summary>

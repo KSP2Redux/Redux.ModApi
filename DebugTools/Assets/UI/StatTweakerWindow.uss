@@ -1,0 +1,10 @@
+.stat-tweaker { width: 640px; min-width: 420px; max-width: 640px; max-height: 680px; }
+.stat-tweaker .stat-scroll { height: auto; max-height: 430px; flex-shrink: 1; }
+.stat-tweaker .unity-scroll-view__content-container { min-width: 0; }
+.stat-tweaker .stat-wrap { white-space: normal; -unity-text-align: upper-left; height: auto; min-width: 0; flex-shrink: 0; }
+.stat-tweaker > .kui-row, .stat-tweaker > .kui-field { flex-shrink: 0; }
+.stat-tweaker .kui-row .kui-button { flex-grow: 1; flex-basis: 0; min-width: 0; }
+.stat-tweaker .stat-row { flex-direction: row; flex-shrink: 0; }
+.stat-tweaker .stat-row .kui-field { flex-grow: 1; min-width: 0; }
+.stat-tweaker .stat-row .unity-base-field__label { width: 270px; min-width: 0; white-space: normal; }
+.stat-tweaker .stat-row .kui-button { width: 60px; min-width: 0; }

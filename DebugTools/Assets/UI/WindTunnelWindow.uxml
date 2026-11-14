@@ -1,0 +1,25 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:Template name="ConditionsPanel" src="ConditionsPanel.uxml" />
+    <Style src="DebugWindow.uss" />
+    <Style src="WindTunnelWindow.uss" />
+    <ui:VisualElement name="root" class="dt-tool kui-dense wind-tunnel">
+        <ui:Label text="// SUBJECT" class="kui-category" />
+        <ui:Label name="subject" text="Current loaded flight vessel" class="kui-value" />
+        <ui:Label name="validation" text="Not validated" class="kui-value" />
+        <ui:Label text="// CONDITIONS" class="kui-category" />
+        <ui:Instance template="ConditionsPanel" name="conditions" />
+        <ui:Label text="// RUN" class="kui-category" />
+        <ui:DropdownField name="variable" label="Sweep variable" class="kui-field" />
+        <ui:FloatField name="from" label="From (deg)" value="-20" class="kui-field" />
+        <ui:FloatField name="to" label="To (deg)" value="20" class="kui-field" />
+        <ui:IntegerField name="count" label="Samples" value="21" class="kui-field" />
+        <UitkForKsp2.Controls.OabButton name="run" text="Run headless sweep" class="kui-button" />
+        <ui:Label name="status" class="kui-value" />
+        <ui:Label text="// RESULTS" class="kui-category" />
+        <ui:VisualElement name="results-header" class="wind-tunnel-header" />
+        <ui:ScrollView name="results-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="AlwaysVisible" class="wind-tunnel-results">
+            <ui:VisualElement name="results" />
+        </ui:ScrollView>
+        <UitkForKsp2.Controls.OabButton name="capture" text="Capture report and polars" class="kui-button" />
+    </ui:VisualElement>
+</ui:UXML>

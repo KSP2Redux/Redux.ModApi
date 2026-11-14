@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="DebugWindow.uss" />
+    <Style src="CampaignFeaturesWindow.uss" />
+    <ui:ScrollView name="root" horizontal-scroller-visibility="Hidden" class="dt-tool kui-dense campaign-features">
+        <ui:Label text="Apply reloads the campaign with the requested features." class="qa-preview-wrap" />
+        <ui:Label text="Revert discards progress since the first Apply." class="qa-preview-wrap" />
+        <ui:VisualElement class="kui-row">
+            <UitkForKsp2.Controls.OabButton name="refresh" text="Refresh" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="apply" text="Apply and reload" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="revert" text="Revert and reload" class="kui-button" />
+        </ui:VisualElement>
+        <ui:Label name="status" class="qa-preview-wrap" />
+        <UitkForKsp2.Controls.OabButton name="capture" text="Capture feature report" class="kui-button" />
+        <ui:VisualElement name="features" />
+    </ui:ScrollView>
+</ui:UXML>

@@ -1,0 +1,22 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="DebugWindow.uss" />
+    <Style src="StructuralVfxWindow.uss" />
+    <ui:ScrollView name="root" horizontal-scroller-visibility="Hidden" class="dt-tool kui-dense structural-vfx">
+        <ui:Label text="// SUBJECT" class="structural-heading" />
+        <ui:DropdownField name="part" label="Part" class="kui-field" />
+        <ui:DropdownField name="connection" label="Attachment" class="kui-field" />
+        <UitkForKsp2.Controls.OabButton name="refresh" text="Refresh active vessel" class="kui-button" />
+        <ui:Label text="// CONDITIONS" class="structural-heading" />
+        <ui:FloatField name="stress" label="Stress (0 to 1)" value="0.9" class="kui-field" />
+        <ui:DropdownField name="medium" label="Break burst medium" class="kui-field" />
+        <ui:Label text="Preview particles only. FX quality and camera culling apply." class="qa-preview-wrap" />
+        <ui:Label text="Flight attachments only. No destruction, fragments, forces or break audio." class="qa-preview-wrap" />
+        <ui:VisualElement class="kui-row">
+            <UitkForKsp2.Controls.OabButton name="overstress" text="Play overstress" class="kui-button" />
+            <UitkForKsp2.Controls.OabButton name="burst" text="Play break burst" class="kui-button" />
+        </ui:VisualElement>
+        <UitkForKsp2.Controls.OabButton name="stop" text="Stop and restore" class="kui-button" />
+        <ui:Label name="status" class="qa-preview-wrap" />
+        <UitkForKsp2.Controls.OabButton name="capture" text="Capture preview report" class="kui-button" />
+    </ui:ScrollView>
+</ui:UXML>

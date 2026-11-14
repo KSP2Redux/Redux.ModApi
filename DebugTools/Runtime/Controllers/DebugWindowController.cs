@@ -19,7 +19,7 @@ namespace DebugTools.Runtime.Controllers
     /// Controller for the Dev Tools hub, the one debug window. It holds the section rail, search, the cheats and the
     /// status strip of active overrides, and opens every other debug tool.
     /// </summary>
-    public class DebugWindowController : KerbalMonoBehaviour
+    public partial class DebugWindowController : KerbalMonoBehaviour
     {
         /// <summary>
         /// The hub sections in rail order. Each one answers a question a tester asks.
@@ -429,6 +429,21 @@ namespace DebugTools.Runtime.Controllers
             }
         }
 
+        /// <summary>
+        /// Open the existing patch trace without toggling an already open tool closed.
+        /// </summary>
+        internal void OpenPatchTrace()
+        {
+            foreach (HubEntry entry in _entries)
+            {
+                if (entry.WindowName != "PatchTraceWindow")
+                    continue;
+                if (!entry.PopoutOpen)
+                    OpenHostedTool(entry);
+                return;
+            }
+        }
+
         private void OpenHostedTool(HubEntry entry)
         {
             if (entry.Mode == ToolMode.Inline && !entry.PoppedOut)
@@ -664,6 +679,8 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnDestroy()
         {
+            ClosePalette();
+            ReleasePaletteEscape();
             DebugOverrides.Changed -= OnOverridesChanged;
             UnsubscribeFromGameState();
         }

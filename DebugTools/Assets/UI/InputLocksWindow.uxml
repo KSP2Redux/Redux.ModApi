@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="DebugWindow.uss" />
+    <Style src="InputLocksWindow.uss" />
+    <ui:ScrollView horizontal-scroller-visibility="Hidden" name="root" class="dt-tool kui-dense input-locks">
+        <ui:Label text="Read-only, sampled every 0.25 s. Age is time observed." class="kui-value input-wrap" />
+        <ui:VisualElement class="input-row input-header"><ui:Label text="Owner" class="input-owner" /><ui:Label text="Mask or scope" class="input-mask" /><ui:Label text="Age (s)" class="input-age" /></ui:VisualElement>
+        <ui:ScrollView horizontal-scroller-visibility="Hidden" class="input-scroll"><ui:VisualElement name="locks" /></ui:ScrollView>
+        <ui:VisualElement class="kui-row">
+            <ui:Button name="probe" text="Probe next input" class="kui-button" />
+            <ui:Button name="cancel" text="Cancel probe" class="kui-button" />
+        </ui:VisualElement>
+        <ui:Label text="Probe observes dispatch without consuming input." class="kui-value input-wrap" />
+        <ui:ScrollView horizontal-scroller-visibility="Hidden" class="input-scroll"><ui:Label name="result" text="Press Probe, then click or press a hotkey normally." class="kui-value input-wrap" /></ui:ScrollView>
+        <ui:Button name="capture" text="Capture report" class="kui-button" />
+    </ui:ScrollView>
+</ui:UXML>

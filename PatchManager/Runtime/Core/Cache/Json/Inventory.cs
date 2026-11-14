@@ -15,6 +15,12 @@ namespace PatchManager.Core.Cache.Json
     public class Inventory
     {
         /// <summary>
+        /// Gets or sets per-mod applied, skipped and failed application counts, or null for an older cache.
+        /// </summary>
+        [JsonProperty("mod_patch_outcomes")]
+        public Dictionary<string, int[]> ModPatchOutcomes { get; internal set; }
+
+        /// <summary>
         /// Dictionary of all patched labels and their respective archives and assets.
         /// </summary>
         [JsonProperty("cache", Required = Required.Always)]

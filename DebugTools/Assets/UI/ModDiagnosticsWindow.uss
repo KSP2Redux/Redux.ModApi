@@ -1,0 +1,12 @@
+.doctor-root { width: 620px; min-width: 420px; max-width: 620px; max-height: 650px; flex-shrink: 1; }
+.doctor-actions > .kui-button { flex-grow: 1; flex-basis: 0; min-width: 0; }
+.doctor-wrap { white-space: normal; flex-shrink: 0; height: auto; -unity-text-align: upper-left; }
+.doctor-matches { max-height: 100px; flex-shrink: 1; }
+.doctor-results { max-height: 380px; min-height: 0; flex-shrink: 1; }
+.doctor-output { min-width: 0; flex-shrink: 0; height: auto; white-space: normal; -unity-text-align: upper-left; }
+.doctor-output .unity-text-field__input { white-space: normal; }
+.doctor-matches .kui-button { white-space: normal; min-width: 0; max-width: 100%; height: auto; min-height: 24px; }
+.doctor-root .unity-scroll-view__content-container { min-width: 0; flex-grow: 0; }
+.doctor-root .doctor-hidden { display: none; }
+.doctor-root .unity-scroll-view { height: auto; }
+.doctor-root > .kui-field, .doctor-root > .kui-row, .doctor-root > .kui-button { flex-shrink: 0; }

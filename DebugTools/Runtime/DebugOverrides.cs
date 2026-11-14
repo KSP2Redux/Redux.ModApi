@@ -88,6 +88,73 @@ namespace DebugTools
         public static string TestOverrideNames => string.Join(", ", GetTestNames());
 
         /// <summary>
+        /// Restore VAB stat edits before copying parts or recording craft history.
+        /// </summary>
+        public static void RevertVabStats()
+        {
+            if (!HasVabStats())
+                return;
+            var ids = new List<string>();
+            foreach (string id in _active.Keys)
+            {
+                if (id.StartsWith("vab:stats:", StringComparison.Ordinal))
+                    ids.Add(id);
+            }
+            foreach (string id in ids)
+            {
+                Revert(id);
+            }
+        }
+
+        private static bool HasVabStats()
+        {
+            foreach (var entry in _active)
+            {
+                if (entry.Key.StartsWith("vab:stats:", StringComparison.Ordinal))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Warn about VAB stat edits and restore them before a save or launch continues.
+        /// </summary>
+        /// <param name="proceed">The operation to retry after restoration.</param>
+        /// <returns>True if a warning was shown and the caller must return, false otherwise.</returns>
+        public static bool ConfirmVabStatReset(Action proceed)
+        {
+            if (!HasVabStats())
+                return false;
+            return ShowVabStatReset(proceed);
+        }
+
+        private static bool ShowVabStatReset(Action proceed)
+        {
+            var ids = new List<string>();
+            foreach (string id in _active.Keys)
+            {
+                if (id.StartsWith("vab:stats:", StringComparison.Ordinal))
+                    ids.Add(id);
+            }
+            if (ids.Count == 0)
+                return false;
+            GameManager.Instance.Game.UI.ShowMessageBox("VAB stat tweaks", SaveWarning +
+                " VAB stat tweaks will be restored before this operation. The saved or launched craft uses original values. Export the delta first to keep the design changes.",
+                null, new List<KSP.UI.ButtonData>
+                {
+                    new KSP.UI.ButtonData { Text = "Restore and continue", Action = () =>
+                    {
+                        foreach (string id in ids)
+                        {
+                            Revert(id);
+                        }
+                        proceed();
+                    } }
+                }, true, true, "Cancel", false);
+            return true;
+        }
+
+        /// <summary>
         /// Add or update test state.
         /// </summary>
         /// <param name="id">The stable owner identifier.</param>
@@ -131,7 +198,15 @@ namespace DebugTools
             if (!_active.TryGetValue(id, out ActiveOverride entry))
                 return false;
 
-            entry.Revert();
+            try
+            {
+                entry.Revert();
+            }
+            catch (Exception exception) when (id.StartsWith("vab:stats:", StringComparison.Ordinal))
+            {
+                _active.Remove(id);
+                GlobalLog.Warn(LogFilter.Gameplay, $"Could not revert {entry.Name}: {exception.Message}");
+            }
             return true;
         }
 

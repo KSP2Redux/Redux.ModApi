@@ -1,0 +1,93 @@
+.plume-lab {
+    width: 560px;
+    min-width: 420px;
+    max-width: 560px;
+    max-height: 600px;
+    height: auto;
+    min-height: 0;
+    flex-shrink: 1;
+}
+.plume-lab .unity-scroll-view__content-container {
+    min-width: 0;
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+.plume-lab .kui-value,
+.plume-lab .plume-lab-wrap {
+    white-space: normal;
+    height: auto;
+    flex-shrink: 0;
+    -unity-text-align: upper-left;
+    min-width: 0;
+    margin-bottom: 3px;
+}
+.plume-lab .kui-button {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+.plume-lab-buttons > .kui-button {
+    flex-basis: 0;
+    margin: 2px;
+}
+.plume-lab .unity-base-field__label {
+    min-width: 155px;
+    max-width: 155px;
+    white-space: normal;
+}
+.plume-lab .unity-toggle__label {
+    flex-shrink: 1;
+    white-space: normal;
+}
+.plume-lab .plume-engine > .unity-base-field__label {
+    flex-grow: 1;
+    max-width: none;
+}
+.plume-lab .plume-engine > .unity-toggle__input {
+    flex-grow: 0;
+    flex-shrink: 0;
+    min-width: 24px;
+}
+.plume-lab .unity-slider {
+    min-height: 28px;
+    flex-shrink: 0;
+}
+.plume-lab .unity-slider > .unity-base-field__input {
+    flex-grow: 1;
+    min-width: 100px;
+    min-height: 24px;
+}
+.plume-lab .unity-slider #unity-tracker {
+    height: 3px;
+    background-color: rgb(116, 118, 128);
+}
+.plume-lab .unity-slider #unity-dragger {
+    width: 14px;
+    height: 20px;
+    margin-top: -8px;
+    background-color: rgb(214, 224, 255);
+    border-width: 1px;
+    border-color: rgb(105, 109, 255);
+}
+
+.plume-lab.unity-scroll-view { height: auto; }
+.plume-lab .unity-scroll-view__content-container > *,
+.plume-lab .kui-group,
+.plume-lab .kui-group > *,
+.plume-lab .plume-lab-buttons,
+.plume-lab .unity-foldout,
+.plume-lab #engines > * { flex-shrink: 0; }
+.plume-lab .kui-group { height: auto; }
+.plume-lab .plume-lab-buttons { min-height: 28px; }
+.plume-lab .unity-foldout__toggle { height: auto; min-height: 24px; flex-shrink: 0; }
+.plume-lab .condition-pressure-input { flex-shrink: 0; }
+.plume-lab .plume-engine { height: auto; min-height: 28px; }
+.plume-lab .plume-engine > .unity-base-field__label.unity-text-element {
+    min-width: 0;
+    max-width: none;
+    flex-basis: 0;
+    flex-grow: 1;
+    height: auto;
+    white-space: normal;
+}
+.plume-lab .plume-engine > .unity-base-field__input { flex-grow: 0; flex-shrink: 0; }

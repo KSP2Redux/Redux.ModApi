@@ -1,0 +1,9 @@
+.appearance { width: 560px; min-width: 420px; max-width: 560px; max-height: 650px; flex-shrink: 1; }
+.appearance-scroll { flex-shrink: 1; min-height: 0; max-height: 430px; }
+.appearance .appearance-wrap { white-space: normal; -unity-text-align: upper-left; min-width: 0; flex-shrink: 0; height: auto; }
+.appearance .kui-row > .kui-button { flex-grow: 1; flex-basis: 0; min-width: 0; }
+.appearance .unity-base-slider__drag-container { min-height: 18px; }
+.appearance .unity-base-slider__tracker { height: 4px; }
+.appearance .unity-base-slider__dragger { width: 10px; height: 16px; }
+.appearance .unity-scroll-view { height: auto; }
+.appearance > .kui-field, .appearance > .kui-row, .appearance > .kui-button { flex-shrink: 0; }

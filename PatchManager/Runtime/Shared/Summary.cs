@@ -50,6 +50,11 @@ namespace PatchManager.Shared
             /// <summary>The name of the patch the entry corresponds to.</summary>
             public string Name;
 
+            /// <summary>
+            /// The owning mod ID, when recorded by patch application.
+            /// </summary>
+            public string ModId;
+
             /// <summary>The pass the patch ran in.</summary>
             public string Pass;
 
@@ -104,6 +109,11 @@ namespace PatchManager.Shared
         [CanBeNull] private List<AssetSummary> _currentLabel;
         [CanBeNull] private AssetSummary _currentAsset;
         private string _currentPass = PassDefinition.DEFAULT;
+
+        /// <summary>
+        /// Gets or sets the owner of the patch currently being applied.
+        /// </summary>
+        internal string CurrentModId { get; set; }
 
         /// <summary>
         /// Gets the latest outcome for the current asset and pass, for diagnostic capture.
@@ -321,6 +331,7 @@ namespace PatchManager.Shared
 
         private void AddEntry(SummaryEntry entry)
         {
+            entry.ModId = CurrentModId;
             if (_currentAsset == null)
                 return;
             if (!_currentAsset.EntriesByPass.TryGetValue(_currentPass, out var list))

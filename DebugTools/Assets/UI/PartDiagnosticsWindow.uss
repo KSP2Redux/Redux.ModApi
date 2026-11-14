@@ -1,0 +1,7 @@
+.part-diagnostics { width: 640px; min-width: 420px; max-width: 640px; max-height: 680px; }
+.part-diagnostics .diagnostic-results { max-height: 430px; flex-shrink: 1; }
+.part-diagnostics .diagnostic-wrap { white-space: normal; -unity-text-align: upper-left; min-width: 0; height: auto; flex-shrink: 0; }
+.part-diagnostics .kui-row .kui-button { flex-grow: 1; flex-basis: 0; min-width: 0; }
+.part-diagnostics .unity-scroll-view__content-container { min-width: 0; }
+.part-diagnostics .unity-scroll-view { height: auto; }
+.part-diagnostics > .kui-field, .part-diagnostics > .kui-row, .part-diagnostics > .kui-button { flex-shrink: 0; }

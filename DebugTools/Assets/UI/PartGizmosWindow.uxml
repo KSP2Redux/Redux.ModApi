@@ -1,0 +1,26 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="DebugWindow.uss" />
+    <Style src="PartGizmosWindow.uss" />
+    <ui:ScrollView name="root" horizontal-scroller-visibility="Hidden" class="dt-tool kui-dense part-gizmos">
+        <ui:DropdownField name="subject" label="Part" class="kui-field" />
+        <ui:VisualElement class="dt-actions">
+            <ui:Button name="selected" text="Use VAB selection" class="kui-button" />
+            <ui:Button name="refresh" text="Refresh craft" class="kui-button" />
+        </ui:VisualElement>
+        <ui:Toggle name="whole" label="Whole craft (otherwise chosen part)" class="kui-field" />
+        <ui:Toggle name="draw" label="Draw geometry overlay" class="kui-field" />
+        <ui:Toggle name="nodes" label="Attach nodes and size tags" value="true" class="kui-field" />
+        <ui:Toggle name="colliders" label="Colliders: cyan solid, orange trigger" class="kui-field" />
+        <ui:Toggle name="drag" label="Drag cube faces: blue low drag, red high" class="kui-field" />
+        <ui:Toggle name="thrust" label="Thrust direction (green)" class="kui-field" />
+        <ui:Toggle name="hatches" label="Airlock transforms (yellow)" class="kui-field" />
+        <ui:Toggle name="com" label="Authored CoM per part (white)" class="kui-field" />
+        <ui:Label text="Geometry only. Refresh after craft edits." class="kui-value gizmos-wrap" />
+        <ui:Label text="Close or Clear all stops drawing." class="kui-value gizmos-wrap" />
+        <ui:Label name="status" class="kui-value gizmos-wrap" />
+        <ui:VisualElement class="dt-actions">
+            <ui:Button name="clear" text="Clear all" class="kui-button" />
+            <ui:Button name="capture" text="Capture report" class="kui-button" />
+        </ui:VisualElement>
+    </ui:ScrollView>
+</ui:UXML>

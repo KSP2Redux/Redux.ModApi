@@ -1,0 +1,17 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="DebugWindow.uss" />
+    <Style src="FlightTimelineWindow.uss" />
+    <ui:VisualElement name="root" class="dt-tool kui-dense flight-timeline">
+        <ui:Toggle name="loss" label="Frozen vessel loss" class="kui-toggle" />
+        <ui:Slider name="zoom" label="Window (real s)" low-value="1" high-value="30" value="30" class="kui-field" />
+        <ui:Slider name="cursor" label="Cursor (window fraction)" low-value="0" high-value="1" value="1" class="kui-field" />
+        <ui:Label name="status" class="kui-value timeline-wrap" />
+        <ui:ScrollView vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden">
+            <ui:Label text="Each row uses its displayed range. Event timestamps use arrival real time and latest observed UT/tick." class="kui-value timeline-wrap" />
+            <ui:VisualElement name="charts" />
+            <ui:Label name="values" class="kui-value timeline-wrap" />
+            <ui:Label name="events" class="kui-value timeline-wrap" />
+        </ui:ScrollView>
+        <ui:Button name="capture" text="Capture timeline report" class="kui-button" />
+    </ui:VisualElement>
+</ui:UXML>

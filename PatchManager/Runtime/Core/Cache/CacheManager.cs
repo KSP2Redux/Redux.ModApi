@@ -344,6 +344,30 @@ namespace PatchManager.Core.Cache
         /// <param name="universeSummary">The run's summary.</param>
         public static void SaveSummary(Summary universeSummary)
         {
+            var outcomes = new Dictionary<string, int[]>(StringComparer.Ordinal);
+            foreach (var group in universeSummary.Summaries)
+            {
+                foreach (var asset in group.assets)
+                {
+                    foreach (var pass in asset.EntriesByPass.Values)
+                    {
+                        foreach (var entry in pass)
+                        {
+                            string owner = entry.ModId ?? "<unattributed>";
+                            if (!outcomes.TryGetValue(owner, out var counts))
+                                outcomes[owner] = counts = new int[3];
+                            int column = entry.State switch
+                            {
+                                Summary.ApplicationState.Skipped => 1,
+                                Summary.ApplicationState.Errored => 2,
+                                _ => 0
+                            };
+                            counts[column]++;
+                        }
+                    }
+                }
+            }
+            Inventory.ModPatchOutcomes = outcomes;
             PatchManagerSummaryLog.UpdateCoreSummary(universeSummary.Dump());
         }
 
