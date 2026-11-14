@@ -383,6 +383,9 @@ namespace DebugTools.Runtime.Controllers
                 UITKHelper.LoadUxml(templateName ?? windowName, asset =>
                 {
                     entry.Loading = false;
+                    // The asset provider has already logged the missing address. Leave the tool unloaded.
+                    if (asset == null)
+                        return;
                     TemplateContainer container = asset.Instantiate();
 
                     // The tools sit under the DontDestroyOnLoad DebugTools object, so a scene change keeps them. If
