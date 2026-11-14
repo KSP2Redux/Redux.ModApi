@@ -57,7 +57,7 @@ namespace DebugTools.Runtime.Controllers
             _list.makeItem = MakeRow;
             _list.bindItem = BindRow;
             _list.itemsSource = _filtered;
-            _list.fixedItemHeight = 32;
+            _list.fixedItemHeight = 52;
             _search.SetValueWithoutNotify(_pendingKey);
             _search.RegisterValueChangedCallback(_ =>
             {

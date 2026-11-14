@@ -3,11 +3,11 @@
     <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/SASChartsWindow.uss?fileID=7433441132597879392&amp;guid=c395466ec39b2b345909adecbe87ff24&amp;type=3#SASChartsWindow"/>
     <Style src="project://database/Packages/com.nb.uit_charts/Runtime/styles/uit_charts.uss?fileID=7433441132597879392&amp;guid=5324f6bc1c9a2074098dc4401f2de17e&amp;type=3#uit_charts"/>
     <ui:VisualElement name="root" class="dt-tool SASChartsWindow">
-        <UitkForKsp2.Controls.InvertedCornerBox border-thickness="1" notch-size="5" border-color="#747680FF" background-color="#1B1E24FF" class="oab-window-body kui-panel">
+        <ui:VisualElement class="dt-tool-body">
 
             <NB.Charts.LineChart name="pitch-chart" major-grid-line-width="1" major-grid-label-font-size="10" show-legend="true" default-data-width="2" show-major-grid-labels-vertical="false" axis-label-left="Pitch (°)" grid-label-format-string="N0" major-grid-auto-spacing-vertical="false" class="sas-chart"/>
             <NB.Charts.LineChart name="roll-chart" major-grid-line-width="1" major-grid-label-font-size="10" show-legend="true" default-data-width="2" show-major-grid-labels-vertical="false" axis-label-left="Roll (°)" grid-label-format-string="N0" major-grid-auto-spacing-vertical="false" class="sas-chart"/>
             <NB.Charts.LineChart name="yaw-chart" major-grid-line-width="1" major-grid-label-font-size="10" show-legend="true" default-data-width="2" show-major-grid-labels-vertical="false" axis-label-left="Yaw (°)" grid-label-format-string="N0" major-grid-auto-spacing-vertical="false" class="sas-chart"/>
-        </UitkForKsp2.Controls.InvertedCornerBox>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

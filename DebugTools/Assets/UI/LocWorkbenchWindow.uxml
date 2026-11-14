@@ -9,13 +9,12 @@
             <UitkForKsp2.Controls.OabButton name="loc-reset-all" text="Reset all" class="kui-button loc-toolbar__narrow" />
         </ui:VisualElement>
         <ui:VisualElement class="dt-table__header kui-row loc-row">
-            <ui:Label text="Key" class="kui-row__label loc-key" />
-            <ui:Label text="Current language" class="kui-row__label loc-value" />
+            <ui:Label text="Key, then current language" class="kui-row__label loc-value" />
             <ui:Label text="English" class="kui-row__label loc-english" />
             <ui:Label text="Source" class="kui-row__label loc-source" />
             <ui:VisualElement class="loc-reset" />
         </ui:VisualElement>
-        <ui:ListView name="loc-list" item-template="LocWorkbenchRow.uxml" virtualization-method="FixedHeight" fixed-item-height="32" selection-type="Single" class="loc-list" />
+        <ui:ListView name="loc-list" item-template="LocWorkbenchRow.uxml" virtualization-method="FixedHeight" fixed-item-height="52" selection-type="Single" class="loc-list" />
         <ui:Label name="loc-status" class="kui-row__label loc-status" />
     </ui:VisualElement>
 </ui:UXML>

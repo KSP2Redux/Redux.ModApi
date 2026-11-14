@@ -1,3 +1,4 @@
-.SASChartsWindow .sas-chart { height: 175px; min-height: 175px; padding: 0; }
+/* The legend is absolutely placed at the chart's top right. The right padding keeps the plot out from under it. */
+.SASChartsWindow .sas-chart { height: 175px; min-height: 175px; padding: 0 104px 0 0; }
 .SASChartsWindow .nb-chart__legend__label { font-size: 12px; }
 .SASChartsWindow .nb-chart__legend__entry { height: 20px; padding: 0 5px; }

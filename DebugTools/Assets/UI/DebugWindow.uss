@@ -449,6 +449,11 @@
 .dt-tool-slot {
     min-width: 0;
 }
+/* The hub box or pop-out frame already draws the border, so a tool body only lays out its content. */
+.dt-tool-body {
+    flex-grow: 1;
+    min-height: 0;
+}
 /* Tool roots size themselves for their pop-out window. Hosted in a hub slot they fill the slot instead, so a fixed
    pop-out width cannot push the tool past the slot's border. */
 .dt-tool-slot .dt-tool {

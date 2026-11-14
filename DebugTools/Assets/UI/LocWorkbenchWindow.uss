@@ -7,10 +7,13 @@
 .loc-toolbar > .loc-toolbar__narrow { width: 88px; }
 
 .loc-list { height: 420px; min-height: 180px; flex-grow: 1; }
-.loc-row { height: 32px; min-height: 32px; flex-shrink: 0; padding: 0 6px; }
-.loc-row > .loc-key { width: 24%; flex-grow: 0; }
-.loc-row > .loc-value { width: 31%; flex-grow: 0; margin-right: 6px; }
-.loc-row > .loc-english { width: 25%; flex-grow: 0; }
+/* Each entry shows its full key on its own line, so writers can always read which term they edit. */
+.loc-entry { height: 52px; padding: 2px 6px 0 6px; }
+.loc-entry__key { height: 18px; margin: 0; padding: 0; font-size: 12px; color: rgb(154, 158, 167); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.loc-row { height: 30px; min-height: 30px; flex-shrink: 0; padding: 0 6px; }
+.loc-entry > .loc-row { padding: 0; }
+.loc-row > .loc-value { width: 45%; flex-grow: 0; margin-right: 6px; }
+.loc-row > .loc-english { width: 35%; flex-grow: 0; }
 .loc-row > .loc-source { width: 90px; flex-grow: 0; }
 .loc-reset { width: 56px; }
 .loc-row .unity-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

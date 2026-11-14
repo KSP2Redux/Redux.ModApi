@@ -2,7 +2,7 @@
     <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/DebugWindow.uss?fileID=7433441132597879392&amp;guid=3b02df7e5905e8746a5ed673f30eb0be&amp;type=3#DebugWindow"/>
     <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/ManeuversWindow.uss?fileID=7433441132597879392&amp;guid=223e4154c4466cf459c464373f941201&amp;type=3#ManeuversWindow"/>
     <ui:VisualElement name="root" class="dt-tool ManeuversWindow">
-        <UitkForKsp2.Controls.InvertedCornerBox border-thickness="1" notch-size="5" border-color="#747680FF" background-color="#1B1E24FF" class="oab-window-body kui-panel">
+        <ui:VisualElement class="dt-tool-body">
             <ui:VisualElement class="dt-table dt-vtable">
                 <ui:VisualElement name="header-host" class="dt-vtable__header">
                     <ui:VisualElement class="maneuver-node dt-table__header">
@@ -33,6 +33,6 @@
                     </ui:VisualElement>
                 </ui:ScrollView>
             </ui:VisualElement>
-        </UitkForKsp2.Controls.InvertedCornerBox>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
