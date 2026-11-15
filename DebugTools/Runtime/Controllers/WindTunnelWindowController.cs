@@ -152,6 +152,7 @@ namespace DebugTools.Runtime.Controllers
                 Vector3 forward = axes.Forward;
                 Vector3 right = axes.Right;
                 Vector3 up = Vector3.Cross(right, forward).normalized;
+                string shielding = string.Empty;
                 for (int index = 0; index < count; index++)
                 {
                     double value = start + (end - start) * index / (count - 1.0);
@@ -172,6 +173,7 @@ namespace DebugTools.Runtime.Controllers
                     Vector3 direction = (forward - up * (float)Math.Tan(aoa * Math.PI / 180) +
                         right * (float)Math.Tan(slip * Math.PI / 180)).normalized;
                     JObject result = WindTunnel.Sample(Game, _conditions.Body, density, (float)(sound * mach), (float)mach, direction);
+                    shielding = result.Value<string>("thermalShielding");
                     var row = new JArray(value);
                     for (int column = 1; column < COLUMNS.Length; column++)
                     {
@@ -184,7 +186,7 @@ namespace DebugTools.Runtime.Controllers
                 _stamp = new JObject { ["conditions"] = conditions, ["variable"] = SweepVariable,
                     ["craft"] = _subject, ["craftId"] = craftId, ["validated"] = !assembly && WindTunnel.IS_VALIDATED,
                     ["from"] = start, ["to"] = end, ["count"] = count };
-                _stamp["thermalShielding"] = assembly ? "VAB geometry and neutral controls. No live exhaust, solar or flight bay shielding. Launch comparison pending." : "Current flight exposure and shield fractions held fixed across the sweep";
+                _stamp["thermalShielding"] = shielding;
                 _rows = rows;
                 _report = report;
                 VisualElement table = RootElement.Q("results");
