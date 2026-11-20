@@ -3,9 +3,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using KSP.Game;
 using KSP.ScriptInterop.impl.moonsharp;
 using MoonSharp.Interpreter;
+using Newtonsoft.Json.Linq;
 using SpaceWarp2.API.Configuration;
 using SpaceWarp2.API.Logging;
 using SpaceWarp2.API;
@@ -36,6 +38,15 @@ namespace SpaceWarp2.API.Lifecycle
         // The global holding the id of the mod an environment belongs to
         private const string MOD_ID_GLOBAL = "ModId";
 
+        /// <summary>
+        /// Observes completed real mod bodies for an explicitly armed source-player capture.
+        /// </summary>
+        /// <remarks>
+        /// Arguments are the real mod id, source key, unmodified body and execution success.
+        /// The capture owner restores the previous observer during completion or teardown.
+        /// </remarks>
+        internal static Action<string, string, string, bool> AuthoredSourceObserver;
+
         private static readonly ModScriptLoader Loader = new();
         // Taken on first use, so tracking feature environments does not need the log provider to be set up
         private static ILogger _logger;
@@ -51,6 +62,8 @@ namespace SpaceWarp2.API.Lifecycle
         private static void ResetStaticState()
         {
             FeatureEnvironments.Clear();
+            _authoredSourceBodies = null;
+            _authoredSourceContractHash = null;
         }
 
         /// <summary>
@@ -128,9 +141,17 @@ namespace SpaceWarp2.API.Lifecycle
 
         private static void RunSource(SpaceWarpPluginDescriptor descriptor, Table env, string key, string content)
         {
+            if (PatchManager.Core.Assets.PatchingManager.ExcludeDiagnosticAuthoredLuaBody(descriptor.Guid, key, content)
+                || IsAuthoredSourceBody(descriptor.Guid, key, content))
+            {
+                descriptor.LoadedScripts[key] = content;
+                return;
+            }
+            bool succeeded = false;
             try
             {
                 RunBodyIn(env, content, key);
+                succeeded = true;
             }
             catch (Exception e)
             {
@@ -140,6 +161,7 @@ namespace SpaceWarp2.API.Lifecycle
             }
 
             descriptor.LoadedScripts[key] = content;
+            AuthoredSourceObserver?.Invoke(descriptor.Guid, key, content, succeeded);
         }
 
         /// <summary>
@@ -312,5 +334,248 @@ namespace SpaceWarp2.API.Lifecycle
                 _consoleEnv[name] = value;
             }
         }
+        private static Newtonsoft.Json.Linq.JObject _authoredSourceBodies;
+        private static string _authoredSourceContractHash;
+
+        /// <summary>
+        /// Gets the portable source-bake contract hash included in the ordinary patch-cache checksum.
+        /// </summary>
+        internal static string AuthoredSourceContractHash
+        {
+            get
+            {
+                LoadAuthoredSourceBodies();
+                return _authoredSourceContractHash ?? string.Empty;
+            }
+        }
+
+        private static void LoadAuthoredSourceBodies()
+        {
+            if (_authoredSourceBodies != null)
+                return;
+            if (!Redux.ReduxAssets.IsSourceOnly)
+            {
+                _authoredSourceBodies = new Newtonsoft.Json.Linq.JObject();
+                return;
+            }
+            string path = Path.Combine(UnityEngine.Application.streamingAssetsPath, "Redux", "lua-source-bakes.json");
+            if (!File.Exists(path))
+            {
+                _authoredSourceBodies = new Newtonsoft.Json.Linq.JObject();
+                return;
+            }
+            if (path.Length > 240 || new FileInfo(path).Length > 8 * 1024 * 1024)
+                throw new InvalidDataException("Portable authored Lua source contract exceeds its file budget.");
+            var contract = Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(path));
+            ValidateAuthoredSourceContract(contract);
+            var bodies = new Newtonsoft.Json.Linq.JObject();
+            foreach (Newtonsoft.Json.Linq.JObject row in contract["bodies"])
+            {
+                bodies[(string)row["key"]] = row.DeepClone();
+            }
+            _authoredSourceBodies = bodies;
+            _authoredSourceContractHash = Redux.IO.Sha256.OfFile(path);
+        }
+
+        /// <summary>
+        /// Validate portable static-body exclusions without relying on conversion folders or the stock installation.
+        /// </summary>
+        /// <param name="contract">The source-owned build and runtime contract.</param>
+        /// <exception cref="InvalidDataException">Thrown when body coverage or saved-source evidence is incomplete.</exception>
+        internal static void ValidateAuthoredSourceContract(Newtonsoft.Json.Linq.JObject contract)
+        {
+            if ((string)contract["schema"] == "redux.authored-lua-source.v2")
+            {
+                ValidateFixedBaselineSourceContract(contract);
+                return;
+            }
+            if ((string)contract["schema"] != "redux.authored-lua-source.v1" || contract["bodies"] is not Newtonsoft.Json.Linq.JArray bodies || bodies.Count == 0)
+                throw new InvalidDataException("Unknown or empty authored Lua source contract.");
+            var keys = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Newtonsoft.Json.Linq.JObject row in bodies)
+            {
+                string key = (string)row["key"];
+                if ((string)row["modId"] != "Ksp2Redux" || string.IsNullOrEmpty(key) || !keys.Add(key) || !key.StartsWith("Ksp2Redux/", StringComparison.Ordinal)
+                    || key is "Ksp2Redux/Features" or "Ksp2Redux/Passes" or "Ksp2Redux/PantherNozzle"
+                    || (string)row["classification"] != "complete-static-definitions" || row["contexts"] is not Newtonsoft.Json.Linq.JArray contexts || contexts.Count == 0
+                    || row["owners"] is not Newtonsoft.Json.Linq.JArray owners || owners.Count == 0
+                    || row["sourceSaveEvidence"] is not Newtonsoft.Json.Linq.JArray saves || saves.Count == 0
+                    || row["bodyEffects"] is not Newtonsoft.Json.Linq.JObject effects
+                    || (bool?)effects["changesDynamicRegistry"] != false || (int?)effects["definitionOperations"] is not > 0
+                    || effects["patches"] is not Newtonsoft.Json.Linq.JObject patches || effects["created"] is not Newtonsoft.Json.Linq.JObject created
+                    || patches.Count + created.Count != (int)effects["definitionOperations"])
+                    throw new InvalidDataException("A dynamic or partially covered Lua body cannot be excluded: " + key);
+                foreach (string hash in new[] { (string)row["bodyTextSha256"], (string)row["coverageSha256"] })
+                {
+                    if (!IsAuthoredSourceHash(hash))
+                        throw new InvalidDataException("Authored Lua body hashes are missing: " + key);
+                }
+                foreach (Newtonsoft.Json.Linq.JObject save in saves)
+                {
+                    foreach (string field in new[] { "applyReceiptSha256", "postflightReceiptSha256", "applyReportSha256", "postflightReportSha256" })
+                    {
+                        if (!IsAuthoredSourceHash((string)save[field]))
+                            throw new InvalidDataException("Actual completed Lua source-save lineage is missing: " + key);
+                    }
+                }
+                foreach (Newtonsoft.Json.Linq.JObject context in contexts)
+                {
+                    if (context["features"] is not Newtonsoft.Json.Linq.JArray || context["targets"] is not Newtonsoft.Json.Linq.JArray targets || targets.Count == 0
+                        || !IsAuthoredSourceHash((string)context["beforeCaptureSha256"]) || !IsAuthoredSourceHash((string)context["authoredCaptureSha256"])
+                        || context["behaviorEvidence"] is not Newtonsoft.Json.Linq.JArray behavior || behavior.Count < 2)
+                        throw new InvalidDataException("Complete normal feature and external/late behavior contexts are required: " + key);
+                    foreach (Newtonsoft.Json.Linq.JObject proof in behavior)
+                    {
+                        if (!IsAuthoredSourceHash((string)proof["baselineCaptureSha256"]) || !IsAuthoredSourceHash((string)proof["authoredCaptureSha256"]))
+                            throw new InvalidDataException("An authored Lua behavior proof is incomplete: " + key);
+                    }
+                }
+                var features = new HashSet<string>(StringComparer.Ordinal);
+                var labels = new HashSet<string>(StringComparer.Ordinal);
+                foreach (Newtonsoft.Json.Linq.JProperty operation in patches.Properties())
+                {
+                    labels.Add((string)operation.Value["label"]);
+                    foreach (string feature in operation.Value["features"])
+                    {
+                        features.Add(feature);
+                    }
+                    foreach (string feature in operation.Value["noFeatures"])
+                    {
+                        features.Add(feature);
+                    }
+                }
+                foreach (Newtonsoft.Json.Linq.JProperty operation in created.Properties())
+                {
+                    labels.Add((string)operation.Value["label"]);
+                    foreach (string feature in operation.Value["features"])
+                    {
+                        features.Add(feature);
+                    }
+                    foreach (string feature in operation.Value["noFeatures"])
+                    {
+                        features.Add(feature);
+                    }
+                }
+                if (features.Count > 10 || labels.Count == 0)
+                    throw new InvalidDataException("A dynamic Lua context set remains pending: " + key);
+                var ordered = new List<string>(features);
+                ordered.Sort(StringComparer.Ordinal);
+                var vectors = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+                foreach (Newtonsoft.Json.Linq.JObject context in contexts)
+                {
+                    string label = (string)context["label"];
+                    if (!labels.Contains(label))
+                        throw new InvalidDataException("Foreign Lua source context label: " + label);
+                    var active = new HashSet<string>(context["features"].Values<string>(), StringComparer.Ordinal);
+                    string vector = string.Empty;
+                    foreach (string feature in ordered)
+                    {
+                        vector += active.Contains(feature) ? "1" : "0";
+                    }
+                    if (!vectors.TryGetValue(label, out HashSet<string> values))
+                    {
+                        values = new HashSet<string>(StringComparer.Ordinal);
+                        vectors.Add(label, values);
+                    }
+                    values.Add(vector);
+                }
+                foreach (string label in labels)
+                {
+                    if (!vectors.TryGetValue(label, out HashSet<string> values) || values.Count != 1 << ordered.Count)
+                        throw new InvalidDataException("Complementary actual Lua contexts are incomplete: " + label);
+                }
+            }
+        }
+
+        private static void ValidateFixedBaselineSourceContract(Newtonsoft.Json.Linq.JObject contract)
+        {
+            if ((string)contract["baseline"] != "fixed-redux" || contract["bodies"] is not Newtonsoft.Json.Linq.JArray bodies
+                || bodies.Count == 0 || bodies.Count > 64)
+                throw new InvalidDataException("Unknown or empty fixed baseline source contract.");
+            var keys = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Newtonsoft.Json.Linq.JObject row in bodies)
+            {
+                string key = (string)row["key"];
+                if ((string)row["modId"] != "Ksp2Redux" || string.IsNullOrEmpty(key) || !key.StartsWith("Ksp2Redux/", StringComparison.Ordinal)
+                    || !keys.Add(key) || key is "Ksp2Redux/Features" or "Ksp2Redux/Passes" or "Ksp2Redux/PantherNozzle"
+                    || (string)row["classification"] != "complete-static-definitions"
+                    || !IsAuthoredSourceHash((string)row["bodyTextSha256"]) || !IsAuthoredSourceHash((string)row["coverageSha256"])
+                    || row["bodyEffects"] is not Newtonsoft.Json.Linq.JObject effects
+                    || (bool?)effects["changesDynamicRegistry"] != false || (int?)effects["definitionOperations"] is not > 0
+                    || effects["patches"] is not Newtonsoft.Json.Linq.JObject patches || effects["created"] is not Newtonsoft.Json.Linq.JObject created
+                    || patches.Count + created.Count != (int)effects["definitionOperations"]
+                    || row["owners"] is not Newtonsoft.Json.Linq.JArray owners || owners.Count == 0
+                    || row["contexts"] is not Newtonsoft.Json.Linq.JArray contexts || contexts.Count == 0
+                    || row["sourceEvidence"] is not Newtonsoft.Json.Linq.JArray saves || saves.Count == 0)
+                    throw new InvalidDataException("Incomplete fixed baseline static body coverage: " + key);
+                var expectedLabels = new HashSet<string>(StringComparer.Ordinal);
+                foreach (Newtonsoft.Json.Linq.JProperty operation in patches.Properties().Concat(created.Properties()))
+                {
+                    string label = (string)operation.Value["label"];
+                    if (string.IsNullOrEmpty(label))
+                        throw new InvalidDataException("A baked static operation omitted its label: " + key);
+                    expectedLabels.Add(label);
+                    foreach (string field in new[] { "needsMods", "conflictsMods", "needsPatches", "conflictsPatches" })
+                    {
+                        if (operation.Value[field] is Newtonsoft.Json.Linq.JArray dependencies && dependencies.Count != 0)
+                            throw new InvalidDataException("Dynamic dependencies cannot enter a fixed source baseline: " + key);
+                    }
+                }
+                var observedLabels = new HashSet<string>(StringComparer.Ordinal);
+                foreach (Newtonsoft.Json.Linq.JObject context in contexts)
+                {
+                    string label = (string)context["label"];
+                    if (string.IsNullOrEmpty(label) || !observedLabels.Add(label) || !expectedLabels.Contains(label)
+                        || context["capturedFeatures"] is not Newtonsoft.Json.Linq.JArray
+                        || !IsAuthoredSourceHash((string)context["registrationCaptureSha256"])
+                        || context["targets"] is not Newtonsoft.Json.Linq.JArray targets || targets.Count == 0)
+                        throw new InvalidDataException("Incomplete fixed baseline source context: " + key);
+                    var names = new HashSet<string>(StringComparer.Ordinal);
+                    foreach (string target in targets)
+                    {
+                        if (string.IsNullOrEmpty(target) || !names.Add(target) || !owners.Any(owner =>
+                            (string)owner["label"] == label && (string)owner["name"] == target))
+                            throw new InvalidDataException("A static target lacks ordinary saved source ownership: " + key);
+                    }
+                }
+                if (!expectedLabels.SetEquals(observedLabels))
+                    throw new InvalidDataException("A static body still has uncovered labels: " + key);
+                foreach (Newtonsoft.Json.Linq.JObject save in saves)
+                {
+                    if ((string)save["kind"] is not ("ordinary-source-batch-v1" or "existing-source-native-projection-v1")
+                        || !IsAuthoredSourceHash((string)save["sourceBatchSha256"])
+                        || !IsAuthoredSourceHash((string)save["nativeReadbackReceiptSha256"])
+                        || !IsAuthoredSourceHash((string)save["nativeReadbackReportSha256"]))
+                        throw new InvalidDataException("Actual ordinary source or native projection evidence is missing: " + key);
+                }
+            }
+        }
+
+        private static bool IsAuthoredSourceHash(string value)
+        {
+            if (value == null || value.Length != 64)
+                return false;
+            foreach (char character in value)
+            {
+                if (character is not (>= '0' and <= '9') and not (>= 'a' and <= 'f'))
+                    return false;
+            }
+            return true;
+        }
+
+        private static bool IsAuthoredSourceBody(string modId, string key, string content)
+        {
+            if (modId != "Ksp2Redux" || !Redux.ReduxAssets.IsSourceOnly)
+                return false;
+            LoadAuthoredSourceBodies();
+            string hash = Redux.IO.Sha256.OfString(content);
+            if (_authoredSourceBodies[key] is JObject row && (string)row["bodyTextSha256"] != hash)
+                throw new InvalidDataException("An authored Lua body changed. Move intentional new behavior into a separate ordinary source body or explicitly reconcile the baked defaults: " + key);
+            return MatchesAuthoredSourceBody(_authoredSourceBodies, modId, key, hash);
+        }
+
+        private static bool MatchesAuthoredSourceBody(Newtonsoft.Json.Linq.JObject bodies, string modId, string key, string textHash)
+            => modId == "Ksp2Redux" && bodies[key] is Newtonsoft.Json.Linq.JObject row && (string)row["bodyTextSha256"] == textHash;
+
     }
 }

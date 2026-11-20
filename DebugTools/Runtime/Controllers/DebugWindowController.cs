@@ -71,7 +71,11 @@ namespace DebugTools.Runtime.Controllers
             // Get the root element of the window.
             // Since we're cloning the UXML tree from a VisualTreeAsset, the actual root element is a TemplateContainer,
             // so we need to get the first child of the TemplateContainer to get our actual root VisualElement.
-            _rootElement = _window.GetWindowRoot();
+            VisualElement root = _window.GetWindowRoot();
+            if (_rootElement != null && ReferenceEquals(_rootElement, root))
+                return;
+
+            _rootElement = root;
 
             // Center the window by default
             _rootElement.CenterByDefault();
@@ -84,6 +88,11 @@ namespace DebugTools.Runtime.Controllers
             // Toggles container
             _content = _rootElement.Q<VisualElement>("content");
             _content.Clear();
+            // Existing toggles are registered once, so move them to a rebuilt panel if its root changed.
+            foreach (Toggle toggle in WindowToggles.Values)
+            {
+                _content.Add(toggle);
+            }
         }
 
         public void Update()

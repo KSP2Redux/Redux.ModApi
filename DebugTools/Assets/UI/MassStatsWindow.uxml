@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/MassStatsWindow.uss?fileID=7433441132597879392&amp;guid=744e026163207f34385f494a2da668b6&amp;type=3#MassStatsWindow" />
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/MassStatsWindow.uss?fileID=7433441132597879392&amp;guid=744e026163207f34385f494a2da668b6&amp;type=3#MassStatsWindow" />
     <ui:VisualElement name="root" class="root">
         <ui:VisualElement name="title-bar">
             <ui:Label text="Mass Stats" />

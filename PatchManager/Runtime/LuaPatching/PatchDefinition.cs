@@ -81,7 +81,7 @@ namespace PatchManager.LuaPatching
         public string Label;
 
         /// <summary>
-        /// The patch's namespaced name, typically <c>modId:&lt;supplied-name&gt;</c>.
+        /// The patch's name, prefixed by the mod ID and a colon.
         /// </summary>
         public string Name;
 
@@ -393,6 +393,21 @@ namespace PatchManager.LuaPatching
         }
 
         [MoonSharpHidden] private List<Predicate> _predicates = new();
+
+        /// <summary>
+        /// Describe the registered predicate controls without invoking their callbacks.
+        /// </summary>
+        /// <returns>The predicate keys, inversion flags, messages and callback presence in registration order.</returns>
+        internal JArray DescribeAuthoredLuaPredicates()
+        {
+            var result = new JArray();
+            foreach (Predicate predicate in _predicates)
+            {
+                result.Add(new JObject { ["key"] = predicate.Key, ["invert"] = predicate.Invert,
+                    ["assertionMessage"] = predicate.AssertionMessage, ["hasMethod"] = predicate.Method != null });
+            }
+            return result;
+        }
 
 
         /// <summary>

@@ -511,6 +511,13 @@ namespace PatchManager.PrefabPatching
                     ExceptionDispatchInfo.Capture(failures[index]).Throw();
 
                 var result = results[index];
+                if (result.CacheWriteFailure != null)
+                {
+                    PatchManager.Logger.LogWarning(
+                        $"Could not write prefab patch plan cache '{result.Path}', the plan is used without caching: "
+                            + result.CacheWriteFailure
+                    );
+                }
                 if (result.CacheHit)
                     CurrentMetrics.CacheHitCount++;
                 else
@@ -975,7 +982,7 @@ namespace PatchManager.PrefabPatching
                         );
                 }
 
-                return locations
+                return FeatureAssetIndex.FilterKeyCandidates(locations
                     .Where(
                         location =>
                             !string.Equals(
@@ -983,7 +990,7 @@ namespace PatchManager.PrefabPatching
                                 typeof(PrefabPatchResourceProvider).FullName,
                                 StringComparison.Ordinal
                             )
-                    )
+                    ), null)
                     .OrderBy(location => location.PrimaryKey, StringComparer.Ordinal)
                     .ThenBy(location => location.InternalId, StringComparer.Ordinal)
                     .FirstOrDefault()

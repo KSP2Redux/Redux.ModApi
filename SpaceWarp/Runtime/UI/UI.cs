@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 
 using System.Collections.Generic;
 using JetBrains.Annotations;
@@ -147,10 +147,11 @@ namespace SpaceWarp2.UI
             AppbarBackend.Instance.AppBarOABSubscriber.AddListener(Appbar.LoadOABButtons);
             AppbarBackend.Instance.AppBarKSCSubscriber.AddListener(Appbar.LoadKSCButtons);
             // The flight tray outlives the campaign, so its buttons go when the campaign unloads and the next flight
-            // builds the ones the next campaign's features allow
-            SaveLoad.AddCampaignLoadAction(ModIds.SPACE_WARP, "Clearing the flight app bar", CampaignPhase.Loaded, done =>
+            // builds the ones the next campaign's features allow. Registered in the first phase, before any bar loads
+            // its buttons, so a load that fails part way clears them too
+            SaveLoad.AddCampaignLoadAction(ModIds.SPACE_WARP, "Clearing the flight app bar", CampaignPhase.Content, done =>
             {
-                SaveLoad.OnCampaignUnload(Appbar.RemoveFlightButtons);
+                SaveLoad.OnCampaignUnload(Appbar.UnloadCampaignButtons);
                 done();
             });
             Instance = this;

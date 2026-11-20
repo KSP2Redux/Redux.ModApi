@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DebugTools.Runtime.Controllers;
 using DebugTools.Runtime.Controllers.FlightTools;
 using DebugTools.Runtime.Controllers.VesselTools;
@@ -13,6 +14,13 @@ namespace DebugTools
 {
     public class DebugToolsPlugin : KerbalMonoBehaviour
     {
+        internal const string VesselScienceWindowName = "VesselScienceWindow";
+        internal const string TeleportBookmarksWindowName = "TeleportBookmarksWindow";
+        internal const string KerbalRosterWindowName = "KerbalRosterToolWindow";
+        internal const string FlightToolsWindowName = "FlightToolsWindow";
+        internal const string TerrainDebugWindowName = "TerrainDebugWindow";
+
+        private static readonly Dictionary<string, BaseWindowController> _windows = new();
         private static DebugWindowController? DebugWindowController { get; set; }
 
         internal static ILogger Logger;
@@ -23,6 +31,7 @@ namespace DebugTools
             // With Domain Reload disabled this runs on every Play Mode enter, so reset static
             // state (UDR0002) and re-subscribe idempotently to the static event (UDR0003).
             DebugWindowController = null;
+            _windows.Clear();
             Logger = null;
             ReduxManager.OnInitialized -= PreInitialize;
             ReduxManager.OnInitialized += PreInitialize;
@@ -59,6 +68,17 @@ namespace DebugTools
             });
         }
 
+        internal static bool TryToggleWindow(string windowName)
+        {
+            if (DebugWindowController == null || !_windows.TryGetValue(windowName, out var window) || window == null ||
+                !DebugWindowController.WindowToggles.TryGetValue(windowName, out var toggle))
+                return false;
+
+            window.IsWindowOpen = !window.IsWindowOpen;
+            toggle.SetValueWithoutNotify(window.IsWindowOpen);
+            return true;
+        }
+
         private static void CreateDebugWindow<T>(string windowName, string toggleLabel) where T : BaseWindowController
         {
             // Load window UXML
@@ -76,6 +96,7 @@ namespace DebugTools
                 // Setup window toggling & close button
                 DebugWindowController.RegisterToggle(windowName, toggleLabel,
                     evt => controller.IsWindowOpen = evt.newValue);
+                _windows[windowName] = controller;
                 controller.CloseButton.clicked += () =>
                 {
                     controller.IsWindowOpen = false;
@@ -89,21 +110,23 @@ namespace DebugTools
             // Vessel tools window
             CreateDebugWindow<VesselToolsWindowController>("VesselToolsWindow", "Vessel Tools");
             // Flight tools window
-            CreateDebugWindow<FlightToolsWindowController>("FlightToolsWindow", "Flight Tools");
+            CreateDebugWindow<FlightToolsWindowController>(FlightToolsWindowName, "Flight Tools");
             // Joints tools window
             CreateDebugWindow<JointsToolsWindowController>("JointsToolsWindow", "Joints Tools");
             // Quick actions window
             CreateDebugWindow<QuickSwitchWindowController>("QuickSwitchWindow", "Quick Switch");
+            // Free flight window
+            CreateDebugWindow<FreeFlightWindowController>("FreeFlightWindow", "Free Flight");
             // Terrain debug window
-            CreateDebugWindow<TerrainDebugWindowController>("TerrainDebugWindow", "Terrain Debug");
+            CreateDebugWindow<TerrainDebugWindowController>(TerrainDebugWindowName, "Terrain Debug");
             // Science tools window
             CreateDebugWindow<ScienceToolsWindowController>("ScienceToolsWindow", "Science Tools");
             // Vessel science window
-            CreateDebugWindow<VesselScienceWindowController>("VesselScienceWindow", "Vessel Science");
+            CreateDebugWindow<VesselScienceWindowController>(VesselScienceWindowName, "Vessel Science");
             // Kerbal roster tools window
-            CreateDebugWindow<KerbalRosterToolWindowController>("KerbalRosterToolWindow", "Roster Tools");
+            CreateDebugWindow<KerbalRosterToolWindowController>(KerbalRosterWindowName, "Roster Tools");
             // Teleport bookmarks window
-            CreateDebugWindow<TeleportBookmarksWindowController>("TeleportBookmarksWindow", "Teleport Bookmarks");
+            CreateDebugWindow<TeleportBookmarksWindowController>(TeleportBookmarksWindowName, "Teleport Bookmarks");
             // Resource scanning window
             CreateDebugWindow<ResourceScanDebugWindowController>("ResourceScanDebugWindow", "Resource Scanning");
             // Missions debug window

@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/JointsToolsWindow.uss?fileID=7433441132597879392&amp;guid=358950aa23d1e384f81e759931ff407f&amp;type=3#JointsToolsWindow" />
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/JointsToolsWindow.uss?fileID=7433441132597879392&amp;guid=358950aa23d1e384f81e759931ff407f&amp;type=3#JointsToolsWindow" />
     <ui:VisualElement name="root" class="root">
         <ui:VisualElement name="title-bar">
             <ui:Label text="Joints Tools" />

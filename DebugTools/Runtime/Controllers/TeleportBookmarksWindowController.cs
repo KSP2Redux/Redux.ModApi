@@ -43,7 +43,8 @@ namespace DebugTools.Runtime.Controllers
         private readonly List<TeleportBookmarkRow> _teleportBookmarks = new();
         private int _bookmarkIndex = -1;
 
-        private TeleportBookmark _kscBookmark;
+        private TeleportBookmark? _kscBookmark;
+        private bool _kscBookmarkLoading;
         private readonly Dictionary<string, BookmarksList> _bookmarksLists = new();
 
         private void Awake()
@@ -67,7 +68,9 @@ namespace DebugTools.Runtime.Controllers
             _autoSaveOnTeleport.value = false;
 
             _teleportToKSC = RootElement.Q<Button>("teleport-to-ksc");
+            _teleportToKSC.SetEnabled(_kscBookmark.HasValue);
             _teleportToKSC.clicked += OnTeleportToKSC;
+            LoadKscBookmark();
 
             _newListField = RootElement.Q<TextField>("bookmarks-list-name");
             _createNewList = RootElement.Q<Button>("create-bookmarks-list");
@@ -100,6 +103,8 @@ namespace DebugTools.Runtime.Controllers
         /// </summary>
         private void OnTeleportToKSC()
         {
+            if (_kscBookmark is not { } bookmark) return;
+
             var activeVehicle = Game.ViewController.GetActiveVehicle();
             // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             if (activeVehicle == null) return;
@@ -108,7 +113,7 @@ namespace DebugTools.Runtime.Controllers
                 Game.SaveLoadManager.ForceQuickSave();
 
             var guid = activeVehicle.Guid.ToString();
-            Game.SpaceSimulation.TeleportSimObjectToSurface(guid, _kscBookmark.State);
+            Game.SpaceSimulation.TeleportSimObjectToSurface(guid, bookmark.State);
         }
 
         /// <summary>
@@ -323,17 +328,40 @@ namespace DebugTools.Runtime.Controllers
         /// </summary>
         private void OnGameLoadFinished(MessageCenterMessage msg)
         {
-            GameManager.Instance.Assets.Load<TextAsset>(KSCBookmarkAddress, OnKSCBookmarkLoaded);
+            LoadKscBookmark();
             PopulateBookmarksLists();
         }
 
-        /// <summary>
-        /// Loads the KSC bookmark from the <c>KSCBookmark.json</c> file in <c>Assets/Modules/DebugTools/Assets</c>.
-        /// </summary>
-        /// <param name="asset">KSC Bookmark text asset</param>
-        private void OnKSCBookmarkLoaded(TextAsset asset)
+        private void LoadKscBookmark()
         {
-            _kscBookmark = IOProvider.FromJson<TeleportBookmark>(asset.text);
+            if (_kscBookmark.HasValue || _kscBookmarkLoading)
+                return;
+
+            var assets = GameManager.Instance.Assets;
+            _kscBookmarkLoading = true;
+            assets.Load<TextAsset>(KSCBookmarkAddress, asset =>
+            {
+                _kscBookmarkLoading = false;
+                if (asset == null)
+                    return;
+
+                try
+                {
+                    if (this == null)
+                        return;
+
+                    var bookmark = IOProvider.FromJson<TeleportBookmark>(asset.text);
+                    if (bookmark.Type != BookmarkType.Surface || string.IsNullOrWhiteSpace(bookmark.State.ReferenceBodyGuid))
+                        return;
+
+                    _kscBookmark = bookmark;
+                    _teleportToKSC?.SetEnabled(true);
+                }
+                finally
+                {
+                    assets.ReleaseAsset(asset);
+                }
+            });
         }
 
         /// <summary>

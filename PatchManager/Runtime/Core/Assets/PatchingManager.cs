@@ -104,6 +104,8 @@ namespace PatchManager.Core.Assets
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
+            ReleaseRebuildLoads();
+            AbortAuthoredLuaCapture(null);
             Universe = null;
             CurrentPatchHashes = PatchHashes.CreateDefault();
             _createdAssets = new Dictionary<string, List<(string name, LuaAsset data)>>();
@@ -126,7 +128,8 @@ namespace PatchManager.Core.Assets
         {
             var loadedPlugins = PluginList.AllLoadedPlugins.Select(x => x.Guid).ToList();
             loadedPlugins.AddRange(singleFileModIds);
-            Universe = new(PatchManager.Logger.LogError, PatchManager.Logger.LogMessage, loadedPlugins);
+            Universe = new(ObserveAuthoredLuaEngineError, PatchManager.Logger.LogMessage, loadedPlugins);
+            BeginAuthoredLuaCapture();
         }
 
         /// <summary>
@@ -472,6 +475,7 @@ namespace PatchManager.Core.Assets
             TotalDefinitionPatchCount = 0;
             CSharpPatching.FluentPatchRegistry.Flush(Universe);
             Universe.SetupPatchesForRun();
+            ObserveAuthoredLuaRegistration();
             PatchManager.Logger.LogInfo($"{Universe.TotalPatchCount} patchers registered!");
             PatchManager.Logger.LogInfo($"{Universe.AllNewAssets.Count} assets created!");
         }
@@ -563,6 +567,11 @@ namespace PatchManager.Core.Assets
         /// </summary>
         public static void CollectScriptResults()
         {
+            if (Redux.ReduxAssets.IsSourceOnly)
+                CurrentPatchHashes.Patches["Ksp2Redux/<authored-source>"] = Hash.FromString(
+                    SpaceWarp2.API.Lifecycle.ModScriptRuntime.AuthoredSourceContractHash + ":" + Application.buildGUID
+                    + ":" + (string)(_authoredLuaRequest?["diagnosticCandidate"] as JObject)?["sha256"]
+                    + ":" + (string)_authoredLuaCapture?["controlSha256"]);
             foreach (var descriptor in PluginList.AllLoadedPlugins)
             {
                 foreach (var script in descriptor.LoadedScripts)
@@ -602,7 +611,8 @@ namespace PatchManager.Core.Assets
             setHashes.Patches = ScopeHashesToSet(CurrentPatchHashes.Patches, folderByMod, Universe.EnabledFeatures);
             var checksum = Hash.FromJsonObject(setHashes);
 
-            if (CacheManager.Inventory.Checksum == checksum)
+            // Imported source edits have no player build GUID while running in the authoring editor.
+            if (CacheManager.Inventory.Checksum == checksum && !(Redux.ReduxAssets.IsSourceOnly && Application.isEditor))
             {
                 PatchManager.Logger.LogInfo("Cache is valid, skipping rebuild.");
                 CacheManager.CacheValidLabels.AddRange(CacheManager.Inventory.CacheEntries.Keys);
@@ -677,10 +687,14 @@ namespace PatchManager.Core.Assets
         {
             Universe.BeginRun();
             var labels = Universe.PatchedLabels.Concat(_createdAssets.Keys).Distinct().ToList();
+            string diagnosticLabel = (string)_authoredLuaRequest?["label"];
+            if (_authoredLuaPlan == null && IsAuthoredLuaTarget(diagnosticLabel) && !labels.Contains(diagnosticLabel))
+                labels.Add(diagnosticLabel);
 
             if (labels.Count == 0)
             {
                 Universe.EndRun();
+                FinishAuthoredLuaCapture();
                 resolve();
                 return;
             }
@@ -713,8 +727,17 @@ namespace PatchManager.Core.Assets
                 "Patching: Finalize",
                 (r, _) =>
                 {
-                    FinalizeRebuild();
-                    Universe.EndRun();
+                    try
+                    {
+                        FinalizeRebuild();
+                        Universe.EndRun();
+                        FinishAuthoredLuaCapture();
+                    }
+                    catch (Exception error)
+                    {
+                        AbortAuthoredLuaCapture(error);
+                        throw;
+                    }
                     r();
                 }
             ));
@@ -725,13 +748,13 @@ namespace PatchManager.Core.Assets
 
         private static void InitRebuildStates(List<string> labels)
         {
+            ReleaseRebuildLoads();
             _rebuildStates = new Dictionary<string, LabelRebuildState>(labels.Count);
             foreach (var label in labels)
             {
                 var state = new LabelRebuildState
                 {
-                    Label = label,
-                    PrimaryKeyMap = Universe.BuildPrimaryKeyMapForLabel(label)
+                    Label = label
                 };
                 _rebuildStates[label] = state;
 
@@ -756,6 +779,12 @@ namespace PatchManager.Core.Assets
             foreach (var pass in Universe.OrderedPasses)
             {
                 if (HasPatchesInPass(label, pass)) result.Add(pass);
+            }
+            if (_authoredLuaPlan == null && result.Count == 0 && IsAuthoredLuaTarget(label))
+            {
+                if (!Universe.OrderedPasses.Contains(PassDefinition.DEFAULT))
+                    throw new InvalidDataException("The diagnostic source observation has no ordinary default pass.");
+                result.Add(PassDefinition.DEFAULT);
             }
             if (result.Count == 0
                 && _rebuildStates.TryGetValue(label, out var state)
@@ -801,10 +830,29 @@ namespace PatchManager.Core.Assets
             Action resolve
         )
         {
-            if (loadFirst) yield return LoadLabel(label);
-            RunPassForLabel(label, pass);
-            if (writeLast) WriteAndReleaseLabel(label);
-            resolve();
+            bool completed = false;
+            IEnumerator load = loadFirst ? LoadLabel(label) : null;
+            try
+            {
+                if (load != null)
+                {
+                    while (load.MoveNext())
+                    {
+                        yield return load.Current;
+                    }
+                }
+                RunPassForLabel(label, pass);
+                if (writeLast)
+                    WriteAndReleaseLabel(label);
+                resolve();
+                completed = true;
+            }
+            finally
+            {
+                (load as IDisposable)?.Dispose();
+                if (!completed)
+                    ReleaseRebuildLoads();
+            }
         }
 
         private static IEnumerator LoadLabel(string label)
@@ -812,71 +860,87 @@ namespace PatchManager.Core.Assets
             if (_rebuildStates == null || !_rebuildStates.TryGetValue(label, out var state))
                 yield break;
 
+            var locations = new List<IResourceLocation>();
             var locHandle = Addressables.LoadResourceLocationsAsync(label, typeof(TextAsset));
-            while (!locHandle.IsDone)
+            try
             {
-                UpdateLoadingBarData();
-                yield return null;
-            }
-            // Only the locations the feature set lets in reach the patch run, so the archive holds nothing else.
-            // Patch input is content whatever its label, so a mod that is off adds nothing to it.
-            var locations = locHandle.Status == AsyncOperationStatus.Succeeded && locHandle.Result != null
-                ? FeatureAssetIndex.FilterContent(locHandle.Result, label)
-                : new List<IResourceLocation>();
-            Addressables.Release(locHandle);
-
-            if (locations.Count > 0)
-            {
-                var handle = Addressables.LoadAssetsAsync<TextAsset>(locations, null);
-                state.LoadHandle = handle;
-
-                while (!handle.IsDone)
+                while (!locHandle.IsDone)
                 {
                     UpdateLoadingBarData();
                     yield return null;
                 }
-
-                // The results follow the locations, so which of two same-named assets wins is catalog order rather
-                // than whichever finished loading first
-                if (handle.Status == AsyncOperationStatus.Succeeded && handle.Result != null)
-                {
-                    foreach (TextAsset asset in handle.Result)
-                    {
-                        if (asset != null && !string.IsNullOrEmpty(asset.text))
-                            AddRawText(state, asset.name, asset.text);
-                    }
-                }
+                if (locHandle.Status != AsyncOperationStatus.Succeeded || locHandle.Result == null)
+                    throw new InvalidOperationException($"Failed to resolve patch input locations for {label}.", locHandle.OperationException);
+                locations.AddRange(FeatureAssetIndex.FilterContent(locHandle.Result, label));
+            }
+            finally
+            {
+                if (locHandle.IsValid())
+                    Addressables.Release(locHandle);
             }
 
             if (LabelMembers.TryGetValue(label, out var members))
             {
-                foreach (var key in members)
+                foreach (string key in members)
                 {
-                    // A member can have a same-named twin in another feature, so the gate picks which one loads
-                    if (FeatureAssetIndex.TryResolveKey(key, typeof(TextAsset), label, true, out var memberLocation) && memberLocation == null)
+                    if (FeatureAssetIndex.TryResolveKey(key, typeof(TextAsset), label, true, out var memberLocation))
+                    {
+                        if (memberLocation != null)
+                            locations.Add(memberLocation);
                         continue;
+                    }
+                    // Resolve an ungated member's real location before loading it by any alias.
+                    var candidates = new List<IResourceLocation>();
+                    foreach (var locator in Addressables.ResourceLocators)
+                    {
+                        if (locator.Locate(key, typeof(TextAsset), out IList<IResourceLocation> found) && found != null)
+                            candidates.AddRange(found);
+                    }
+                    List<IResourceLocation> accepted = FeatureAssetIndex.FilterContent(candidates, label);
+                    if (accepted.Count > 1)
+                        throw new InvalidOperationException($"Ambiguous patch member location for {label}:{key}.");
+                    locations.AddRange(accepted);
+                }
+            }
 
-                    var memberHandle = memberLocation != null
-                        ? Addressables.LoadAssetAsync<TextAsset>(memberLocation)
-                        : Addressables.LoadAssetAsync<TextAsset>(key);
-                    while (!memberHandle.IsDone)
+            bool loaded = false;
+            try
+            {
+                var acceptedByKey = new Dictionary<string, IResourceLocation>(StringComparer.Ordinal);
+                foreach (IResourceLocation location in locations)
+                {
+                    string key = FeatureAssetIndex.KeyOf(location);
+                    if (acceptedByKey.TryGetValue(key, out IResourceLocation previous))
+                    {
+                        if (!SameTextLocation(previous, location))
+                            throw new InvalidOperationException($"Contradictory patch input locations for {label}:{key}.");
+                        continue;
+                    }
+                    acceptedByKey.Add(key, location);
+                    // Start every accepted load before waiting. Each handle keeps its own exact location.
+                    state.LoadHandles.Add((location, Addressables.LoadAssetAsync<TextAsset>(location)));
+                }
+                foreach (var (location, handle) in state.LoadHandles)
+                {
+                    while (!handle.IsDone)
                     {
                         UpdateLoadingBarData();
                         yield return null;
                     }
-
-                    // The text is copied out, so the handle is released at once rather than held to the archive write
-                    if (memberHandle.Status == AsyncOperationStatus.Succeeded && memberHandle.Result != null
-                        && !string.IsNullOrEmpty(memberHandle.Result.text))
-                    {
-                        if (AddRawText(state, memberHandle.Result.name, memberHandle.Result.text))
-                            state.PrimaryKeyMap[memberHandle.Result.name] = key;
-                    }
-
-                    Addressables.Release(memberHandle);
+                    if (handle.Status != AsyncOperationStatus.Succeeded || handle.Result == null)
+                        throw new InvalidOperationException($"Failed to load patch input {label}:{location.PrimaryKey}.", handle.OperationException);
+                    BindLoadedText(state, location, handle.Result);
                 }
+                loaded = true;
+            }
+            finally
+            {
+                if (!loaded)
+                    ReleaseLabelLoads(state);
             }
 
+            ObserveAuthoredLuaLocations(state);
+            ObserveAuthoredLuaValues(state, true);
             if (state.CreatedAssets.Count > 0)
             {
                 Universe.Summary.BeginLabel(label);
@@ -885,6 +949,50 @@ namespace PatchManager.Core.Assets
                     state.AddressAliases.TryGetValue(name, out var alias);
                     Universe.Summary.BeginNewAsset(name, alias);
                 }
+            }
+        }
+
+        private static bool SameTextLocation(IResourceLocation first, IResourceLocation second) =>
+            JToken.DeepEquals(AuthoredLuaLocationGraph(first, new HashSet<IResourceLocation>()),
+                AuthoredLuaLocationGraph(second, new HashSet<IResourceLocation>()));
+
+        private static void BindLoadedText(LabelRebuildState state, IResourceLocation location, TextAsset asset)
+        {
+            if (asset == null || string.IsNullOrEmpty(asset.name) || string.IsNullOrEmpty(location.PrimaryKey))
+                throw new InvalidOperationException("Patch input has no loaded name or primary address.");
+            string assetType = asset.GetType().AssemblyQualifiedName;
+            if (state.LocationsByName.TryGetValue(asset.name, out var previous))
+            {
+                if (!SameTextLocation(previous.location, location) || previous.assetType != assetType)
+                    throw new InvalidOperationException($"Distinct patch input locations share the loaded name {state.Label}:{asset.name}.");
+                if (state.RawTexts.TryGetValue(asset.name, out string previousText) && previousText != asset.text)
+                    throw new InvalidOperationException($"One patch input location returned conflicting text for {state.Label}:{asset.name}.");
+                return;
+            }
+            state.LocationsByName.Add(asset.name, (location, assetType));
+            state.PrimaryKeyMap.Add(asset.name, location.PrimaryKey);
+            if (!string.IsNullOrEmpty(asset.text))
+                state.RawTexts.Add(asset.name, asset.text);
+        }
+
+        private static void ReleaseLabelLoads(LabelRebuildState state)
+        {
+            foreach (var (_, handle) in state.LoadHandles)
+            {
+                // Failed and unfinished operations still own a reference and must be released.
+                if (handle.IsValid())
+                    Addressables.Release(handle);
+            }
+            state.LoadHandles.Clear();
+        }
+
+        private static void ReleaseRebuildLoads()
+        {
+            if (_rebuildStates == null)
+                return;
+            foreach (var state in _rebuildStates.Values)
+            {
+                ReleaseLabelLoads(state);
             }
         }
 
@@ -941,6 +1049,7 @@ namespace PatchManager.Core.Assets
             }
 
             AddDuplicates(state, label, pass, duplicates);
+            ObserveAuthoredLuaPass(label, pass);
             UpdateLoadingBarData();
         }
 
@@ -1011,40 +1120,35 @@ namespace PatchManager.Core.Assets
         {
             if (_rebuildStates == null || !_rebuildStates.TryGetValue(label, out var state))
                 return;
-
-            if (!state.Unchanged) WriteArchive(state);
-
-            if (state.LoadHandle.IsValid()
-                && state.LoadHandle.Status == AsyncOperationStatus.Succeeded)
+            try
             {
-                Addressables.Release(state.LoadHandle);
+                ObserveAuthoredLuaValues(state, false);
+                if (!state.Unchanged)
+                    WriteArchive(state);
             }
-
-            _rebuildStates.Remove(label);
+            finally
+            {
+                ReleaseLabelLoads(state);
+                _rebuildStates.Remove(label);
+            }
         }
 
         private static void FinalizeRebuild()
         {
-            CacheManager.SetTotalPatchCount(TotalPatchCount);
-            CacheManager.SetTotalErrorCount(TotalErrorCount);
-            CacheManager.SetTotalDefinitionCount(TotalDefinitionPatchCount);
-            CacheManager.SetTotalAssetCount(TotalNewAssetCount);
-            CacheManager.SaveInventory();
-
-            if (_rebuildStates != null)
+            try
             {
-                foreach (var (_, state) in _rebuildStates)
-                {
-                    if (state.LoadHandle.IsValid()
-                        && state.LoadHandle.Status == AsyncOperationStatus.Succeeded)
-                    {
-                        Addressables.Release(state.LoadHandle);
-                    }
-                }
+                CacheManager.SetTotalPatchCount(TotalPatchCount);
+                CacheManager.SetTotalErrorCount(TotalErrorCount);
+                CacheManager.SetTotalDefinitionCount(TotalDefinitionPatchCount);
+                CacheManager.SetTotalAssetCount(TotalNewAssetCount);
+                CacheManager.SaveInventory();
+                UpdateLoadingBarData();
+            }
+            finally
+            {
+                ReleaseRebuildLoads();
                 _rebuildStates = null;
             }
-
-            UpdateLoadingBarData();
         }
 
         private static void WriteArchive(LabelRebuildState state)
@@ -1131,50 +1235,1190 @@ namespace PatchManager.Core.Assets
             CacheManager.Inventory.CacheEntries.AddRangeUnique(assetsCacheEntries);
         }
 
+        // Source-player diagnostics attach before mod bodies. The ordinary patch engine remains the only runner.
+        private static JObject _authoredLuaPlan;
+        private static JObject _authoredLuaPlanPin;
+        private static string _authoredLuaEpisodeId;
+        private static List<(JObject request, JObject capture)> _authoredLuaWindows;
+
+        private static readonly string[] AUTHORED_LUA_SHARED_FIELDS =
+        {
+            "engine", "productionEngine", "captureFailurePolicy", "sourceOnly", "coreMvid", "coreFullName",
+            "sources", "sourceSaveTraceVersion", "patchIdentity", "bodyEffects", "bodyRegistry",
+            "qualifiedSourceExclusions", "diagnosticCandidateExclusions", "engineErrors", "sourceWrites",
+            "runtimeBaseApplicationRetired", "rootEnvironment", "interpreter", "interpreterMvid",
+            "runtimeInterpreter", "features", "mods", "orderedPasses", "beginCallbacks", "endCallbacks",
+            "converters", "contributors", "isTargetRun", "allRequestedSourcesObserved",
+            "allObservedSourcesSucceeded", "totalPatchErrors", "normalPipelineCompleted", "inputsUnchanged",
+            "observerSlotOwned"
+        };
+
+        private static JObject ReadAuthoredLuaWindow(JObject row, string scope, string root)
+        {
+            JObject pin = (JObject)row["request"];
+            string path = (string)pin["path"];
+            CheckAuthoredLuaPath(path, scope);
+            if (new FileInfo(path).Length >= 8 * 1024 * 1024 || Sha256.OfFile(path) != (string)pin["sha256"])
+                throw new InvalidDataException("A predeclared Lua window request changed or exceeded its bound.");
+            var request = JObject.Parse(File.ReadAllText(path));
+            if ((string)request["schema"] != "omnipatching.lua-capture-request.v1"
+                || (string)request["captureFailurePolicy"] != "detach-and-continue-v1"
+                || (string)request["projectRoot"] != root || request["names"] is not JArray names
+                || names.Count is < 1 or > 32 || names.Values<string>().Distinct(StringComparer.Ordinal).Count() != names.Count
+                || (string)request["episodePlanId"] != (string)_authoredLuaPlan["id"]
+                || (string)request["windowId"] != (string)row["id"] || string.IsNullOrEmpty((string)row["id"])
+                || (string)request["label"] != (string)_authoredLuaPlan["label"])
+                throw new InvalidDataException("Foreign or unbounded predeclared Lua window.");
+            CheckAuthoredLuaPath((string)request["output"], scope);
+            foreach (string filename in new[] { "input.json", "projection.json", "report.json", "failed.json" })
+            {
+                CheckAuthoredLuaPath(Path.Combine((string)request["output"], filename), scope);
+                CheckAuthoredLuaPath(Path.Combine((string)request["output"], filename) + ".tmp", scope);
+            }
+            if (Directory.Exists((string)request["output"]) || File.Exists((string)request["output"]))
+                throw new IOException("Preserve the previous planned Lua window output.");
+            return request;
+        }
+
+        private static JObject BeginAuthoredLuaPlan(JObject plan, string control, string expected, string root, string scope)
+        {
+            if ((string)plan["schema"] != "omnipatching.lua-window-plan.v1" || (string)plan["projectRoot"] != root
+                || (string)plan["captureFailurePolicy"] != "detach-and-continue-v1"
+                || string.IsNullOrEmpty((string)plan["id"]) || string.IsNullOrEmpty((string)plan["label"])
+                || plan["windows"] is not JArray windows || windows.Count is < 1 or > 256)
+                throw new InvalidDataException("Unsupported finite Lua window plan.");
+            _authoredLuaPlan = plan;
+            _authoredLuaPlanPin = new JObject { ["path"] = control, ["size"] = new FileInfo(control).Length, ["sha256"] = expected };
+            _authoredLuaEpisodeId = Guid.NewGuid().ToString("N");
+            CheckAuthoredLuaPath((string)plan["output"], scope);
+            CheckAuthoredLuaPath(Path.Combine((string)plan["output"], "execution.json.tmp"), scope);
+            CheckAuthoredLuaPath(Path.Combine((string)plan["output"], "failed.json.tmp"), scope);
+            if (Directory.Exists((string)plan["output"]) || File.Exists((string)plan["output"]))
+                throw new IOException("Preserve the previous Lua episode output.");
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            var selected = new HashSet<string>(StringComparer.Ordinal);
+            var outputs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            JObject first = null;
+            foreach (JObject row in windows)
+            {
+                JObject request = ReadAuthoredLuaWindow(row, scope, root);
+                if (!ids.Add((string)row["id"]) || !outputs.Add(Path.GetFullPath((string)request["output"]))
+                    || request["names"].Values<string>().Any(name => !selected.Add(name)))
+                    throw new InvalidDataException("Repeated Lua window, output or requested spelling.");
+                if (first == null)
+                    first = request;
+                foreach (string field in new[] { "features", "sources", "suppressedSources", "diagnosticCandidate", "runtimeCore", "patchIdentity" })
+                {
+                    if (!JToken.DeepEquals(first[field], request[field]))
+                        throw new InvalidDataException("A Lua plan mixed initialized source or feature contexts: " + field);
+                }
+                foreach (JObject input in request["inputs"])
+                {
+                    if (!plan["inputs"].Any(pin => JToken.DeepEquals(pin, input)))
+                        throw new InvalidDataException("A Lua window input is absent from the plan.");
+                }
+                if (!plan["inputs"].Any(pin => JToken.DeepEquals(pin, row["request"])))
+                    throw new InvalidDataException("A Lua request is absent from its plan inputs.");
+            }
+            foreach (JObject pin in plan["inputs"])
+            {
+                CheckAuthoredLuaPath((string)pin["path"], root);
+                if (Sha256.OfFile((string)pin["path"]) != (string)pin["sha256"])
+                    throw new InvalidDataException("A Lua plan input changed.");
+            }
+            Directory.CreateDirectory((string)plan["output"]);
+            return first;
+        }
+
+        private static void InitializeAuthoredLuaWindows(string scope, string root)
+        {
+            if (_authoredLuaPlan == null)
+                return;
+            _authoredLuaWindows = new List<(JObject request, JObject capture)>();
+            foreach (JObject row in _authoredLuaPlan["windows"])
+            {
+                JObject request = (string)row["id"] == (string)_authoredLuaRequest["windowId"]
+                    ? _authoredLuaRequest : ReadAuthoredLuaWindow(row, scope, root);
+                JObject capture = _authoredLuaWindows.Count == 0 ? _authoredLuaCapture : (JObject)_authoredLuaCapture.DeepClone();
+                capture["controlSha256"] = row["request"]["sha256"].DeepClone();
+                capture["windowStages"] = new JArray();
+                if (_authoredLuaWindows.Count > 0)
+                    Directory.CreateDirectory((string)request["output"]);
+                _authoredLuaWindows.Add((request, capture));
+            }
+        }
+
+        private static void ForEachAuthoredLuaWindow(Action observe)
+        {
+            if (_authoredLuaWindows == null)
+            {
+                observe();
+                return;
+            }
+            JObject request = _authoredLuaRequest;
+            JObject capture = _authoredLuaCapture;
+            try
+            {
+                foreach (var window in _authoredLuaWindows)
+                {
+                    if (_authoredLuaPlan == null)
+                        break;
+                    window.capture["isTargetRun"] = capture["isTargetRun"]?.DeepClone();
+                    _authoredLuaRequest = window.request;
+                    _authoredLuaCapture = window.capture;
+                    observe();
+                }
+            }
+            finally
+            {
+                if (_authoredLuaPlan != null)
+                {
+                    _authoredLuaRequest = request;
+                    _authoredLuaCapture = capture;
+                }
+            }
+        }
+
+        private static bool HasAuthoredLuaWindow(string label, string name)
+        {
+            if (_authoredLuaWindows == null)
+                return IsAuthoredLuaTarget(label) && AuthoredLuaSelectedNames().Contains(name);
+            bool selected = false;
+            ForEachAuthoredLuaWindow(() => selected |= IsAuthoredLuaTarget(label) && AuthoredLuaSelectedNames().Contains(name));
+            return selected;
+        }
+
+        private static void RecordAuthoredLuaWindowStage(bool isInput)
+        {
+            if (_authoredLuaPlan == null)
+                return;
+            var stages = (JArray)_authoredLuaCapture["windowStages"];
+            if (isInput ? stages.Count != 0 : stages.Count != 1 || (string)stages[0] != "before-patches")
+                throw new InvalidDataException("A Lua window missed or repeated a genuine capture stage.");
+            stages.Add(isInput ? "before-patches" : "after-patches");
+        }
+
+        private static void FinishAuthoredLuaPlan()
+        {
+            JObject common = _authoredLuaCapture;
+            JObject first = _authoredLuaRequest;
+            if ((bool?)common["isTargetRun"] != true)
+                throw new InvalidDataException("The normal initialized episode did not enter the planned feature context.");
+            if (!ReferenceEquals(SpaceWarp2.API.Lifecycle.ModScriptRuntime.AuthoredSourceObserver, _authoredLuaObserver))
+                throw new InvalidDataException("The Lua episode lost its real body observer.");
+            var observed = common["sources"].Children<JObject>().ToList();
+            if (observed.Count != first["sources"].Count() || observed.Select(row => (string)row["modId"] + "/" + (string)row["key"]).Distinct().Count() != observed.Count
+                || !first["sources"].Children<JObject>().All(source => observed.Count(row =>
+                    (string)row["modId"] == (string)source["modId"] && (string)row["key"] == (string)source["key"]
+                    && (string)row["sha256"] == (string)source["textSha256"] && (bool?)row["succeeded"] == true
+                    && (bool?)row["sourceMatches"] == true) == 1)
+                || TotalErrorCount != 0 || common["engineErrors"].Any())
+                throw new InvalidDataException("The real Lua episode has missing, repeated, failed or foreign execution events.");
+            if (!JToken.DeepEquals(new JArray((ActiveFeatures.Enabled ?? throw new InvalidDataException("No actual feature context.")).OrderBy(value => value, StringComparer.OrdinalIgnoreCase)), common["features"]))
+                throw new InvalidDataException("The Lua episode changed its feature context.");
+            foreach (JObject pin in _authoredLuaPlan["inputs"])
+            {
+                if (Sha256.OfFile((string)pin["path"]) != (string)pin["sha256"])
+                    throw new InvalidDataException("A planned Lua input changed during the real episode.");
+            }
+            if (Sha256.OfFile((string)_authoredLuaPlanPin["path"]) != (string)_authoredLuaPlanPin["sha256"]
+                || Sha256.OfFile((string)common["runtimeInterpreter"]["path"]) != (string)common["runtimeInterpreter"]["sha256"])
+                throw new InvalidDataException("The Lua plan or actual interpreter changed during execution.");
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            var windows = new JArray();
+            foreach (var window in _authoredLuaWindows)
+            {
+                if (!JToken.DeepEquals(window.capture["windowStages"], new JArray("before-patches", "after-patches"))
+                    || window.capture["input"] == null || window.capture["projection"] == null
+                    || window.capture["outputLineage"].Any(row => !names.Add((string)row["name"])))
+                    throw new InvalidDataException("A planned Lua window was not naturally captured once or overlaps another actual output.");
+                foreach (JObject binding in (window.request["sourceBindings"] as JArray ?? new JArray()))
+                {
+                    JObject asset = (JObject)binding["sourceIdentity"]["asset"];
+                    if (Sha256.OfFile((string)asset["path"]) != (string)asset["sha256"])
+                        throw new InvalidDataException("A bound Lua source changed during execution.");
+                }
+                windows.Add(new JObject { ["id"] = window.request["windowId"].DeepClone(),
+                    ["requestSha256"] = window.capture["controlSha256"].DeepClone(), ["names"] = window.request["names"].DeepClone(),
+                    ["stages"] = window.capture["windowStages"].DeepClone(), ["input"] = window.capture["input"].DeepClone(),
+                    ["projection"] = window.capture["projection"].DeepClone() });
+            }
+            foreach (string field in new[] { "allRequestedSourcesObserved", "allObservedSourcesSucceeded", "normalPipelineCompleted", "inputsUnchanged", "observerSlotOwned" })
+            {
+                common[field] = true;
+            }
+            common["totalPatchErrors"] = TotalErrorCount;
+            var shared = new JObject();
+            foreach (string field in AUTHORED_LUA_SHARED_FIELDS)
+            {
+                shared[field] = common[field]?.DeepClone() ?? throw new InvalidDataException("Missing genuine Lua episode context: " + field);
+            }
+            var execution = new JObject { ["schema"] = "omnipatching.lua-execution-episode.v1", ["episodeId"] = _authoredLuaEpisodeId,
+                ["plan"] = _authoredLuaPlanPin.DeepClone(), ["label"] = first["label"].DeepClone(), ["stage"] = "sealed",
+                ["shared"] = shared, ["windows"] = windows, ["success"] = true };
+            string manifest = Path.Combine((string)_authoredLuaPlan["output"], "execution.json");
+            WriteAuthoredLuaFile(manifest, execution);
+            var executionPin = new JObject { ["path"] = manifest, ["size"] = new FileInfo(manifest).Length, ["sha256"] = Sha256.OfFile(manifest) };
+            foreach (var window in _authoredLuaWindows)
+            {
+                foreach (JProperty field in shared.Properties())
+                {
+                    window.capture[field.Name] = field.Value.DeepClone();
+                }
+                // These compatibility views refer to the one execution above. They are never new body events.
+                window.capture["episode"] = new JObject { ["plan"] = _authoredLuaPlanPin.DeepClone(), ["execution"] = executionPin.DeepClone(),
+                    ["episodeId"] = _authoredLuaEpisodeId, ["windowId"] = window.request["windowId"].DeepClone(), ["stage"] = "sealed",
+                    ["executionView"] = "shared-real-events-v1" };
+                window.capture["success"] = true;
+                WriteAuthoredLuaFile(Path.Combine((string)window.request["output"], "report.json"), window.capture);
+            }
+            RestoreAuthoredLuaObserver();
+        }
+
+        private static JObject _authoredLuaCapture;
+
+        private static JObject _authoredLuaRequest;
+
+        private static Action<string, string, string, bool> _authoredLuaPriorObserver;
+
+        private static Action<string, string, string, bool> _authoredLuaObserver;
+
+        private static object _authoredLuaGeneration;
+
+        private static void BeginAuthoredLuaCapture()
+        {
+            RunAuthoredLuaCapture(() =>
+            {
+                string control = Environment.GetEnvironmentVariable("KSP2REDUX_LUA_SOURCE_BAKE_CONTROL");
+                if (string.IsNullOrEmpty(control))
+                    return;
+                if (!Redux.ReduxAssets.IsSourceOnly)
+                    throw new InvalidOperationException("Source Lua capture requires the actual source-only player.");
+                if (_authoredLuaCapture != null)
+                    throw new InvalidOperationException("A source Lua capture is already armed.");
+                string root = Path.GetFullPath(Environment.GetEnvironmentVariable("KSP2REDUX_LUA_SOURCE_BAKE_PROJECT") ?? Path.Combine(Application.dataPath, ".."));
+                string scope = Path.Combine(root, "reference/omnipatching/source-player/current-authored-lua-source-bake-r1");
+                string saveScope = Path.GetFullPath(Path.Combine(root, "reference/omnipatching/source-player/lua-transactional-source-save-r1"));
+                if (Path.GetFullPath(control).StartsWith(saveScope + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                    scope = saveScope;
+                CheckAuthoredLuaPath(control, scope);
+                string expected = Environment.GetEnvironmentVariable("KSP2REDUX_LUA_SOURCE_BAKE_SHA256");
+                if (Sha256.OfFile(control) != expected)
+                    throw new InvalidOperationException("Source Lua capture control changed.");
+                if (new FileInfo(control).Length >= 8 * 1024 * 1024)
+                    throw new InvalidDataException("The finite Lua control exceeded 8 MiB.");
+                var request = JObject.Parse(File.ReadAllText(control));
+                if ((string)request["schema"] == "omnipatching.lua-window-plan.v1")
+                {
+                    request = BeginAuthoredLuaPlan(request, control, expected, root, scope);
+                    expected = (string)_authoredLuaPlan["windows"][0]["request"]["sha256"];
+                }
+                else if (request["episodePlanId"] != null || request["windowId"] != null)
+                    throw new InvalidDataException("A planned window must run through its real episode plan.");
+                if ((string)request["schema"] != "omnipatching.lua-capture-request.v1" || (string)request["captureFailurePolicy"] != "detach-and-continue-v1" || (string)request["projectRoot"] != root || string.IsNullOrEmpty((string)request["label"]) || request["names"] is not JArray names || names.Count is < 1 or > 32)
+                    throw new InvalidOperationException("Unsupported finite source Lua capture request.");
+                if (request["patchIdentity"] != null && (string)request["patchIdentity"] != "label-registration-ordinal-v1")
+                    throw new InvalidOperationException("Unsupported requested Lua registration identity.");
+                if (request["diagnosticCandidate"] is JToken candidate && candidate.Type != JTokenType.Null && candidate is not JObject)
+                    throw new InvalidOperationException("Unsupported diagnostic Lua candidate pin.");
+                string output = (string)request["output"];
+                CheckAuthoredLuaPath(output, scope);
+                foreach (string filename in new[]
+                {
+                    "input.json",
+                    "projection.json",
+                    "report.json",
+                    "failed.json"
+                }
+
+                )
+                {
+                    CheckAuthoredLuaPath(Path.Combine(output, filename), scope);
+                    CheckAuthoredLuaPath(Path.Combine(output, filename) + ".tmp", scope);
+                }
+
+                if (Directory.Exists(output) || File.Exists(output))
+                    throw new IOException("Preserve the previous source Lua capture output.");
+                foreach (var pin in request["inputs"].Children<JObject>())
+                {
+                    string path = (string)pin["path"];
+                    CheckAuthoredLuaPath(path, root);
+                    if (Sha256.OfFile(path) != (string)pin["sha256"])
+                        throw new InvalidOperationException($"Source Lua capture input changed: {path}");
+                }
+
+                var core = typeof(GameManager).Assembly;
+                if (Sha256.OfFile(CheckAuthoredLuaAssemblyPath(core.Location, root)) != (string)request["runtimeCore"]["sha256"])
+                    throw new InvalidOperationException("The loaded game assembly differs from the pinned source-player assembly.");
+                Directory.CreateDirectory(output);
+                _authoredLuaRequest = request;
+                _authoredLuaCapture = new JObject
+                {
+                    ["schema"] = "omnipatching.lua-capture-report.v1",
+                    ["controlSha256"] = expected,
+                    ["engine"] = "ModScriptRuntime/Descant/MoonSharp + PatchingManager/Universe",
+                    ["productionEngine"] = true,
+                    ["captureFailurePolicy"] = "detach-and-continue-v1",
+                    ["sourceOnly"] = Redux.ReduxAssets.IsSourceOnly,
+                    ["coreMvid"] = core.ManifestModule.ModuleVersionId.ToString(),
+                    ["coreFullName"] = core.FullName,
+                    ["sources"] = new JArray(),
+                    ["passes"] = new JArray(),
+                    ["sourceSaveTraceVersion"] = 1,
+                    ["patchIdentity"] = "label-registration-ordinal-v1",
+                    ["applications"] = new JArray(),
+                    ["bodyEffects"] = new JArray(),
+                    ["normalMembers"] = new JObject(),
+                    ["loadedNameIdentity"] = "observed-textasset-location-v1",
+                    ["loadedAssets"] = new JArray(),
+                    ["requestedBindings"] = new JArray(),
+                    ["bodyRegistry"] = AuthoredLuaBodyRegistry(),
+                    ["qualifiedSourceExclusions"] = request["suppressedSources"]?.DeepClone() ?? new JArray(),
+                    ["diagnosticCandidateExclusions"] = new JArray(),
+                    ["outputLineage"] = new JArray(),
+                    ["locations"] = new JArray(),
+                    ["registration"] = new JArray(),
+                    ["engineErrors"] = new JArray(),
+                    ["sourceWrites"] = false,
+                    ["runtimeBaseApplicationRetired"] = false,
+                    ["normalPipelineCompleted"] = false,
+                    ["success"] = false
+                };
+                InitializeAuthoredLuaWindows(scope, root);
+                AttachAuthoredLuaObserver();
+            });
+        }
+
+
+        private static void ObserveAuthoredLuaBody(string modId, string key, string content, bool succeeded)
+        {
+            RunAuthoredLuaCapture(() =>
+            {
+                if (_authoredLuaCapture == null)
+                    return;
+                try
+                {
+                    var sources = (JArray)_authoredLuaCapture["sources"];
+                    if (sources.Count >= 256)
+                        throw new InvalidOperationException("The finite Lua source observation window overflowed.");
+                    var matches = _authoredLuaRequest["sources"].Children<JObject>().Where(row => (string)row["modId"] == modId && (string)row["key"] == key).ToList();
+                    string hash = Sha256.OfString(content);
+                    sources.Add(new JObject { ["sequence"] = sources.Count, ["modId"] = modId, ["key"] = key, ["sha256"] = hash, ["succeeded"] = succeeded, ["expectedSource"] = matches.Count == 1, ["sourceMatches"] = matches.Count == 1 && hash == (string)matches[0]["textSha256"] });
+                    ObserveAuthoredLuaBodyRegistry(modId, key, hash);
+                }
+                catch (Exception error)
+                {
+                    FailAuthoredLuaCapture(error);
+                }
+            });
+        }
+
+
+        private static void ObserveAuthoredLuaRegistration()
+        {
+            RunAuthoredLuaCapture(() =>
+            {
+                if (_authoredLuaCapture == null)
+                    return;
+                try
+                {
+                    string[] actual = (ActiveFeatures.Enabled ?? throw new InvalidOperationException("No actual feature set.")).OrderBy(value => value, StringComparer.OrdinalIgnoreCase).ToArray();
+                    bool first = _authoredLuaRequest["features"].Type == JTokenType.Null;
+                    string[] expected = first ? actual : _authoredLuaRequest["features"].Values<string>().OrderBy(value => value, StringComparer.OrdinalIgnoreCase).ToArray();
+                    _authoredLuaCapture["isTargetRun"] = actual.SequenceEqual(expected, StringComparer.OrdinalIgnoreCase);
+                    if (!(bool)_authoredLuaCapture["isTargetRun"])
+                        return;
+                    var root = GameManager.Instance.Game.ScriptEnvironment as KSP.ScriptInterop.impl.moonsharp.ScriptEnvironment;
+                    if (root == null || root.globals == null || root.globals.OwnerScript != root.script)
+                        throw new InvalidOperationException("The genuine game root Lua environment is unavailable.");
+                    _authoredLuaCapture["rootEnvironment"] = root.GetType().AssemblyQualifiedName;
+                    _authoredLuaCapture["interpreter"] = root.script.GetType().Assembly.FullName;
+                    _authoredLuaCapture["interpreterMvid"] = root.script.GetType().Assembly.ManifestModule.ModuleVersionId.ToString();
+                    string interpreterPath = CheckAuthoredLuaAssemblyPath(root.script.GetType().Assembly.Location, (string)_authoredLuaRequest["projectRoot"]);
+                    _authoredLuaCapture["runtimeInterpreter"] = new JObject { ["path"] = interpreterPath, ["size"] = new FileInfo(interpreterPath).Length, ["sha256"] = Sha256.OfFile(interpreterPath) };
+                    _authoredLuaCapture["features"] = new JArray(actual);
+                    _authoredLuaCapture["mods"] = new JArray(Universe.AllMods.OrderBy(value => value, StringComparer.Ordinal));
+                    _authoredLuaCapture["orderedPasses"] = new JArray(Universe.OrderedPasses);
+                    _authoredLuaCapture["beginCallbacks"] = Universe.BeginRunCallbacks.Count;
+                    _authoredLuaCapture["endCallbacks"] = Universe.EndRunCallbacks.Count;
+                    _authoredLuaCapture["converters"] = new JArray(Universe.Converters.OrderBy(row => row.Key, StringComparer.Ordinal).Select(row => new JObject { ["name"] = row.Key, ["type"] = row.Value.GetType().AssemblyQualifiedName }));
+                    _authoredLuaCapture["contributors"] = new JArray(SpaceWarp2.API.Lifecycle.ModRuntime.Contributors.Select(value => value.GetType().AssemblyQualifiedName));
+                    string label = (string)_authoredLuaRequest["label"];
+                    // Selection and patch membership need actual loaded object names.
+                    _authoredLuaCapture["selectedInputAbsent"] = false;
+                }
+                catch (Exception error)
+                {
+                    FailAuthoredLuaCapture(error);
+                }
+            });
+        }
+
+
+        private static void ObserveAuthoredLuaLocations(LabelRebuildState state)
+        {
+            if (_authoredLuaWindows == null)
+            {
+                ObserveAuthoredLuaLocationsWindow(state);
+                return;
+            }
+            ForEachAuthoredLuaWindow(() => ObserveAuthoredLuaLocationsWindow(state));
+        }
+
+        private static void ObserveAuthoredLuaLocationsWindow(LabelRebuildState state)
+        {
+            RunAuthoredLuaCapture(() =>
+            {
+                if (!IsAuthoredLuaTarget(state.Label))
+                    return;
+                var loadedAssets = new JArray();
+                foreach (var (name, binding) in state.LocationsByName.OrderBy(row => row.Key, StringComparer.Ordinal))
+                {
+                    IResourceLocation location = binding.location;
+                    JObject graph = AuthoredLuaLocationGraph(location, new HashSet<IResourceLocation>());
+                    var bindings = (_authoredLuaRequest["sourceBindings"] as JArray)?.Children<JObject>()
+                        .Where(row => JToken.DeepEquals(row["location"], graph)).ToList() ?? new List<JObject>();
+                    if (bindings.Count > 1)
+                        throw new InvalidOperationException("Ambiguous pinned Lua source identity: " + name);
+                    JObject sourceIdentity = null;
+                    if (bindings.Count == 1)
+                    {
+                        sourceIdentity = (JObject)bindings[0]["sourceIdentity"];
+                        if ((string)sourceIdentity["identity"]["name"] != name
+                            || (string)sourceIdentity["assetType"] != binding.assetType)
+                            throw new InvalidOperationException("Pinned Lua source identity differs from the loaded object: " + name);
+                        JObject asset = (JObject)sourceIdentity["asset"];
+                        CheckAuthoredLuaPath((string)asset["path"], (string)_authoredLuaRequest["projectRoot"]);
+                        if (Sha256.OfFile((string)asset["path"]) != (string)asset["sha256"])
+                            throw new InvalidOperationException("Pinned Lua source bytes differ at the load boundary: " + name);
+                    }
+                    loadedAssets.Add(new JObject { ["name"] = name, ["assetType"] = binding.assetType,
+                        ["location"] = graph, ["sourceIdentity"] = sourceIdentity?.DeepClone() });
+                }
+                _authoredLuaCapture["loadedAssets"] = loadedAssets;
+                var requestedBindings = new JArray();
+                var selectedLocations = new JArray();
+                foreach (string requested in _authoredLuaRequest["names"].Values<string>())
+                {
+                    var matches = loadedAssets.Children<JObject>().Where(row => requested == (string)row["name"]
+                        || requested == (string)row["location"]["primaryKey"]
+                        || requested == Path.GetFileNameWithoutExtension((string)row["location"]["primaryKey"])).ToList();
+                    if (matches.Count > 1)
+                        throw new InvalidOperationException("Requested Lua spelling identifies distinct loaded assets: " + requested);
+                    foreach (JObject match in matches)
+                    {
+                        requestedBindings.Add(new JObject { ["requested"] = requested, ["name"] = match["name"].DeepClone(),
+                            ["location"] = match["location"].DeepClone() });
+                        if (!selectedLocations.Any(row => JToken.DeepEquals(row, match["location"])))
+                            selectedLocations.Add(match["location"].DeepClone());
+                    }
+                }
+                _authoredLuaCapture["requestedBindings"] = requestedBindings;
+                _authoredLuaCapture["locations"] = selectedLocations;
+                _authoredLuaCapture["selectedInputAbsent"] = requestedBindings.Count == 0
+                    && !state.CreatedAssets.Any(asset => _authoredLuaRequest["names"].Values<string>().Contains(asset.name));
+                ObserveAuthoredLuaMembers(state);
+                foreach (string pass in Universe.OrderedPasses)
+                {
+                    foreach (string name in AuthoredLuaSelectedNames())
+                    {
+                        foreach (PatchDefinition patch in Universe.GetAllSortedPatchesFor(state.Label, name, pass))
+                        {
+                            RecordAuthoredLuaPatchRegistration(name, pass, patch);
+                        }
+                    }
+                }
+            });
+        }
+
+
+        /// <summary>
+        /// Exclude a genuinely saved body only inside an explicitly pinned diagnostic capture.
+        /// </summary>
+        /// <param name="modId">The executing mod identity.</param>
+        /// <param name="key">The executing source key.</param>
+        /// <param name="content">The actual loaded source text.</param>
+        /// <returns>True if this diagnostic capture excludes the exact saved body, false otherwise.</returns>
+        /// <exception cref="InvalidDataException">Thrown when candidate source or saved-owner pins changed.</exception>
+        internal static bool ExcludeDiagnosticAuthoredLuaBody(string modId, string key, string content)
+        {
+            if (_authoredLuaRequest == null || _authoredLuaCapture == null || modId != "Ksp2Redux"
+                || _authoredLuaRequest["diagnosticCandidate"] is not JObject candidatePin)
+                return false;
+            string root = (string)_authoredLuaRequest["projectRoot"];
+            string path = (string)candidatePin["path"];
+            CheckAuthoredLuaPath(path, Path.Combine(root, "reference/omnipatching/source-player/lua-transactional-source-save-r1/review-r1"));
+            if (Sha256.OfFile(path) != (string)candidatePin["sha256"] || new FileInfo(path).Length > 8 * 1024 * 1024)
+                throw new InvalidDataException("Diagnostic Lua candidate changed.");
+            JObject candidate = JObject.Parse(File.ReadAllText(path));
+            if ((string)candidate["schema"] != "omnipatching.lua-diagnostic-exclusion.v1"
+                || (bool?)candidate["diagnosticOnly"] != true || (bool?)candidate["runtimeRetired"] != false
+                || candidate["body"] is not JObject body || (string)body["modId"] != "Ksp2Redux"
+                || (string)body["key"] is "Ksp2Redux/Features" or "Ksp2Redux/Passes" or "Ksp2Redux/PantherNozzle")
+                throw new InvalidDataException("Foreign diagnostic Lua candidate.");
+            if ((string)body["key"] != key)
+                return false;
+            if ((string)body["bodyTextSha256"] != Sha256.OfString(content))
+                throw new InvalidDataException("The diagnostic Lua body changed.");
+            foreach (JObject pin in candidate["currentInputs"])
+            {
+                string input = (string)pin["path"];
+                CheckAuthoredLuaPath(input, root);
+                if (new FileInfo(input).Length != (long)pin["size"] || Sha256.OfFile(input) != (string)pin["sha256"])
+                    throw new InvalidDataException("Diagnostic saved-source input changed: " + input);
+            }
+            var excluded = (JArray)_authoredLuaCapture["diagnosticCandidateExclusions"];
+            if (excluded.Count != 0)
+                throw new InvalidDataException("A diagnostic body was excluded more than once.");
+            excluded.Add(new JObject { ["modId"] = modId, ["key"] = key, ["sha256"] = Sha256.OfString(content), ["candidate"] = candidatePin.DeepClone() });
+            return true;
+        }
+
+        private static IEnumerable<string> AuthoredLuaSelectedNames()
+        {
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string requested in _authoredLuaRequest["names"].Values<string>())
+            {
+                var bindings = _authoredLuaCapture["requestedBindings"].Children<JObject>()
+                    .Where(row => (string)row["requested"] == requested).ToList();
+                if (bindings.Count == 0)
+                    names.Add(requested);
+                foreach (JObject binding in bindings)
+                {
+                    names.Add((string)binding["name"]);
+                }
+            }
+            if (_authoredLuaCapture["outputLineage"] is JArray lineage)
+            {
+                foreach (JObject row in lineage)
+                {
+                    names.Add((string)row["name"]);
+                }
+            }
+            return names.OrderBy(value => value, StringComparer.Ordinal);
+        }
+
+        /// <summary>
+        /// Observe the actual accepted duplicate and its source without changing the patch result.
+        /// </summary>
+        /// <param name="patch">The real executing duplicate patch.</param>
+        /// <param name="sourceName">The actual source asset name.</param>
+        /// <param name="duplicate">The accepted duplicate queued by the engine.</param>
+        internal static void ObserveAuthoredLuaDuplicate(PatchDefinition patch, string sourceName, Universe.DuplicatedAsset duplicate)
+        {
+            if (_authoredLuaWindows == null)
+            {
+                ObserveAuthoredLuaDuplicateWindow(patch, sourceName, duplicate);
+                return;
+            }
+            ForEachAuthoredLuaWindow(() => ObserveAuthoredLuaDuplicateWindow(patch, sourceName, duplicate));
+        }
+
+        private static void ObserveAuthoredLuaDuplicateWindow(PatchDefinition patch, string sourceName, Universe.DuplicatedAsset duplicate)
+        {
+            RunAuthoredLuaCapture(() =>
+            {
+                if (!IsAuthoredLuaTarget(patch.Label) || !AuthoredLuaSelectedNames().Contains(sourceName))
+                    return;
+                var lineage = (JArray)_authoredLuaCapture["outputLineage"];
+                if (lineage.Any(row => (string)row["name"] == duplicate.Name))
+                    throw new InvalidOperationException("An observed generated Lua name is ambiguous: " + duplicate.Name);
+                lineage.Add(new JObject { ["name"] = duplicate.Name, ["kind"] = "duplicate", ["sourceName"] = sourceName,
+                    ["patch"] = patch.Name, ["patchId"] = AuthoredLuaPatchId(patch.Label, AuthoredLuaPatchOrdinal(patch)),
+                    ["label"] = patch.Label, ["registrationOrdinal"] = AuthoredLuaPatchOrdinal(patch), ["pass"] = patch.PassName, ["modId"] = patch.PatchModId, ["converter"] = patch.ConverterInstance.GetType().AssemblyQualifiedName,
+                    ["afterOrder"] = duplicate.AfterOrder, ["initialValue"] = duplicate.Data.DeepClone(),
+                    ["features"] = new JArray(patch.Selector.Features), ["noFeatures"] = new JArray(patch.Selector.NoFeatures) });
+                foreach (string pass in Universe.OrderedPasses)
+                {
+                    foreach (PatchDefinition registered in Universe.GetAllSortedPatchesFor(patch.Label, duplicate.Name, pass))
+                    {
+                        RecordAuthoredLuaPatchRegistration(duplicate.Name, pass, registered);
+                    }
+                }
+            });
+        }
+
+        private static string AuthoredLuaPatchId(string label, int ordinal)
+        {
+            if (string.IsNullOrEmpty(label) || ordinal < 0)
+                throw new InvalidOperationException("Malformed Lua registration identity.");
+            return label + "/" + ordinal.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        private static int AuthoredLuaPatchOrdinal(PatchDefinition patch)
+        {
+            if (!Universe.AllPatches.TryGetValue(patch.Label, out var definitions))
+                throw new InvalidOperationException("Unregistered Lua patch label: " + patch.Label);
+            int ordinal = -1;
+            for (int index = 0; index < definitions.Count; index++)
+            {
+                if (!ReferenceEquals(definitions[index], patch))
+                    continue;
+                if (ordinal >= 0)
+                    throw new InvalidOperationException("Repeated Lua definition reference in registration list.");
+                ordinal = index;
+            }
+            if (ordinal < 0)
+                throw new InvalidOperationException("Unregistered Lua patch definition: " + patch.Name);
+            return ordinal;
+        }
+
+        private static List<Summary.SummaryEntry> AuthoredLuaEntries(Summary summary, PatchDefinition patch, string name)
+        {
+            foreach (var label in summary.Summaries)
+            {
+                if (label.labelName != patch.Label)
+                    continue;
+                foreach (var asset in label.assets)
+                {
+                    if (asset.AssetName == name && asset.EntriesByPass.TryGetValue(patch.PassName, out var entries))
+                        return entries;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Apply an ordinary patch and attribute its actual summary entries to the registered definition.
+        /// </summary>
+        /// <param name="patch">The actual definition selected by the engine.</param>
+        /// <param name="value">The ordinary converter value.</param>
+        /// <param name="summary">The engine summary receiving the actual outcome.</param>
+        /// <param name="name">The current source or generated asset name.</param>
+        /// <param name="removed">True if the callback removed the asset, false otherwise.</param>
+        /// <param name="errored">True if the patch reported an error, false otherwise.</param>
+        /// <returns>True if the patch ran without error or predicate failure, false otherwise.</returns>
+        internal static bool ApplyAuthoredLuaPatch(PatchDefinition patch, MoonSharp.Interpreter.DynValue value,
+            Summary summary, string name, out bool removed, out bool errored)
+        {
+            if (!HasAuthoredLuaWindow(patch.Label, name))
+                return patch.Apply(value, summary, out removed, out errored);
+            int start = 0;
+            RunAuthoredLuaCapture(() => start = AuthoredLuaEntries(summary, patch, name)?.Count ?? 0);
+            bool result = patch.Apply(value, summary, out removed, out errored);
+            ForEachAuthoredLuaWindow(() => RunAuthoredLuaCapture(() =>
+            {
+                if (!IsAuthoredLuaTarget(patch.Label) || !AuthoredLuaSelectedNames().Contains(name))
+                    return;
+                List<Summary.SummaryEntry> entries = AuthoredLuaEntries(summary, patch, name);
+                if (entries == null || entries.Count <= start)
+                    throw new InvalidOperationException("The actual Lua operation produced no summary entry.");
+                int ordinal = AuthoredLuaPatchOrdinal(patch);
+                string identity = AuthoredLuaPatchId(patch.Label, ordinal);
+                for (int index = start; index < entries.Count; index++)
+                {
+                    Summary.SummaryEntry entry = entries[index];
+                    if (entry.Name != patch.Name || entry.Pass != patch.PassName)
+                        throw new InvalidOperationException("The actual Lua operation summary attribution changed.");
+                    ((JArray)_authoredLuaCapture["applications"]).Add(new JObject
+                    {
+                        ["target"] = name, ["pass"] = entry.Pass, ["patch"] = entry.Name,
+                        ["patchId"] = identity, ["label"] = patch.Label, ["registrationOrdinal"] = ordinal,
+                        ["state"] = entry.State.ToString(), ["context"] = entry.Context
+                    });
+                }
+            }));
+            return result;
+        }
+
+
+        private static void RecordAuthoredLuaPatchRegistration(string name, string pass, PatchDefinition patch)
+        {
+            int ordinal = AuthoredLuaPatchOrdinal(patch);
+            string identity = AuthoredLuaPatchId(patch.Label, ordinal);
+            var registrations = (JArray)_authoredLuaCapture["registration"];
+            if (registrations.Any(row => (string)row["target"] == name && (string)row["pass"] == pass && (string)row["patchId"] == identity))
+                return;
+            registrations.Add(new JObject { ["patchId"] = identity, ["label"] = patch.Label, ["registrationOrdinal"] = ordinal, ["target"] = name, ["name"] = patch.Name, ["modId"] = patch.PatchModId, ["pass"] = pass, ["order"] = patch.Order, ["converter"] = patch.ConverterInstance.GetType().AssemblyQualifiedName, ["features"] = new JArray(patch.Selector.Features), ["noFeatures"] = new JArray(patch.Selector.NoFeatures), ["needsMods"] = new JArray(patch.NeedsMods), ["conflictsMods"] = new JArray(patch.ConflictsMods), ["needsPatches"] = new JArray(patch.NeedsPatches), ["conflictsPatches"] = new JArray(patch.ConflictsPatches), ["duplicate"] = patch.DuplicateNameTemplate });
+        }
+
+        private static void ObserveAuthoredLuaOutputLineage(LabelRebuildState state, bool isInput)
+        {
+            if (!IsAuthoredLuaTarget(state.Label))
+                return;
+            var lineage = (JArray)_authoredLuaCapture["outputLineage"];
+            foreach (string name in AuthoredLuaSelectedNames())
+            {
+                if (lineage.Any(row => (string)row["name"] == name))
+                    continue;
+                var created = state.CreatedAssets.Where(row => row.name == name).ToList();
+                if (created.Count > 1)
+                    throw new InvalidOperationException("Ambiguous selected Lua creation: " + name);
+                if (created.Count == 1)
+                {
+                    LuaAsset asset = created[0].asset;
+                    lineage.Add(new JObject { ["name"] = name, ["kind"] = "created", ["modId"] = asset.ModId,
+                        ["converter"] = asset.ConverterInstance.GetType().AssemblyQualifiedName, ["label"] = asset.Label,
+                        ["features"] = new JArray(asset.Selector.Features), ["noFeatures"] = new JArray(asset.Selector.NoFeatures),
+                        ["initialValue"] = asset.ConverterInstance.ToJson(asset.CurrentValue)?.DeepClone() });
+                }
+                else if (state.RawTexts.ContainsKey(name) || state.Tokens.ContainsKey(name))
+                {
+                    if (!state.PrimaryKeyMap.TryGetValue(name, out string primaryKey))
+                        throw new InvalidOperationException("Selected Lua source lacks its actual primary key: " + name);
+                    JObject loaded = _authoredLuaCapture["loadedAssets"].Children<JObject>().Single(row => (string)row["name"] == name);
+                    lineage.Add(new JObject { ["name"] = name, ["kind"] = "existing", ["primaryKey"] = primaryKey,
+                        ["location"] = loaded["location"].DeepClone(), ["assetType"] = loaded["assetType"].DeepClone(),
+                        ["sourceIdentity"] = loaded["sourceIdentity"]?.DeepClone() });
+                }
+            }
+            if (!isInput)
+            {
+                JObject values = AuthoredLuaValues(state);
+                foreach (JObject row in lineage)
+                {
+                    row["presentAtOutput"] = values[(string)row["name"]] != null;
+                }
+            }
+        }
+
+        private static JObject AuthoredLuaLocationGraph(IResourceLocation location, HashSet<IResourceLocation> stack)
+        {
+            if (!stack.Add(location))
+                throw new InvalidOperationException("A selected Lua catalog location has cyclic dependencies.");
+            var dependencies = new JArray();
+            if (location.Dependencies != null)
+            {
+                foreach (IResourceLocation dependency in location.Dependencies)
+                {
+                    dependencies.Add(AuthoredLuaLocationGraph(dependency, stack));
+                }
+            }
+            stack.Remove(location);
+            return new JObject { ["primaryKey"] = location.PrimaryKey, ["locationKey"] = FeatureAssetIndex.KeyOf(location),
+                ["internalId"] = location.InternalId, ["providerId"] = location.ProviderId,
+                ["resourceType"] = location.ResourceType?.AssemblyQualifiedName, ["dependencies"] = dependencies,
+                ["gate"] = "FeatureAssetIndex.Filter" };
+        }
+
+        private static JObject AuthoredLuaBodyRegistry()
+        {
+            var patches = new JObject();
+            foreach (var label in Universe.AllPatches)
+            {
+                for (int ordinal = 0; ordinal < label.Value.Count; ordinal++)
+                {
+                    PatchDefinition patch = label.Value[ordinal];
+                    if (patch.Label != label.Key || AuthoredLuaPatchOrdinal(patch) != ordinal)
+                        throw new InvalidOperationException("Lua definition registration label/reference differs.");
+                    string identity = AuthoredLuaPatchId(label.Key, ordinal);
+                    patches.Add(identity, new JObject { ["patchId"] = identity, ["registrationOrdinal"] = ordinal,
+                        ["name"] = patch.Name, ["modId"] = patch.PatchModId, ["label"] = patch.Label,
+                        ["names"] = new JArray(patch.Names.OrderBy(value => value, StringComparer.Ordinal)), ["pass"] = patch.PassName, ["order"] = patch.Order,
+                        ["features"] = new JArray(patch.Selector.Features), ["noFeatures"] = new JArray(patch.Selector.NoFeatures),
+                        ["converter"] = patch.ConverterInstance.GetType().AssemblyQualifiedName,
+                        ["predicates"] = patch.DescribeAuthoredLuaPredicates(),
+                        ["needsMods"] = new JArray(patch.NeedsMods), ["conflictsMods"] = new JArray(patch.ConflictsMods),
+                        ["needsPatches"] = new JArray(patch.NeedsPatches), ["conflictsPatches"] = new JArray(patch.ConflictsPatches),
+                        ["duplicate"] = patch.DuplicateNameTemplate });
+                }
+            }
+            var created = new JObject();
+            foreach (LuaAsset asset in Universe.AllNewAssets)
+            {
+                if (created.Property(asset.Label + "/" + asset.Name) != null)
+                    throw new InvalidOperationException("Ambiguous full Lua registry creation identity: " + asset.Label + "/" + asset.Name);
+                created[asset.Label + "/" + asset.Name] = new JObject { ["name"] = asset.Name, ["label"] = asset.Label, ["modId"] = asset.ModId,
+                    ["features"] = new JArray(asset.Selector.Features), ["noFeatures"] = new JArray(asset.Selector.NoFeatures),
+                    ["converter"] = asset.ConverterInstance.GetType().AssemblyQualifiedName };
+            }
+            return new JObject { ["patchIdentity"] = "label-registration-ordinal-v1", ["patches"] = patches, ["created"] = created,
+                ["converters"] = new JArray(Universe.Converters.OrderBy(row => row.Key, StringComparer.Ordinal).Select(row => new JObject { ["name"] = row.Key, ["type"] = row.Value.GetType().AssemblyQualifiedName })),
+                ["passes"] = new JArray(Universe.Passes.OrderBy(row => row.Key, StringComparer.Ordinal).Select(row => new JObject
+                { ["name"] = row.Key, ["before"] = new JArray(row.Value.BeforePasses), ["after"] = new JArray(row.Value.AfterPasses) })),
+                ["features"] = new JArray(FeatureRegistry.Instance.All.OrderBy(value => value.Id, StringComparer.Ordinal).Select(value => new JObject
+                { ["id"] = value.Id, ["requires"] = new JArray(value.Requires), ["conflicts"] = new JArray(value.Conflicts), ["provides"] = new JArray(value.Provides) })),
+                ["beginCallbacks"] = new JArray(Universe.BeginRunCallbacks.Select(value => value.ModId + ":" + value.Name)),
+                ["endCallbacks"] = new JArray(Universe.EndRunCallbacks.Select(value => value.ModId + ":" + value.Name)) };
+        }
+
+        private static void ObserveAuthoredLuaBodyRegistry(string modId, string key, string hash)
+        {
+            JObject after = AuthoredLuaBodyRegistry();
+            ((JArray)_authoredLuaCapture["bodyEffects"]).Add(new JObject { ["modId"] = modId, ["key"] = key, ["sha256"] = hash,
+                ["before"] = _authoredLuaCapture["bodyRegistry"].DeepClone(), ["after"] = after.DeepClone() });
+            _authoredLuaCapture["bodyRegistry"] = after;
+        }
+
+        private static void ObserveAuthoredLuaMembers(LabelRebuildState state)
+        {
+            if (!IsAuthoredLuaTarget(state.Label))
+                return;
+            var members = new JObject();
+            foreach (var (name, binding) in state.LocationsByName)
+            {
+                IResourceLocation location = binding.location;
+                var patches = new JArray();
+                foreach (string pass in Universe.OrderedPasses)
+                {
+                    foreach (PatchDefinition patch in Universe.GetAllSortedPatchesFor(state.Label, name, pass))
+                    {
+                        int ordinal = AuthoredLuaPatchOrdinal(patch);
+                        patches.Add(new JObject { ["patchId"] = AuthoredLuaPatchId(state.Label, ordinal), ["label"] = state.Label,
+                            ["registrationOrdinal"] = ordinal, ["name"] = patch.Name, ["pass"] = pass, ["modId"] = patch.PatchModId });
+                    }
+                }
+                if (members.Property(location.PrimaryKey) != null)
+                    throw new InvalidOperationException("Distinct loaded Lua inputs share a primary address: " + location.PrimaryKey);
+                members[location.PrimaryKey] = new JObject { ["name"] = name, ["primaryKey"] = location.PrimaryKey,
+                    ["location"] = AuthoredLuaLocationGraph(location, new HashSet<IResourceLocation>()), ["patches"] = patches };
+            }
+            _authoredLuaCapture["normalMembers"] = members;
+        }
+
+
+        private static JObject AuthoredLuaValues(LabelRebuildState state)
+        {
+            var assets = new JObject();
+            foreach (string name in AuthoredLuaSelectedNames())
+            {
+                if (state.Tokens.TryGetValue(name, out JToken token))
+                {
+                    assets[name] = token.DeepClone();
+                    continue;
+                }
+
+                if (state.RawTexts.TryGetValue(name, out string text))
+                {
+                    assets[name] = JToken.Parse(text);
+                    continue;
+                }
+
+                var created = state.CreatedAssets.Where(row => row.name == name).ToList();
+                if (created.Count > 1)
+                    throw new InvalidOperationException($"Duplicate created definition: {name}");
+                if (created.Count == 1)
+                    assets[name] = created[0].asset.ConverterInstance.ToJson(created[0].asset.CurrentValue)?.DeepClone();
+            }
+
+            return assets;
+        }
+
+
+        private static void ObserveAuthoredLuaValues(LabelRebuildState state, bool isInput)
+        {
+            if (_authoredLuaWindows == null)
+            {
+                ObserveAuthoredLuaValuesWindow(state, isInput);
+                return;
+            }
+            ForEachAuthoredLuaWindow(() => ObserveAuthoredLuaValuesWindow(state, isInput));
+        }
+
+        private static void ObserveAuthoredLuaValuesWindow(LabelRebuildState state, bool isInput)
+        {
+            RunAuthoredLuaCapture(() =>
+            {
+                if (!IsAuthoredLuaTarget(state.Label))
+                    return;
+                try
+                {
+                    RecordAuthoredLuaWindowStage(isInput);
+                    if (!isInput)
+                        ObserveAuthoredLuaEngineSummary(state.Label);
+                    ObserveAuthoredLuaOutputLineage(state, isInput);
+                    var values = AuthoredLuaValues(state);
+                    string filename = isInput ? "input.json" : "projection.json";
+                    string path = Path.Combine((string)_authoredLuaRequest["output"], filename);
+                    WriteAuthoredLuaFile(path, values);
+                    _authoredLuaCapture[isInput ? "input" : "projection"] = new JObject
+                    {
+                        ["path"] = path,
+                        ["sha256"] = Sha256.OfFile(path),
+                        ["count"] = values.Count
+                    };
+
+                }
+                catch (Exception error)
+                {
+                    FailAuthoredLuaCapture(error);
+                }
+            });
+        }
+
+
+        private static void ObserveAuthoredLuaEngineSummary(string selectedLabel)
+        {
+            if (!IsAuthoredLuaTarget(selectedLabel))
+                return;
+            var witness = new JArray();
+            foreach (var label in Universe.Summary.Summaries)
+            {
+                if (label.labelName != selectedLabel)
+                    continue;
+                foreach (var asset in label.assets)
+                {
+                    if (!AuthoredLuaSelectedNames().Contains(asset.AssetName))
+                        continue;
+                    foreach (var pass in asset.EntriesByPass)
+                    {
+                        foreach (Summary.SummaryEntry entry in pass.Value)
+                        {
+                            witness.Add(new JObject { ["target"] = asset.AssetName, ["pass"] = entry.Pass,
+                                ["patch"] = entry.Name, ["state"] = entry.State.ToString(), ["context"] = entry.Context });
+                        }
+                    }
+                }
+            }
+            // Engine errors outside Apply have no retained definition reference. Keep the raw outcomes separate.
+            _authoredLuaCapture["selectedEngineSummary"] = witness;
+        }
+
+        private static void ObserveAuthoredLuaPass(string label, string pass)
+        {
+            if (_authoredLuaWindows == null)
+            {
+                ObserveAuthoredLuaPassWindow(label, pass);
+                return;
+            }
+            ForEachAuthoredLuaWindow(() => ObserveAuthoredLuaPassWindow(label, pass));
+        }
+
+        private static void ObserveAuthoredLuaPassWindow(string label, string pass)
+        {
+            RunAuthoredLuaCapture(() =>
+            {
+                if (!IsAuthoredLuaTarget(label))
+                    return;
+                if (_authoredLuaPlan != null && (((JArray)_authoredLuaCapture["windowStages"]).Count != 1
+                    || _authoredLuaCapture["passes"].Any(row => (string)row["pass"] == pass)))
+                    throw new InvalidDataException("Repeated or out-of-stage Lua pass observation.");
+                ObserveAuthoredLuaEngineSummary(label);
+                JObject values = AuthoredLuaValues(_rebuildStates[label]);
+                ((JArray)_authoredLuaCapture["passes"]).Add(new JObject { ["pass"] = pass, ["totalPatchErrors"] = TotalErrorCount, ["valueSha256"] = Sha256.OfString(values.ToString(Formatting.None)), ["values"] = values });
+            });
+        }
+
+
+        private static void FinishAuthoredLuaCapture()
+        {
+            RunAuthoredLuaCapture(() =>
+            {
+                if (_authoredLuaPlan != null)
+                {
+                    FinishAuthoredLuaPlan();
+                    return;
+                }
+                if (_authoredLuaCapture == null || (bool? )_authoredLuaCapture["isTargetRun"] != true)
+                    return;
+                try
+                {
+                    if ((bool? )_authoredLuaCapture["selectedInputAbsent"] == true && _authoredLuaCapture["input"] == null)
+                    {
+                        var empty = new LabelRebuildState
+                        {
+                            Label = (string)_authoredLuaRequest["label"]
+                        };
+                        ObserveAuthoredLuaValues(empty, true);
+                        ObserveAuthoredLuaValues(empty, false);
+                    }
+
+                    foreach (var pin in _authoredLuaRequest["inputs"].Children<JObject>())
+                    {
+                        if (Sha256.OfFile((string)pin["path"]) != (string)pin["sha256"])
+                            throw new InvalidOperationException("A source Lua capture input changed during the real run.");
+                    }
+
+                    foreach (JObject binding in (_authoredLuaRequest["sourceBindings"] as JArray ?? new JArray()).Children<JObject>())
+                    {
+                        JObject asset = (JObject)binding["sourceIdentity"]["asset"];
+                        CheckAuthoredLuaPath((string)asset["path"], (string)_authoredLuaRequest["projectRoot"]);
+                        if (Sha256.OfFile((string)asset["path"]) != (string)asset["sha256"])
+                            throw new InvalidOperationException("A bound Lua source changed during capture.");
+                    }
+                    var sources = _authoredLuaCapture["sources"].Children<JObject>().ToList();
+                    bool sourceMatch = _authoredLuaRequest["sources"].Children<JObject>().All(expected => sources.Count(actual => (string)actual["modId"] == (string)expected["modId"] && (string)actual["key"] == (string)expected["key"] && (bool)actual["succeeded"] && (bool)actual["sourceMatches"]) == 1);
+                    var interpreterPin = (JObject)_authoredLuaCapture["runtimeInterpreter"];
+                    if (Sha256.OfFile((string)interpreterPin["path"]) != (string)interpreterPin["sha256"])
+                        throw new InvalidOperationException("The actual interpreter changed during capture.");
+                    _authoredLuaCapture["allRequestedSourcesObserved"] = sourceMatch;
+                    _authoredLuaCapture["allObservedSourcesSucceeded"] = sources.All(row => (bool)row["succeeded"]);
+                    _authoredLuaCapture["totalPatchErrors"] = TotalErrorCount;
+                    _authoredLuaCapture["normalPipelineCompleted"] = true;
+                    _authoredLuaCapture["inputsUnchanged"] = true;
+                    _authoredLuaCapture["observerSlotOwned"] = SpaceWarp2.API.Lifecycle.ModScriptRuntime.AuthoredSourceObserver == _authoredLuaObserver;
+                    _authoredLuaCapture["success"] = sourceMatch && sources.All(row => (bool)row["succeeded"]) && TotalErrorCount == 0 && !_authoredLuaCapture["engineErrors"].Any() && (bool)_authoredLuaCapture["observerSlotOwned"] && _authoredLuaCapture["input"] != null && _authoredLuaCapture["projection"] != null;
+                    string path = Path.Combine((string)_authoredLuaRequest["output"], "report.json");
+                    WriteAuthoredLuaFile(path, _authoredLuaCapture);
+                }
+                catch (Exception error)
+                {
+                    FailAuthoredLuaCapture(error);
+                }
+                finally
+                {
+                    RestoreAuthoredLuaObserver();
+                }
+            });
+        }
+
+
+        private static void FailAuthoredLuaCapture(Exception error)
+        {
+            try
+            {
+                if (_authoredLuaPlan != null && Directory.Exists((string)_authoredLuaPlan["output"]))
+                    WriteAuthoredLuaFile(Path.Combine((string)_authoredLuaPlan["output"], "failed.json"),
+                        new JObject { ["plan"] = _authoredLuaPlanPin?.DeepClone(), ["error"] = error.ToString(), ["success"] = false });
+                if (_authoredLuaCapture == null || _authoredLuaRequest == null)
+                    return;
+                _authoredLuaCapture["error"] = error.ToString();
+                string path = Path.Combine((string)_authoredLuaRequest["output"], "failed.json");
+                WriteAuthoredLuaFile(path, _authoredLuaCapture);
+            }
+            catch (Exception)
+            {
+            // Failure evidence is best effort. Diagnostic IO must not interrupt the real patch run.
+            }
+            finally
+            {
+                RestoreAuthoredLuaObserver();
+            }
+        }
+
+
+        private static void RestoreAuthoredLuaObserver()
+        {
+            if (SpaceWarp2.API.Lifecycle.ModScriptRuntime.AuthoredSourceObserver == _authoredLuaObserver)
+                SpaceWarp2.API.Lifecycle.ModScriptRuntime.AuthoredSourceObserver = _authoredLuaPriorObserver;
+            _authoredLuaPlan = null;
+            _authoredLuaPlanPin = null;
+            _authoredLuaWindows = null;
+            _authoredLuaEpisodeId = null;
+            _authoredLuaGeneration = null;
+            _authoredLuaObserver = null;
+            _authoredLuaPriorObserver = null;
+            _authoredLuaCapture = null;
+            _authoredLuaRequest = null;
+        }
+
+
+        private static void WriteAuthoredLuaFile(string path, JObject value)
+        {
+            string text = value.ToString(Formatting.Indented);
+            if (System.Text.Encoding.UTF8.GetByteCount(text) >= 8 * 1024 * 1024)
+                throw new InvalidOperationException("The finite Lua capture output exceeded 8 MiB.");
+            string temporary = path + ".tmp";
+            using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            using (var writer = new StreamWriter(stream))
+            {
+                writer.Write(text);
+            }
+
+            File.Move(temporary, path);
+        }
+
+
+        private static void CheckAuthoredLuaPath(string path, string scope)
+        {
+            string full = Path.GetFullPath(path);
+            string prefix = Path.GetFullPath(scope).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (full.Length > 240 || !full.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                throw new IOException("Source Lua capture path escaped its scope or Mono path budget.");
+            for (string current = full; !string.IsNullOrEmpty(current); current = Path.GetDirectoryName(current))
+            {
+                if ((File.Exists(current) || Directory.Exists(current)) && (File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
+                    throw new IOException("Source Lua capture paths must not cross filesystem links.");
+            }
+        }
+
+
+        private static string CheckAuthoredLuaAssemblyPath(string path, string root)
+        {
+            CheckAuthoredLuaPath(path, root);
+            return path;
+        }
+
+
+        private static bool IsAuthoredLuaTarget(string label) => _authoredLuaCapture != null && (bool? )_authoredLuaCapture["isTargetRun"] == true && label == (string)_authoredLuaRequest["label"];
+
+        private static void ObserveAuthoredLuaEngineError(string message)
+        {
+            PatchManager.Logger.LogError(message);
+            RunAuthoredLuaCapture(() =>
+            {
+                if (_authoredLuaCapture == null)
+                    return;
+                var errors = (JArray)_authoredLuaCapture["engineErrors"];
+                if (errors.Count < 32)
+                    errors.Add(message.Length > 1000 ? message.Substring(0, 1000) : message);
+            });
+        }
+
+
+        /// <summary>
+        /// Restores the previous diagnostic observer when a source-player run is cancelled or fails.
+        /// </summary>
+        /// <param name = "error">The actual failure to retain, or null for ordinary teardown.</param>
+        internal static void AbortAuthoredLuaCapture(Exception error)
+        {
+            if (error != null)
+            {
+                FailAuthoredLuaCapture(error);
+                return;
+            }
+
+            if (_authoredLuaCapture != null)
+                RestoreAuthoredLuaObserver();
+        }
+
+
+        private static void RunAuthoredLuaCapture(Action observe)
+        {
+            try
+            {
+                observe();
+            }
+            catch (Exception error)
+            {
+                FailAuthoredLuaCapture(error);
+            }
+        }
+
+
+        private static void AttachAuthoredLuaObserver()
+        {
+            _authoredLuaPriorObserver = SpaceWarp2.API.Lifecycle.ModScriptRuntime.AuthoredSourceObserver;
+            _authoredLuaGeneration = new object ();
+            _authoredLuaObserver = CreateAuthoredLuaObserver(_authoredLuaGeneration, _authoredLuaPriorObserver);
+            SpaceWarp2.API.Lifecycle.ModScriptRuntime.AuthoredSourceObserver = _authoredLuaObserver;
+        }
+
+
+        private static Action<string, string, string, bool> CreateAuthoredLuaObserver(object generation, Action<string, string, string, bool> prior)
+        {
+            // Keep the prior chain independent of mutable capture state and forward genuine prior errors unchanged.
+            return (modId, key, content, succeeded) =>
+            {
+                prior?.Invoke(modId, key, content, succeeded);
+                if (!ReferenceEquals(_authoredLuaGeneration, generation))
+                    return;
+                ObserveAuthoredLuaBody(modId, key, content, succeeded);
+            };
+        }
+
+
         private class LabelRebuildState
         {
             public string Label;
             public Dictionary<string, string> RawTexts = new();
             public Dictionary<string, JToken> Tokens = new();
-            public Dictionary<string, string> PrimaryKeyMap;
+            /// <summary>
+            /// Primary addresses bound at the actual TextAsset load boundary.
+            /// </summary>
+            public Dictionary<string, string> PrimaryKeyMap = new(StringComparer.Ordinal);
+            /// <summary>
+            /// Accepted locations keyed by their observed Unity object names.
+            /// </summary>
+            public Dictionary<string, (IResourceLocation location, string assetType)> LocationsByName = new(StringComparer.Ordinal);
+            /// <summary>
+            /// Parallel per-location loads owned until archive completion or cancellation.
+            /// </summary>
+            public List<(IResourceLocation location, AsyncOperationHandle<TextAsset> handle)> LoadHandles = new();
             public List<(string name, LuaAsset asset)> CreatedAssets = new();
             public Dictionary<string, string> AddressAliases = new();
             public HashSet<string> PatchedAssetNames = new();
             public bool Unchanged = true;
-            public AsyncOperationHandle<IList<TextAsset>> LoadHandle;
-        }
-
-        private static bool AddRawText(LabelRebuildState state, string name, string text) =>
-            AddRawText(state.RawTexts, state.Label, name, text);
-
-        /// <summary>
-        /// Adds one asset's text to a label's patch input, keeping the first of two different assets with the same name.
-        /// </summary>
-        /// <remarks>
-        /// Patch input is keyed by asset name, and two packs adding a body of the same name meet here before anything
-        /// else can notice. The first in catalog order is kept and the clash reported, as the game does for bodies and
-        /// parts. The same asset reached twice, once through the label and once as a member, is not a clash.
-        /// </remarks>
-        /// <param name="rawTexts">The label's patch input so far, by asset name.</param>
-        /// <param name="label">The label, for the report.</param>
-        /// <param name="name">The asset's name.</param>
-        /// <param name="text">The asset's text.</param>
-        /// <returns>True if the input now holds this text under the name, false if a different asset already did.</returns>
-        internal static bool AddRawText(Dictionary<string, string> rawTexts, string label, string name, string text)
-        {
-            if (!rawTexts.TryGetValue(name, out string existing))
-            {
-                rawTexts[name] = text;
-                return true;
-            }
-
-            if (existing == text)
-                return true;
-
-            PatchManager.Logger.LogError(
-                $"Two {label} assets are named {name}, so the first is kept. The features that provide them should conflict."
-            );
-            return false;
         }
 
         private static void UpdateLoadingBarData()

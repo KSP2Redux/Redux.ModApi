@@ -90,7 +90,8 @@ namespace SpaceWarp2
             SetupBeforeGameLoadActions();
             SetupAfterGameLoadActions(() => GameManager.Instance.LoadingFlow);
     #if UNITY_EDITOR
-            AddressablesFixes.Install();
+            if (!Redux.ReduxAssets.IsSourceOnly)
+                AddressablesFixes.Install();
     #endif
         }
 

@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/QuickActionsWindow.uss?fileID=7433441132597879392&amp;guid=e7fbbc4e594afab49af2d0d6baea1b30&amp;type=3#QuickActionsWindow" />
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/QuickSwitchWindow.uss?fileID=7433441132597879392&amp;guid=e7fbbc4e594afab49af2d0d6baea1b30&amp;type=3#QuickSwitchWindow" />
     <ui:VisualElement name="root" class="root">
         <ui:VisualElement name="title-bar">
             <ui:Label text="Quick Switch" />

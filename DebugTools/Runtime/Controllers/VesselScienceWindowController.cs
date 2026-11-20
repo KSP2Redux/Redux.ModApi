@@ -102,6 +102,9 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnGameLoaded(MessageCenterMessage msg)
         {
+            if (msg is GameLoadFinishedMessage { IsSuccess: false })
+                return;
+
             _allVessels.AddRange(Game.UniverseModel.GetAllVessels());
 
             UpdateVesselDropdown();

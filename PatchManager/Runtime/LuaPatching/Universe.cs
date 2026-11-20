@@ -713,7 +713,7 @@ namespace PatchManager.LuaPatching
                     previousInstance = previousConverter.FromJson(jValue);
                 }
 
-                if (patch.Apply(previousInstance, Summary, out var removed, out var errored))
+                if (Core.Assets.PatchingManager.ApplyAuthoredLuaPatch(patch, previousInstance, Summary, name, out var removed, out var errored))
                 {
                     patchCount++;
                     if (removed)
@@ -757,7 +757,7 @@ namespace PatchManager.LuaPatching
                     asset.CurrentValue = asset.ConverterInstance.FromJson(jValue);
                 }
 
-                if (patch.Apply(asset.CurrentValue, Summary, out var removed, out var errored))
+                if (Core.Assets.PatchingManager.ApplyAuthoredLuaPatch(patch, asset.CurrentValue, Summary, asset.Name, out var removed, out var errored))
                 {
                     patchCount++;
                     if (removed)
@@ -777,13 +777,14 @@ namespace PatchManager.LuaPatching
         {
             // Converters hand back the wrapper's live token, so the copy is cloned to keep the two assets apart
             var copy = patch.ConverterInstance.FromJson(sourceJson.DeepClone());
-            if (patch.Apply(copy, Summary, out var removed, out var errored))
+            if (Core.Assets.PatchingManager.ApplyAuthoredLuaPatch(patch, copy, Summary, sourceName, out var removed, out var errored))
             {
                 patchCount++;
                 if (!removed)
                 {
                     duplicates.Add(new DuplicatedAsset(patch.DuplicateNameFor(sourceName), patch.Name,
                         patch.ConverterInstance.ToJson(copy), patch.Order));
+                    Core.Assets.PatchingManager.ObserveAuthoredLuaDuplicate(patch, sourceName, duplicates[duplicates.Count - 1]);
                 }
             }
 

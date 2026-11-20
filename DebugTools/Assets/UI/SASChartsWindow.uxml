@@ -1,5 +1,5 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/SASChartsWindow.uss?fileID=7433441132597879392&amp;guid=c395466ec39b2b345909adecbe87ff24&amp;type=3#SASChartsWindow"/>
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/SASChartsWindow.uss?fileID=7433441132597879392&amp;guid=c395466ec39b2b345909adecbe87ff24&amp;type=3#SASChartsWindow"/>
     <Style src="project://database/Packages/com.nb.uit_charts/Runtime/styles/uit_charts.uss?fileID=7433441132597879392&amp;guid=5324f6bc1c9a2074098dc4401f2de17e&amp;type=3#uit_charts"/>
     <ui:VisualElement name="root" class="root" style="padding-top: 4px; padding-right: 4px; padding-bottom: 4px; padding-left: 4px;">
         <ui:VisualElement name="title-bar">

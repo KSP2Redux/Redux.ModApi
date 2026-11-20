@@ -1,3 +1,5 @@
+using System;
+using System.Globalization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
@@ -22,7 +24,7 @@ namespace PatchManager.PrefabPatching
             Formatting = Formatting.Indented,
             NullValueHandling = NullValueHandling.Ignore,
             DefaultValueHandling = DefaultValueHandling.Include,
-            Converters = { new StringEnumConverter() }
+            Converters = { new StringEnumConverter(), new SignedZeroConverter() }
         };
 
         /// <summary>
@@ -58,6 +60,44 @@ namespace PatchManager.PrefabPatching
             finally
             {
                 manifest.ManifestHash = previous;
+            }
+        }
+
+        // Mono loses numeric negative zero while formatting and parsing JSON.
+        // A string token preserves it across the shared typed manifest codec.
+        private sealed class SignedZeroConverter : JsonConverter<double>
+        {
+            /// <inheritdoc />
+            public override void WriteJson(JsonWriter writer, double value, JsonSerializer serializer)
+            {
+                if (BitConverter.DoubleToInt64Bits(value) == long.MinValue)
+                    writer.WriteValue("-0.0");
+                else
+                    writer.WriteValue(value);
+            }
+
+            /// <inheritdoc />
+            public override double ReadJson(
+                JsonReader reader,
+                Type objectType,
+                double existingValue,
+                bool hasExistingValue,
+                JsonSerializer serializer
+            )
+            {
+                if (reader.TokenType == JsonToken.Integer || reader.TokenType == JsonToken.Float)
+                    return Convert.ToDouble(reader.Value, CultureInfo.InvariantCulture);
+                if (reader.TokenType == JsonToken.String)
+                {
+                    var text = (string)reader.Value;
+                    if (double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
+                    {
+                        if (value == 0d && text.TrimStart().StartsWith("-", StringComparison.Ordinal))
+                            return BitConverter.Int64BitsToDouble(long.MinValue);
+                        return value;
+                    }
+                }
+                throw new JsonSerializationException("Expected a floating-point prefab patch value.");
             }
         }
     }

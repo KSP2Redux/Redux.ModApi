@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Modules/DebugTools/Assets/UI/VesselToolsWindow.uss?fileID=7433441132597879392&amp;guid=6432abe36f3f99a4487427c943339ec3&amp;type=3#VesselToolsWindow"/>
+    <Style src="project://database/Assets/Modules/Redux.ModApi/DebugTools/Assets/UI/VesselToolsWindow.uss?fileID=7433441132597879392&amp;guid=6432abe36f3f99a4487427c943339ec3&amp;type=3#VesselToolsWindow"/>
     <ui:VisualElement name="root" class="root" style="padding-left: 6px; padding-right: 6px;">
         <ui:VisualElement name="title-bar">
             <ui:Label text="Vessel Tools"/>
