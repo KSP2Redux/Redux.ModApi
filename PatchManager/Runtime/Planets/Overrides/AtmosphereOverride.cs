@@ -69,18 +69,15 @@ namespace PatchManager.Planets.Overrides
             if (AbsorptionHeightMinMax.HasValue) atmosphereModel.AbsorptionHeightMinMax = AbsorptionHeightMinMax.Value;
             if (!string.IsNullOrEmpty(TransmittanceTexture))
             {
-                GameManager.Instance.Assets.TryLoad<Texture2D>(TransmittanceTexture,
-                    asset => atmosphereModel.TransmittanceTexture = asset);
+                atmosphereModel.SetTransmittanceOverride(GameManager.Instance.Assets.LoadAssetAsync<Texture2D>(TransmittanceTexture));
             }
             if (!string.IsNullOrEmpty(IrradianceTexture))
             {
-                GameManager.Instance.Assets.TryLoad<Texture2D>(IrradianceTexture,
-                    asset => atmosphereModel.IrradianceTexture = asset);
+                atmosphereModel.SetIrradianceOverride(GameManager.Instance.Assets.LoadAssetAsync<Texture2D>(IrradianceTexture));
             }
             if (!string.IsNullOrEmpty(ScatteringTexture))
             {
-                GameManager.Instance.Assets.TryLoad<Texture3D>(ScatteringTexture,
-                    asset => atmosphereModel.ScatteringTexture = asset);
+                atmosphereModel.SetScatteringOverride(GameManager.Instance.Assets.LoadAssetAsync<Texture3D>(ScatteringTexture));
             }
         }
     }
