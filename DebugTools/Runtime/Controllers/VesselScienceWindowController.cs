@@ -45,9 +45,10 @@ namespace DebugTools.Runtime.Controllers
 
         private void Awake()
         {
-            Game.Messages.Subscribe<AddVesselToMapMessage>(OnVesselAdded);
-            Game.Messages.Subscribe<VesselDestroyedMessage>(OnVesselRemoved);
-            Game.Messages.Subscribe<GameLoadFinishedMessage>(OnGameLoaded);
+            Game.Messages.PersistentSubscribe<AddVesselToMapMessage>(OnVesselAdded);
+            Game.Messages.PersistentSubscribe<VesselDestroyedMessage>(OnVesselRemoved);
+            Game.Messages.PersistentSubscribe<GameLoadFinishedMessage>(OnGameLoaded);
+            Game.Messages.PersistentSubscribe<GameStateChangedMessage>(OnGameStateChanged);
 
             GameManager.Instance.Assets.Load<Material>(PhysXBubbleMaterialAddress, mat => _regionBoundsMaterial = mat);
             GameManager.Instance.Assets.Load<PQSScienceOverlay>(PqsOverlayPrefabAddress, overlay =>
@@ -65,6 +66,7 @@ namespace DebugTools.Runtime.Controllers
             Game.Messages.Unsubscribe<AddVesselToMapMessage>(OnVesselAdded);
             Game.Messages.Unsubscribe<VesselDestroyedMessage>(OnVesselRemoved);
             Game.Messages.Unsubscribe<GameLoadFinishedMessage>(OnGameLoaded);
+            Game.Messages.Unsubscribe<GameStateChangedMessage>(OnGameStateChanged);
         }
 
         private void OnEnable()
@@ -105,10 +107,20 @@ namespace DebugTools.Runtime.Controllers
             if (msg is GameLoadFinishedMessage { IsSuccess: false })
                 return;
 
+            _allVessels.Clear();
             _allVessels.AddRange(Game.UniverseModel.GetAllVessels());
 
             UpdateVesselDropdown();
             UpdateScienceMetadata();
+        }
+
+        private void OnGameStateChanged(MessageCenterMessage message)
+        {
+            if (message is not GameStateChangedMessage { CurrentState: GameState.MainMenu })
+                return;
+
+            _allVessels.Clear();
+            _storageComponent = null;
         }
 
         private void UpdateScienceMetadata()
