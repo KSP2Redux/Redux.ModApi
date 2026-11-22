@@ -3,7 +3,6 @@ using KSP.Game.Science;
 using KSP.Messages;
 using KSP.Sim.impl;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -41,12 +40,13 @@ namespace DebugTools.Runtime.Controllers
         private ScrollView? _reportsView;
 
         private readonly List<VesselComponent> _allVessels = new();
+        private bool _areVesselChoicesDirty = true;
         private ScienceStorageComponent? _storageComponent;
 
         private void Awake()
         {
-            Game.Messages.PersistentSubscribe<AddVesselToMapMessage>(OnVesselAdded);
-            Game.Messages.PersistentSubscribe<VesselDestroyedMessage>(OnVesselRemoved);
+            Game.Messages.PersistentSubscribe<AddVesselToMapMessage>(OnVesselRosterChanged);
+            Game.Messages.PersistentSubscribe<VesselDestroyedMessage>(OnVesselRosterChanged);
             Game.Messages.PersistentSubscribe<GameLoadFinishedMessage>(OnGameLoaded);
             Game.Messages.PersistentSubscribe<GameStateChangedMessage>(OnGameStateChanged);
 
@@ -63,8 +63,8 @@ namespace DebugTools.Runtime.Controllers
             if (Game == null)
                 return;
 
-            Game.Messages.Unsubscribe<AddVesselToMapMessage>(OnVesselAdded);
-            Game.Messages.Unsubscribe<VesselDestroyedMessage>(OnVesselRemoved);
+            Game.Messages.Unsubscribe<AddVesselToMapMessage>(OnVesselRosterChanged);
+            Game.Messages.Unsubscribe<VesselDestroyedMessage>(OnVesselRosterChanged);
             Game.Messages.Unsubscribe<GameLoadFinishedMessage>(OnGameLoaded);
             Game.Messages.Unsubscribe<GameStateChangedMessage>(OnGameStateChanged);
         }
@@ -74,6 +74,7 @@ namespace DebugTools.Runtime.Controllers
             Enable();
 
             _vessel = RootElement.Q<DropdownField>("vessel");
+            _areVesselChoicesDirty = true;
             _useActive = RootElement.Q<Toggle>("use-active");
             _useActive.value = true;
 
@@ -107,10 +108,7 @@ namespace DebugTools.Runtime.Controllers
             if (msg is GameLoadFinishedMessage { IsSuccess: false })
                 return;
 
-            _allVessels.Clear();
-            _allVessels.AddRange(Game.UniverseModel.GetAllVessels());
-
-            UpdateVesselDropdown();
+            _areVesselChoicesDirty = true;
             UpdateScienceMetadata();
         }
 
@@ -120,6 +118,7 @@ namespace DebugTools.Runtime.Controllers
                 return;
 
             _allVessels.Clear();
+            _areVesselChoicesDirty = true;
             _storageComponent = null;
         }
 
@@ -139,38 +138,49 @@ namespace DebugTools.Runtime.Controllers
             }
         }
 
-        private void OnVesselAdded(MessageCenterMessage msg)
-        {
-            if (msg is AddVesselToMapMessage addVesselToMapMessage)
-            {
-                _allVessels.Add(addVesselToMapMessage.Vessel);
-                UpdateVesselDropdown();
-            }
-        }
-
-        private void OnVesselRemoved(MessageCenterMessage msg)
-        {
-            if (msg is VesselDestroyedMessage vesselDestroyedMessage)
-            {
-                _allVessels.Remove(vesselDestroyedMessage.Vessel);
-                UpdateVesselDropdown();
-            }
-        }
+        private void OnVesselRosterChanged(MessageCenterMessage message) => _areVesselChoicesDirty = true;
 
         private void UpdateVesselDropdown()
         {
-            // A destroyed vessel never publishes VesselDestroyedMessage, so entries for vessels
-            // that no longer exist can only be dropped here.
-            _allVessels.RemoveAll(v => v == null || v.IsDestroyedOrBeingDestroyed);
+            if (!_areVesselChoicesDirty || _vessel == null)
+                return;
 
-            _vessel!.choices.Clear();
-            _vessel.choices = _allVessels.Select(p => p.DisplayName + " (" + p.mainBody.bodyName + ")").ToList();
+            _areVesselChoicesDirty = false;
+            int previousIndex = _vessel.index;
+            VesselComponent? previous = previousIndex >= 0 && previousIndex < _allVessels.Count
+                ? _allVessels[previousIndex] : null;
+            _allVessels.Clear();
+
+            var choices = new List<string>();
+            if (Game.GlobalGameState.GetState() != GameState.MainMenu && Game.UniverseModel != null)
+            {
+                foreach (VesselComponent vessel in Game.UniverseModel.GetAllVessels())
+                {
+                    if (vessel == null || vessel.IsDestroyedOrBeingDestroyed || vessel.mainBody == null)
+                        continue;
+
+                    _allVessels.Add(vessel);
+                    choices.Add($"{vessel.DisplayName} ({vessel.mainBody.bodyName})");
+                }
+            }
+
+            _vessel.choices = choices;
+            _vessel.index = _allVessels.IndexOf(previous);
         }
 
         private void LateUpdate()
         {
-            if (!IsWindowOpen) return;
+            if (!IsWindowOpen)
+            {
+                if (_areVesselChoicesDirty && _allVessels.Count > 0)
+                    _allVessels.Clear();
+                return;
+            }
 
+            if (Game == null || Game.SaveLoadManager?.IsLoading == true)
+                return;
+
+            UpdateVesselDropdown();
             if (!TryGetVessel(out var vessel) || vessel == null)
             {
                 SetDefaultLabels();
@@ -208,6 +218,9 @@ namespace DebugTools.Runtime.Controllers
 
             if (_useActive.value)
             {
+                if (Game == null || Game.GlobalGameState.GetState() == GameState.MainMenu || Game.ViewController == null)
+                    return false;
+
                 vessel = Game.ViewController.GetActiveSimVessel();
                 _vessel.index = _allVessels.IndexOf(vessel);
                 return true;
