@@ -41,6 +41,7 @@ namespace DebugTools.Runtime.Controllers
 
         private readonly List<VesselComponent> _allVessels = new();
         private bool _areVesselChoicesDirty = true;
+        private IGGuid? _selectionBeforeRosterClear;
         private ScienceStorageComponent? _storageComponent;
 
         private void Awake()
@@ -119,6 +120,7 @@ namespace DebugTools.Runtime.Controllers
 
             _allVessels.Clear();
             _areVesselChoicesDirty = true;
+            _selectionBeforeRosterClear = null;
             _storageComponent = null;
 
             if (_scienceOverlay != null)
@@ -153,47 +155,66 @@ namespace DebugTools.Runtime.Controllers
 
         private void OnVesselRosterChanged(MessageCenterMessage message) => _areVesselChoicesDirty = true;
 
-        private void UpdateVesselDropdown()
+        private void ClearVesselRoster()
         {
-            if (!_areVesselChoicesDirty || _vessel == null)
+            if (_allVessels.Count == 0)
                 return;
 
-            _areVesselChoicesDirty = false;
-            int previousIndex = _vessel.index;
-            VesselComponent? previous = previousIndex >= 0 && previousIndex < _allVessels.Count
-                ? _allVessels[previousIndex] : null;
+            // Keep the selection while releasing the closed window's vessel references.
+            int selectedIndex = _vessel?.index ?? -1;
+            _selectionBeforeRosterClear = selectedIndex >= 0 && selectedIndex < _allVessels.Count
+                ? _allVessels[selectedIndex].GlobalId
+                : null;
             _allVessels.Clear();
+        }
 
+        private void UpdateVesselDropdown(DropdownField dropdown, IEnumerable<VesselComponent>? vessels)
+        {
+            _areVesselChoicesDirty = false;
+            ClearVesselRoster();
+            IGGuid? selectedId = _selectionBeforeRosterClear;
+            _selectionBeforeRosterClear = null;
+
+            int selectedIndex = -1;
             var choices = new List<string>();
-            if (Game.GlobalGameState.GetState() != GameState.MainMenu && Game.UniverseModel != null)
+            if (vessels != null)
             {
-                foreach (VesselComponent vessel in Game.UniverseModel.GetAllVessels())
+                foreach (VesselComponent vessel in vessels)
                 {
                     if (vessel == null || vessel.IsDestroyedOrBeingDestroyed || vessel.mainBody == null)
                         continue;
+
+                    if (vessel.GlobalId == selectedId)
+                        selectedIndex = _allVessels.Count;
 
                     _allVessels.Add(vessel);
                     choices.Add($"{vessel.DisplayName} ({vessel.mainBody.bodyName})");
                 }
             }
 
-            _vessel.choices = choices;
-            _vessel.index = _allVessels.IndexOf(previous);
+            dropdown.choices = choices;
+            dropdown.index = selectedIndex;
         }
 
         private void LateUpdate()
         {
             if (!IsWindowOpen)
             {
-                if (_areVesselChoicesDirty && _allVessels.Count > 0)
-                    _allVessels.Clear();
+                if (_areVesselChoicesDirty)
+                    ClearVesselRoster();
                 return;
             }
 
             if (Game == null || Game.SaveLoadManager?.IsLoading == true)
                 return;
 
-            UpdateVesselDropdown();
+            if (_areVesselChoicesDirty && _vessel != null)
+            {
+                var vessels = Game.GlobalGameState.GetState() == GameState.MainMenu
+                    ? null
+                    : Game.UniverseModel?.GetAllVessels();
+                UpdateVesselDropdown(_vessel, vessels);
+            }
             if (!TryGetVessel(out var vessel) || vessel == null)
             {
                 SetDefaultLabels();
