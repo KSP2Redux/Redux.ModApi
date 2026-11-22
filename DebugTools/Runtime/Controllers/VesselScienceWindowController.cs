@@ -120,6 +120,19 @@ namespace DebugTools.Runtime.Controllers
             _allVessels.Clear();
             _areVesselChoicesDirty = true;
             _storageComponent = null;
+
+            if (_scienceOverlay != null)
+            {
+                _scienceOverlay.enabled = false;
+                _scienceOverlay.SetCelestialBody(null);
+                _scienceOverlay.SetScienceRegionsDataProvider(null);
+            }
+
+            if (_regionBoundsMaterial != null && PQSObject.RegionBoundingSphereMaterial == _regionBoundsMaterial)
+            {
+                PQSObject.ShowScienceRegionInfo = false;
+                PQSObject.RegionBoundingSphereMaterial = null;
+            }
         }
 
         private void UpdateScienceMetadata()
